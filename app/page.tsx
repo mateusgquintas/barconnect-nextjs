@@ -1,103 +1,433 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from "react";
+import { Header, PageView } from "@/components/Header";
+import { ComandaSidebar } from "@/components/ComandaSidebar";
+import { ComandaDetail } from "@/components/ComandaDetail";
+import { ProductCatalog } from "@/components/ProductCatalog";
+import { PaymentScreen } from "@/components/PaymentScreen";
+import { NewComandaDialog } from "@/components/NewComandaDialog";
+import { Dashboard } from "@/components/Dashboard";
+import { Hotel } from "@/components/Hotel";
+import { Inventory } from "@/components/Inventory";
+import { Transactions } from "@/components/Transactions";
+import { LoginScreen } from "@/components/LoginScreen";
+import {
+  OrderItem,
+  PaymentMethod,
+  SaleRecord,
+} from "@/types";
+import { User } from "@/types/user";
+import { toast } from "sonner";
+import { useComandasDB } from "@/hooks/useComandasDB";
+import { useProductsDB } from "@/hooks/useProductsDB";
+import { useTransactionsDB } from "@/hooks/useTransactionsDB";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
+import { formatDate, formatTime } from "@/utils/calculations";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentView, setCurrentView] = useState<PageView>("pdv");
+  const [dashboardView, setDashboardView] = useState<"bar" | "controladoria">("bar");
+  
+  // Hooks do Supabase
+  const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda } = useComandasDB();
+  const { products } = useProductsDB();
+  const { transactions, addTransaction } = useTransactionsDB();
+  
+  // Sales ainda usa localStorage (você pode migrar depois)
+  const [salesRecords, setSalesRecords] = useLocalStorage<SaleRecord[]>("barconnect_sales", []);
+  
+  // Estados temporários
+  const [selectedComandaId, setSelectedComandaId] = useState<string | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [showNewComandaDialog, setShowNewComandaDialog] = useState(false);
+  const [directSaleItems, setDirectSaleItems] = useState<OrderItem[]>([]);
+  const [isDirectSale, setIsDirectSale] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const selectedComanda = comandas.find((c) => c.id === selectedComandaId) || null;
+
+  const handleNewComanda = () => {
+    setShowNewComandaDialog(true);
+  };
+
+  const handleCreateComanda = async (
+    comandaNumber: number,
+    customerName?: string,
+  ) => {
+    const exists = comandas.some((c) => c.number === comandaNumber);
+    if (exists) {
+      toast.error(`Comanda #${comandaNumber} já existe`);
+      return;
+    }
+
+    const comandaId = await createComanda(comandaNumber, customerName);
+    if (comandaId) {
+      setSelectedComandaId(comandaId);
+      setIsDirectSale(false);
+    }
+  };
+
+  const handleDirectSale = () => {
+    setIsDirectSale(true);
+    setSelectedComandaId(null);
+    setDirectSaleItems([]);
+    toast.success("Modo venda direta ativado");
+  };
+
+  const handleSelectComanda = (comanda: any) => {
+    setSelectedComandaId(comanda.id);
+    setIsDirectSale(false);
+  };
+
+  const handleCloseComanda = async (comandaId: string) => {
+    const comanda = comandas.find((c) => c.id === comandaId);
+    if (comanda && comanda.items.length > 0) {
+      toast.error("Finalize o pagamento antes de fechar a comanda");
+      return;
+    }
+
+    await deleteComanda(comandaId);
+    if (selectedComandaId === comandaId) {
+      setSelectedComandaId(null);
+    }
+  };
+
+  const handleAddProduct = async (product: any) => {
+    if (isDirectSale) {
+      const existingItemIndex = directSaleItems.findIndex(
+        (item) => item.product.id === product.id,
+      );
+      if (existingItemIndex >= 0) {
+        const newItems = [...directSaleItems];
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + 1,
+        };
+        setDirectSaleItems(newItems);
+      } else {
+        setDirectSaleItems([...directSaleItems, { product, quantity: 1 }]);
+      }
+      toast.success(`${product.name} adicionado`);
+    } else if (selectedComandaId) {
+      await addItemToComanda(
+        selectedComandaId,
+        product.id,
+        product.name,
+        product.price
+      );
+    } else {
+      toast.error("Selecione uma comanda ou ative venda direta");
+    }
+  };
+
+  const handleRemoveItem = async (productId: string) => {
+    if (isDirectSale) {
+      setDirectSaleItems(
+        directSaleItems.filter((item) => item.product.id !== productId),
+      );
+      toast.success("Item removido");
+    } else if (selectedComandaId) {
+      await removeItem(selectedComandaId, productId);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (
+      (isDirectSale && directSaleItems.length > 0) ||
+      (selectedComanda && selectedComanda.items.length > 0)
+    ) {
+      setShowPayment(true);
+    }
+  };
+
+  const handleConfirmPayment = async (method: PaymentMethod) => {
+    const now = new Date();
+    const isCourtesy = method === "courtesy";
+
+    if (isDirectSale) {
+      const total = directSaleItems.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+      );
+
+      const saleRecord: SaleRecord = {
+        id: Date.now().toString(),
+        items: [...directSaleItems],
+        total,
+        paymentMethod: method,
+        date: formatDate(now),
+        time: formatTime(now),
+        isDirectSale: true,
+        isCourtesy,
+      };
+      setSalesRecords([saleRecord, ...salesRecords]);
+
+      if (!isCourtesy) {
+        await addTransaction({
+          type: "income",
+          description: "Venda Direta",
+          amount: total,
+          category: "Vendas",
+        });
+      }
+
+      setDirectSaleItems([]);
+      setIsDirectSale(false);
+      toast.success(`Venda direta finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+    } else if (selectedComandaId && selectedComanda) {
+      const total = selectedComanda.items.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+      );
+
+      const saleRecord: SaleRecord = {
+        id: Date.now().toString(),
+        comandaNumber: selectedComanda.number,
+        customerName: selectedComanda.customerName,
+        items: [...selectedComanda.items],
+        total,
+        paymentMethod: method,
+        date: formatDate(now),
+        time: formatTime(now),
+        isDirectSale: false,
+        isCourtesy,
+      };
+      setSalesRecords([saleRecord, ...salesRecords]);
+
+      await addTransaction({
+        type: "income",
+        description: `Venda Comanda #${String(selectedComanda.number).padStart(3, "0")}`,
+        amount: total,
+        category: "Vendas",
+      });
+
+      await closeComanda(selectedComandaId);
+      setSelectedComandaId(null);
+      toast.success(`Comanda #${selectedComanda.number} finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+    }
+    setShowPayment(false);
+  };
+
+  const currentItems = isDirectSale
+    ? directSaleItems
+    : selectedComanda?.items || [];
+  const paymentTitle = isDirectSale
+    ? "Venda Direta"
+    : `Comanda #${selectedComanda?.number}`;
+
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+    setCurrentView("pdv");
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentView("pdv");
+    setSelectedComandaId(null);
+    setDirectSaleItems([]);
+    setIsDirectSale(false);
+    toast.success("Logout realizado com sucesso");
+  };
+
+  if (!currentUser) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  if (loadingComandas) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  const renderContent = () => {
+    switch (currentView) {
+      case "dashboard":
+        return (
+          <Dashboard
+            activeView={dashboardView}
+            transactions={transactions}
+            comandas={comandas}
+            salesRecords={salesRecords}
+          />
+        );
+      case "hotel":
+        return <Hotel />;
+      case "inventory":
+        return <Inventory />;
+      case "transactions":
+        return (
+          <Transactions
+            transactions={transactions}
+            onAddTransaction={addTransaction}
+          />
+        );
+      case "pdv":
+      default:
+        return (
+          <div className="flex-1 flex overflow-hidden">
+            <ComandaSidebar
+              comandas={comandas}
+              selectedComandaId={selectedComandaId}
+              onSelectComanda={handleSelectComanda}
+              onCloseComanda={handleCloseComanda}
+              userRole={currentUser.role}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+            <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 bg-white overflow-hidden">
+                <ProductCatalog onAddProduct={handleAddProduct} />
+              </div>
+
+              <div className="w-96 border-l border-slate-200 overflow-hidden">
+                {isDirectSale ? (
+                  <div className="flex flex-col h-full bg-white">
+                    <div className="px-6 py-4 border-b border-slate-200">
+                      <div className="flex items-baseline justify-between">
+                        <div>
+                          <h2 className="text-slate-900">Venda Direta</h2>
+                          <p className="text-sm text-slate-500 mt-1">Sem comanda</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-slate-500">Total</p>
+                          <p className="text-2xl text-slate-900">
+                            R${" "}
+                            {directSaleItems
+                              .reduce(
+                                (sum, item) =>
+                                  sum + item.product.price * item.quantity,
+                                0,
+                              )
+                              .toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="px-6 py-4 border-b border-slate-200">
+                      <h3 className="text-slate-700 mb-3">Itens</h3>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-6">
+                      {directSaleItems.length === 0 ? (
+                        <div className="py-12 text-center text-slate-400">
+                          <p>Nenhum item adicionado</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 py-4">
+                          {directSaleItems.map((item) => (
+                            <div
+                              key={item.product.id}
+                              className="p-4 border border-slate-200 rounded-lg"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <p className="text-slate-600 text-sm mb-1">
+                                    {item.quantity}x {item.product.name}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <p className="text-slate-900">
+                                    R${" "}
+                                    {(item.product.price * item.quantity).toFixed(
+                                      2,
+                                    )}
+                                  </p>
+                                  <button
+                                    onClick={() =>
+                                      handleRemoveItem(item.product.id)
+                                    }
+                                    className="text-slate-400 hover:text-red-600"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {directSaleItems.length > 0 && (
+                      <div className="p-6 border-t border-slate-200">
+                        <button
+                          onClick={handleCheckout}
+                          className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"
+                        >
+                          Finalizar Venda - R${" "}
+                          {directSaleItems
+                            .reduce(
+                              (sum, item) =>
+                                sum + item.product.price * item.quantity,
+                              0,
+                            )
+                            .toFixed(2)}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <ComandaDetail
+                    comanda={selectedComanda}
+                    onRemoveItem={handleRemoveItem}
+                    onCheckout={handleCheckout}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="h-screen flex flex-col bg-slate-100">
+      <Header
+        onNewComanda={handleNewComanda}
+        onDirectSale={handleDirectSale}
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        dashboardView={dashboardView}
+        onDashboardViewChange={setDashboardView}
+        userRole={currentUser.role}
+        userName={currentUser.name}
+        onLogout={handleLogout}
+      />
+
+      {renderContent()}
+
+      {showPayment && (
+        <PaymentScreen
+          title={paymentTitle}
+          items={currentItems}
+          onBack={() => setShowPayment(false)}
+          onConfirmPayment={handleConfirmPayment}
+          userRole={currentUser.role}
+          isDirectSale={isDirectSale}
+        />
+      )}
+
+      <NewComandaDialog
+        open={showNewComandaDialog}
+        onOpenChange={setShowNewComandaDialog}
+        onCreateComanda={handleCreateComanda}
+      />
     </div>
   );
 }
