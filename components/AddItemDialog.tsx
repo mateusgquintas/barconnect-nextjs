@@ -20,6 +20,7 @@ interface AddItemDialogProps {
   onAddItem: (product: Product, quantity: number) => void;
 }
 
+export function AddItemDialog({ open, onClose, onAddItem }: AddItemDialogProps) {
   const { products, loading } = useProductsDB();
   const [search, setSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);

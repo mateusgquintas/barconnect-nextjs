@@ -26,6 +26,7 @@ const categoryLabels: Record<Category, string> = {
   outros: 'Outros',
 };
 
+export default function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
   const { products, loading } = useProductsDB();
   const [activeCategory, setActiveCategory] = useState<Category>('bebidas');
   const [searchQuery, setSearchQuery] = useState('');

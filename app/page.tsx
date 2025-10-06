@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Header, PageView } from "@/components/Header";
 import { ComandaSidebar } from "@/components/ComandaSidebar";
 import { ComandaDetail } from "@/components/ComandaDetail";
-import { ProductCatalog } from "@/components/ProductCatalog";
+import ProductCatalog from "@/components/ProductCatalog";
 import { PaymentScreen } from "@/components/PaymentScreen";
 import { NewComandaDialog } from "@/components/NewComandaDialog";
 import { Dashboard } from "@/components/Dashboard";
