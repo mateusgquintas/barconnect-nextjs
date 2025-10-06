@@ -1,3 +1,5 @@
+
+
 'use client'
 
 import { useState } from "react";
@@ -22,7 +24,7 @@ import { toast } from "sonner";
 import { useComandasDB } from "@/hooks/useComandasDB";
 import { useProductsDB } from "@/hooks/useProductsDB";
 import { useTransactionsDB } from "@/hooks/useTransactionsDB";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useSalesDB } from "@/hooks/useSalesDB";
 import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
 import { formatDate, formatTime } from "@/utils/calculations";
 
@@ -36,8 +38,8 @@ export default function Home() {
   const { products } = useProductsDB();
   const { transactions, addTransaction } = useTransactionsDB();
   
-  // Sales ainda usa localStorage (você pode migrar depois)
-  const [salesRecords, setSalesRecords] = useLocalStorage<SaleRecord[]>("barconnect_sales", []);
+  // Vendas agora usam Supabase
+  const { sales: salesRecords, addSale, loading: loadingSales } = useSalesDB();
   
   // Estados temporários
   const [selectedComandaId, setSelectedComandaId] = useState<string | null>(null);
@@ -152,8 +154,7 @@ export default function Home() {
         0,
       );
 
-      const saleRecord: SaleRecord = {
-        id: Date.now().toString(),
+      const saleRecord: Omit<SaleRecord, 'id'> = {
         items: [...directSaleItems],
         total,
         paymentMethod: method,
@@ -162,7 +163,7 @@ export default function Home() {
         isDirectSale: true,
         isCourtesy,
       };
-      setSalesRecords([saleRecord, ...salesRecords]);
+      await addSale(saleRecord);
 
       if (!isCourtesy) {
         await addTransaction({
@@ -182,8 +183,7 @@ export default function Home() {
         0,
       );
 
-      const saleRecord: SaleRecord = {
-        id: Date.now().toString(),
+      const saleRecord: Omit<SaleRecord, 'id'> = {
         comandaNumber: selectedComanda.number,
         customerName: selectedComanda.customerName,
         items: [...selectedComanda.items],
@@ -194,7 +194,7 @@ export default function Home() {
         isDirectSale: false,
         isCourtesy,
       };
-      setSalesRecords([saleRecord, ...salesRecords]);
+      await addSale(saleRecord);
 
       await addTransaction({
         type: "income",
@@ -428,6 +428,6 @@ export default function Home() {
         onOpenChange={setShowNewComandaDialog}
         onCreateComanda={handleCreateComanda}
       />
-    </div>
+      </div>
   );
 }

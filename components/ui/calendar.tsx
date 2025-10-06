@@ -4,10 +4,10 @@ import * as React from "react";
 import {
   ChevronLeft,
   ChevronRight,
-} from "lucide-react@0.487.0";
-import { DayPicker } from "react-day-picker@8.10.1";
+} from "lucide-react";
+import { DayPicker } from "react-day-picker";
 
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 import { buttonVariants } from "./button";
 
 function Calendar({
@@ -63,20 +63,7 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft
-            className={cn("size-4", className)}
-            {...props}
-          />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight
-            className={cn("size-4", className)}
-            {...props}
-          />
-        ),
-      }}
+      // Ícones de navegação customizados removidos pois não são suportados na versão atual do react-day-picker
       {...props}
     />
   );
