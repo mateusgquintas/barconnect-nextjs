@@ -25,7 +25,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       .from('users')
       .select('*')
       .eq('username', username)
-      .eq('password', password)
+      .eq('password_hash', password)
       .single();
 
     if (error || !data) {
