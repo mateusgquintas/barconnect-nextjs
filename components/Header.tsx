@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react';
 import { Receipt, ShoppingCart, Plus, LayoutDashboard, Package, TrendingUpDown, ShoppingBag, LogOut, User as UserIcon, Hotel as HotelIcon, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';

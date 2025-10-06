@@ -1,13 +1,11 @@
 'use client'
 import { useState } from 'react';
-import { useRoomsDB, Room as DBRoom } from '../hooks/useRoomsDB';
+import { useRoomsDB, Room } from '../hooks/useRoomsDB';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Bed, Users, Calendar, Clock, DollarSign, Search } from 'lucide-react';
+import { Bed, Users, Clock, DollarSign, Search } from 'lucide-react';
 import { Input } from './ui/input';
-
-
 
 const roomTypeLabels = {
   single: 'Solteiro',

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react';
 import { DashboardBar } from './DashboardBar';
 import { DashboardControladoria } from './DashboardControladoria';
 import { Comanda, Transaction, SaleRecord } from '@/types';

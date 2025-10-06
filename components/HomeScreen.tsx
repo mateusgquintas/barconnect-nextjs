@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react';
 import { Receipt, ShoppingCart } from 'lucide-react';
-import { Button } from './ui/button';
 import { Card } from './ui/card';
 
 interface HomeScreenProps {

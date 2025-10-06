@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react';
 import { ArrowLeft, Plus, Receipt } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';

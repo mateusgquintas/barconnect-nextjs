@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Card } from './ui/card';
 import { Comanda } from '@/types';
