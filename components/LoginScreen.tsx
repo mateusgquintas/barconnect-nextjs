@@ -4,7 +4,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Receipt, Lock, User as UserIcon } from 'lucide-react';
-import { User, users } from '@/types/user';
+import { User } from '@/types/user';
+import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
 interface LoginScreenProps {
@@ -16,24 +17,25 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    // Busca usuário na tabela 'users' do Supabase
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .single();
 
-    // Simulate authentication delay
-    setTimeout(() => {
-      const user = users.find(
-        u => u.username === username && u.password === password
-      );
-
-      if (user) {
-        onLogin(user);
-        toast.success(`Bem-vindo, ${user.name}!`);
-      } else {
-        toast.error('Usuário ou senha incorretos');
-      }
+    if (error || !data) {
+      toast.error('Usuário ou senha incorretos');
       setIsLoading(false);
-    }, 500);
+      return;
+    }
+    onLogin(data as User);
+    toast.success(`Bem-vindo, ${data.name}!`);
+    setIsLoading(false);
   };
 
   return (
@@ -87,19 +89,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </Button>
         </form>
 
-        <div className="mt-8 p-4 bg-slate-50 rounded-lg">
-          <p className="text-sm text-slate-600 mb-3">Usuários de teste:</p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-700">Admin:</span>
-              <span className="text-slate-500">admin / admin123</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-700">Operador:</span>
-              <span className="text-slate-500">operador / operador123</span>
-            </div>
-          </div>
-        </div>
       </Card>
     </div>
   );

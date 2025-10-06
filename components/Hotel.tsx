@@ -1,21 +1,13 @@
 'use client'
 import { useState } from 'react';
+import { useRoomsDB, Room as DBRoom } from '../hooks/useRoomsDB';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Bed, Users, Calendar, Clock, DollarSign, Search } from 'lucide-react';
 import { Input } from './ui/input';
 
-interface Room {
-  id: string;
-  number: string;
-  type: 'single' | 'double' | 'suite';
-  status: 'available' | 'occupied' | 'cleaning' | 'maintenance';
-  guest?: string;
-  checkIn?: string;
-  checkOut?: string;
-  dailyRate: number;
-}
+
 
 const roomTypeLabels = {
   single: 'Solteiro',
@@ -38,25 +30,13 @@ const statusColors = {
 };
 
 export function Hotel() {
-  const [rooms, setRooms] = useState<Room[]>([
-    { id: '1', number: '101', type: 'single', status: 'available', dailyRate: 150 },
-    { id: '2', number: '102', type: 'single', status: 'cleaning', dailyRate: 150 },
-    { id: '3', number: '103', type: 'double', status: 'occupied', guest: 'João Silva', checkIn: '01/10/2025', checkOut: '05/10/2025', dailyRate: 200 },
-    { id: '4', number: '104', type: 'double', status: 'available', dailyRate: 200 },
-    { id: '5', number: '201', type: 'suite', status: 'occupied', guest: 'Maria Santos', checkIn: '30/09/2025', checkOut: '03/10/2025', dailyRate: 350 },
-    { id: '6', number: '202', type: 'suite', status: 'available', dailyRate: 350 },
-    { id: '7', number: '203', type: 'double', status: 'available', dailyRate: 200 },
-    { id: '8', number: '204', type: 'single', status: 'maintenance', dailyRate: 150 },
-    { id: '9', number: '301', type: 'suite', status: 'occupied', guest: 'Carlos Oliveira', checkIn: '28/09/2025', checkOut: '10/10/2025', dailyRate: 350 },
-    { id: '10', number: '302', type: 'double', status: 'available', dailyRate: 200 },
-  ]);
+  const { rooms, loading, error, updateRoom } = useRoomsDB();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const filteredRooms = rooms.filter(room => {
-    const matchesSearch = room.number.includes(searchQuery) || 
-                         room.guest?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = room.number?.toString().includes(searchQuery);
     const matchesStatus = filterStatus === 'all' || room.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -66,15 +46,19 @@ export function Hotel() {
     available: rooms.filter(r => r.status === 'available').length,
     occupied: rooms.filter(r => r.status === 'occupied').length,
     cleaning: rooms.filter(r => r.status === 'cleaning').length,
-    occupancyRate: ((rooms.filter(r => r.status === 'occupied').length / rooms.length) * 100).toFixed(0),
+    occupancyRate: rooms.length > 0 ? ((rooms.filter(r => r.status === 'occupied').length / rooms.length) * 100).toFixed(0) : '0',
   };
 
-  const handleChangeStatus = (roomId: string, newStatus: Room['status']) => {
-    setRooms(rooms.map(room => 
-      room.id === roomId ? { ...room, status: newStatus } : room
-    ));
+  const handleChangeStatus = async (roomId: string, newStatus: string) => {
+    await updateRoom(roomId, { status: newStatus });
   };
 
+  if (loading) {
+    return <div className="p-8">Carregando quartos...</div>;
+  }
+  if (error) {
+    return <div className="p-8 text-red-600">Erro ao carregar quartos: {error.message}</div>;
+  }
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50">
       <div className="p-8">
@@ -194,32 +178,15 @@ export function Hotel() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-slate-900 text-xl">Quarto {room.number}</h3>
-                  <p className="text-sm text-slate-500">{roomTypeLabels[room.type]}</p>
+                  <p className="text-sm text-slate-500">{roomTypeLabels[room.type as keyof typeof roomTypeLabels] || room.type}</p>
                 </div>
-                <Badge className={`${statusColors[room.status]} border`}>
-                  {statusLabels[room.status]}
+                <Badge className={`${statusColors[room.status as keyof typeof statusColors] || ''} border`}>
+                  {statusLabels[room.status as keyof typeof statusLabels] || room.status}
                 </Badge>
               </div>
 
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <DollarSign className="w-4 h-4" />
-                  <span>R$ {room.dailyRate}/diária</span>
-                </div>
-
-                {room.status === 'occupied' && room.guest && (
-                  <>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Users className="w-4 h-4" />
-                      <span>{room.guest}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{room.checkIn} - {room.checkOut}</span>
-                    </div>
-                  </>
-                )}
-              </div>
+              {/* Dados adicionais removidos: dailyRate, guest, checkIn, checkOut */}
+              <div className="space-y-2 mb-4"></div>
 
               <div className="flex gap-2">
                 {room.status === 'occupied' && (

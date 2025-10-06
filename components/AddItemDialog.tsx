@@ -12,7 +12,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Product } from '@/types';
-import { products } from '@/data/products';
+import { useProductsDB } from '@/hooks/useProductsDB';
 
 interface AddItemDialogProps {
   open: boolean;
@@ -20,7 +20,7 @@ interface AddItemDialogProps {
   onAddItem: (product: Product, quantity: number) => void;
 }
 
-export function AddItemDialog({ open, onClose, onAddItem }: AddItemDialogProps) {
+  const { products, loading } = useProductsDB();
   const [search, setSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);

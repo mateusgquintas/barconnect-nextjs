@@ -5,12 +5,12 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Package, Search, AlertCircle, Edit } from 'lucide-react';
-import { products as initialProducts } from '@/data/products';
+import { useProductsDB } from '@/hooks/useProductsDB';
 import { EditStockDialog } from './EditStockDialog';
 import { Product } from '@/types';
 
 export function Inventory() {
-  const [products, setProducts] = useState(initialProducts);
+  const { products, updateStock, loading } = useProductsDB();
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -20,10 +20,8 @@ export function Inventory() {
     setShowEditDialog(true);
   };
 
-  const handleUpdateStock = (productId: string, newStock: number) => {
-    setProducts(products.map(p => 
-      p.id === productId ? { ...p, stock: newStock } : p
-    ));
+  const handleUpdateStock = async (productId: string, newStock: number) => {
+    await updateStock(productId, newStock);
   };
 
   const filteredProducts = products.filter(p => 

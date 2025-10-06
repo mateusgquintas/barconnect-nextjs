@@ -3,6 +3,8 @@
 'use client'
 
 import { useState } from "react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/context/AuthContext";
 import { Header, PageView } from "@/components/Header";
 import { ComandaSidebar } from "@/components/ComandaSidebar";
 import { ComandaDetail } from "@/components/ComandaDetail";
@@ -29,7 +31,7 @@ import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
 import { formatDate, formatTime } from "@/utils/calculations";
 
 export default function Home() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user: currentUser, setUser: setCurrentUser } = useAuth();
   const [currentView, setCurrentView] = useState<PageView>("pdv");
   const [dashboardView, setDashboardView] = useState<"bar" | "controladoria">("bar");
   
@@ -247,54 +249,144 @@ export default function Home() {
     switch (currentView) {
       case "dashboard":
         return (
-          <Dashboard
-            activeView={dashboardView}
-            transactions={transactions}
-            comandas={comandas}
-            salesRecords={salesRecords}
-          />
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Dashboard
+              activeView={dashboardView}
+              transactions={transactions}
+              comandas={comandas}
+              salesRecords={salesRecords}
+            />
+          </ProtectedRoute>
         );
       case "hotel":
-        return <Hotel />;
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Hotel />
+          </ProtectedRoute>
+        );
       case "inventory":
-        return <Inventory />;
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Inventory />
+          </ProtectedRoute>
+        );
       case "transactions":
         return (
-          <Transactions
-            transactions={transactions}
-            onAddTransaction={addTransaction}
-          />
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Transactions
+              transactions={transactions}
+              onAddTransaction={addTransaction}
+            />
+          </ProtectedRoute>
         );
       case "pdv":
       default:
         return (
-          <div className="flex-1 flex overflow-hidden">
-            <ComandaSidebar
-              comandas={comandas}
-              selectedComandaId={selectedComandaId}
-              onSelectComanda={handleSelectComanda}
-              onCloseComanda={handleCloseComanda}
-              userRole={currentUser.role}
-            />
-
+          <ProtectedRoute allowedRoles={["admin", "operator"]}>
+            {/* ...existing code for PDV... */}
             <div className="flex-1 flex overflow-hidden">
-              <div className="flex-1 bg-white overflow-hidden">
-                <ProductCatalog onAddProduct={handleAddProduct} />
-              </div>
+              <ComandaSidebar
+                comandas={comandas}
+                selectedComandaId={selectedComandaId}
+                onSelectComanda={handleSelectComanda}
+                onCloseComanda={handleCloseComanda}
+                userRole={currentUser.role}
+              />
 
-              <div className="w-96 border-l border-slate-200 overflow-hidden">
-                {isDirectSale ? (
-                  <div className="flex flex-col h-full bg-white">
-                    <div className="px-6 py-4 border-b border-slate-200">
-                      <div className="flex items-baseline justify-between">
-                        <div>
-                          <h2 className="text-slate-900">Venda Direta</h2>
-                          <p className="text-sm text-slate-500 mt-1">Sem comanda</p>
+              <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 bg-white overflow-hidden">
+                  <ProductCatalog onAddProduct={handleAddProduct} />
+                </div>
+
+                <div className="w-96 border-l border-slate-200 overflow-hidden">
+                  {isDirectSale ? (
+                    <div className="flex flex-col h-full bg-white">
+                      <div className="px-6 py-4 border-b border-slate-200">
+                        <div className="flex items-baseline justify-between">
+                          <div>
+                            <h2 className="text-slate-900">Venda Direta</h2>
+                            <p className="text-sm text-slate-500 mt-1">Sem comanda</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">Total</p>
+                            <p className="text-2xl text-slate-900">
+                              R${" "}
+                              {directSaleItems
+                                .reduce(
+                                  (sum, item) =>
+                                    sum + item.product.price * item.quantity,
+                                  0,
+                                )
+                                .toFixed(2)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-slate-500">Total</p>
-                          <p className="text-2xl text-slate-900">
-                            R${" "}
+                      </div>
+
+                      <div className="px-6 py-4 border-b border-slate-200">
+                        <h3 className="text-slate-700 mb-3">Itens</h3>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto px-6">
+                        {directSaleItems.length === 0 ? (
+                          <div className="py-12 text-center text-slate-400">
+                            <p>Nenhum item adicionado</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 py-4">
+                            {directSaleItems.map((item) => (
+                              <div
+                                key={item.product.id}
+                                className="p-4 border border-slate-200 rounded-lg"
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <p className="text-slate-600 text-sm mb-1">
+                                      {item.quantity}x {item.product.name}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <p className="text-slate-900">
+                                      R${" "}
+                                      {(item.product.price * item.quantity).toFixed(
+                                        2,
+                                      )}
+                                    </p>
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveItem(item.product.id)
+                                      }
+                                      className="text-slate-400 hover:text-red-600"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M6 18L18 6M6 6l12 12"
+                                        />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {directSaleItems.length > 0 && (
+                        <div className="p-6 border-t border-slate-200">
+                          <button
+                            onClick={handleCheckout}
+                            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"
+                          >
+                            Finalizar Venda - R${" "}
                             {directSaleItems
                               .reduce(
                                 (sum, item) =>
@@ -302,96 +394,21 @@ export default function Home() {
                                 0,
                               )
                               .toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="px-6 py-4 border-b border-slate-200">
-                      <h3 className="text-slate-700 mb-3">Itens</h3>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto px-6">
-                      {directSaleItems.length === 0 ? (
-                        <div className="py-12 text-center text-slate-400">
-                          <p>Nenhum item adicionado</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 py-4">
-                          {directSaleItems.map((item) => (
-                            <div
-                              key={item.product.id}
-                              className="p-4 border border-slate-200 rounded-lg"
-                            >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                  <p className="text-slate-600 text-sm mb-1">
-                                    {item.quantity}x {item.product.name}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <p className="text-slate-900">
-                                    R${" "}
-                                    {(item.product.price * item.quantity).toFixed(
-                                      2,
-                                    )}
-                                  </p>
-                                  <button
-                                    onClick={() =>
-                                      handleRemoveItem(item.product.id)
-                                    }
-                                    className="text-slate-400 hover:text-red-600"
-                                  >
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                      />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                          </button>
                         </div>
                       )}
                     </div>
-
-                    {directSaleItems.length > 0 && (
-                      <div className="p-6 border-t border-slate-200">
-                        <button
-                          onClick={handleCheckout}
-                          className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"
-                        >
-                          Finalizar Venda - R${" "}
-                          {directSaleItems
-                            .reduce(
-                              (sum, item) =>
-                                sum + item.product.price * item.quantity,
-                              0,
-                            )
-                            .toFixed(2)}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <ComandaDetail
-                    comanda={selectedComanda}
-                    onRemoveItem={handleRemoveItem}
-                    onCheckout={handleCheckout}
-                  />
-                )}
+                  ) : (
+                    <ComandaDetail
+                      comanda={selectedComanda}
+                      onRemoveItem={handleRemoveItem}
+                      onCheckout={handleCheckout}
+                    />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </ProtectedRoute>
         );
     }
   };

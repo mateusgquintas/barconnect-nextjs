@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Product } from '@/types';
-import { products } from '@/data/products';
+import { useProductsDB } from '@/hooks/useProductsDB';
 
 interface ProductCatalogProps {
   onAddProduct: (product: Product) => void;
@@ -17,12 +17,7 @@ interface ProductCatalogProps {
 
 type Category = 'bebidas' | 'porcoes' | 'almoco' | 'outros';
 
-const productsByCategory: Record<Category, Product[]> = {
-  bebidas: products.filter(p => p.category === 'bebidas'),
-  porcoes: products.filter(p => p.category === 'porcoes'),
-  almoco: products.filter(p => p.category === 'almoco'),
-  outros: [], // Categoria especial para itens customizados
-};
+// productsByCategory será calculado dinamicamente com os dados do banco
 
 const categoryLabels: Record<Category, string> = {
   bebidas: 'Bebidas',
@@ -31,7 +26,7 @@ const categoryLabels: Record<Category, string> = {
   outros: 'Outros',
 };
 
-export function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
+  const { products, loading } = useProductsDB();
   const [activeCategory, setActiveCategory] = useState<Category>('bebidas');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCustomItemDialog, setShowCustomItemDialog] = useState(false);
@@ -39,9 +34,15 @@ export function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
   const [customItemPrice, setCustomItemPrice] = useState('');
   const [customItemNote, setCustomItemNote] = useState('');
 
+  const productsByCategory: Record<Category, Product[]> = {
+    bebidas: products.filter(p => p.category === 'bebidas'),
+    porcoes: products.filter(p => p.category === 'porcoes'),
+    almoco: products.filter(p => p.category === 'almoco'),
+    outros: [], // Categoria especial para itens customizados
+  };
+
   const filterProducts = (categoryProducts: Product[]) => {
     if (!searchQuery.trim()) return categoryProducts;
-    
     const query = searchQuery.toLowerCase();
     return categoryProducts.filter(product => 
       product.name.toLowerCase().includes(query)
@@ -50,7 +51,6 @@ export function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
 
   const getAllFilteredProducts = () => {
     if (!searchQuery.trim()) return [];
-    
     const query = searchQuery.toLowerCase();
     return products.filter(product => 
       product.name.toLowerCase().includes(query)
