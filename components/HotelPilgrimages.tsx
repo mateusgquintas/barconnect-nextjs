@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
 // import { useRoomsDB } from '../hooks/useRoomsDB';
