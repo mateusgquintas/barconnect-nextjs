@@ -53,9 +53,40 @@ export function useProductsDB() {
     }
   };
 
+  // Adicionar produto
+  const addProduct = async (product: Omit<Product, 'id'>) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .insert([product]);
+      if (error) throw error;
+      toast.success('Produto adicionado!');
+      await fetchProducts();
+    } catch (error: any) {
+      console.error('Erro ao adicionar produto:', error);
+      toast.error('Erro ao adicionar produto');
+    }
+  };
+
+  // Editar produto
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id);
+      if (error) throw error;
+      toast.success('Produto atualizado!');
+      await fetchProducts();
+    } catch (error: any) {
+      console.error('Erro ao atualizar produto:', error);
+      toast.error('Erro ao atualizar produto');
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  return { products, loading, updateStock, refetch: fetchProducts };
+  return { products, loading, updateStock, addProduct, updateProduct, refetch: fetchProducts };
 }

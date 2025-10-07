@@ -16,11 +16,23 @@ interface DashboardBarProps {
 export function DashboardBar({ transactions, comandas, salesRecords }: DashboardBarProps) {
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   
   const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(lastDayOfMonth.toISOString().split('T')[0]);
   const [searchComanda, setSearchComanda] = useState('');
   const [selectedSale, setSelectedSale] = useState<SaleRecord | null>(null);
+
+  // Debug logs para verificar dados
+  console.log('📊 DashboardBar - Dados recebidos:', {
+    transactions: transactions.length,
+    comandas: comandas.length,
+    salesRecords: salesRecords.length,
+    startDate,
+    endDate,
+    todayISO: today.toISOString(),
+    salesDates: salesRecords.map(s => s.date).slice(0, 5)
+  });
 
   // Filtrar vendas não-cortesia por período
   const salesInPeriod = salesRecords.filter(sale => {

@@ -5,16 +5,32 @@ import { Card } from './ui/card';
 import { DollarSign, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import { Input } from './ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Transaction } from '@/types';
+import { Transaction, SaleRecord } from '@/types';
 
 interface DashboardControladoria {
   transactions: Transaction[];
+  salesRecords: SaleRecord[];
 }
 
-export function DashboardControladoria({ transactions }: DashboardControladoria) {
-  // Filtro de data - padrão: setembro 2025
-  const [startDate, setStartDate] = useState('2025-09-01');
-  const [endDate, setEndDate] = useState('2025-09-30');
+export function DashboardControladoria({ transactions, salesRecords }: DashboardControladoria) {
+  // Filtro de data - padrão: mês atual completo
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(lastDayOfMonth.toISOString().split('T')[0]);
+
+  // Debug logs para verificar dados
+  console.log('📈 DashboardControladoria - Dados recebidos:', {
+    transactions: transactions.length,
+    salesRecords: salesRecords.length,
+    startDate,
+    endDate,
+    todayISO: today.toISOString(),
+    transactionDates: transactions.map(t => t.date).slice(0, 5),
+    salesDates: salesRecords.map(s => s.date).slice(0, 5)
+  });
 
   // Filtrar transações por período
   const filteredTransactions = transactions.filter(t => {
@@ -27,10 +43,24 @@ export function DashboardControladoria({ transactions }: DashboardControladoria)
     return transactionDate >= start && transactionDate <= end;
   });
 
-  // Calcular totais do período
-  const totalIncome = filteredTransactions
+  // Filtrar vendas por período
+  const filteredSales = salesRecords.filter(sale => {
+    const [day, month, year] = sale.date.split('/');
+    const saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    
+    return saleDate >= start && saleDate <= end;
+  });
+
+  // Calcular totais do período incluindo vendas
+  const salesIncome = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+  const transactionIncome = filteredTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalIncome = salesIncome + transactionIncome;
   
   const totalExpense = filteredTransactions
     .filter(t => t.type === 'expense')
@@ -39,39 +69,54 @@ export function DashboardControladoria({ transactions }: DashboardControladoria)
   const profit = totalIncome - totalExpense;
   const profitMargin = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : '0.0';
 
-  // Agrupar por mês para o gráfico
+  // Agrupar por mês para o gráfico (últimos 9 meses incluindo mês atual)
+  const currentMonth = today.getMonth(); // outubro = 9
+  const currentYear = today.getFullYear();
   const monthlyData = Array.from({ length: 9 }, (_, i) => {
     const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const month = i;
-    const year = 2025;
+    const monthIndex = (currentMonth - 8 + i + 12) % 12; // últimos 9 meses
+    const year = monthIndex > currentMonth ? currentYear - 1 : currentYear;
+    const month = monthIndex;
     
     const monthTransactions = transactions.filter(t => {
       const [day, m, y] = t.date.split('/');
-      return parseInt(y) === year && parseInt(m) - 1 === month;
+      return parseInt(y) === year && parseInt(m) - 1 === monthIndex;
+    });
+
+    const monthSales = salesRecords.filter(sale => {
+      const [day, m, y] = sale.date.split('/');
+      return parseInt(y) === year && parseInt(m) - 1 === monthIndex;
     });
     
-    const entradas = monthTransactions
+    const transactionIncome = monthTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
+
+    const salesIncome = monthSales.reduce((sum, sale) => sum + sale.total, 0);
     
     const saidas = monthTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
     
     return {
-      month: monthNames[month],
-      entradas,
+      month: monthNames[monthIndex],
+      entradas: transactionIncome + salesIncome,
       saidas,
     };
   });
 
-  // Distribuição de Entradas por categoria
+  // Distribuição de Entradas por categoria (incluindo vendas)
   const incomeByCategory = filteredTransactions
     .filter(t => t.type === 'income')
     .reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;
     }, {} as Record<string, number>);
+
+  // Adicionar vendas como categoria separada
+  if (salesIncome > 0) {
+    incomeByCategory['Vendas do Bar'] = salesIncome;
+  }
 
   const incomeDistribution = Object.entries(incomeByCategory).map(([category, value]) => ({
     category,

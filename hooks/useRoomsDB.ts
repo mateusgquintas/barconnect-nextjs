@@ -9,6 +9,14 @@ export interface Room {
   status?: string;
   description?: string;
   created_at?: string;
+  pilgrimage_id?: string;    // ID da romaria associada
+  guest_name?: string;       // Nome do hóspede principal
+  guest_cpf?: string;        // CPF do hóspede
+  guest_phone?: string;      // Telefone do hóspede
+  guest_email?: string;      // Email do hóspede
+  check_in_date?: string;    // Data de check-in
+  check_out_date?: string;   // Data de check-out
+  observations?: string;     // Observações
 }
 
 export function useRoomsDB() {

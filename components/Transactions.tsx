@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -17,7 +18,8 @@ export function Transactions({ transactions, onAddTransaction }: TransactionsPro
   const [showIncomeDialog, setShowIncomeDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   
-  // Filtros de data - padrão: início do mês até hoje
+  // Filtros de busca e data
+  const [search, setSearch] = useState('');
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   
@@ -25,25 +27,32 @@ export function Transactions({ transactions, onAddTransaction }: TransactionsPro
   const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
 
   const handleAddTransactionLocal = (transaction: Omit<Transaction, 'id' | 'date' | 'time'>) => {
-    onAddTransaction(transaction);
-    
-    // Atualizar data final para incluir hoje se necessário
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    if (endDate < todayStr) {
-      setEndDate(todayStr);
+    try {
+      onAddTransaction(transaction);
+      toast.success('Transação adicionada com sucesso!');
+      // Atualizar data final para incluir hoje se necessário
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      if (endDate < todayStr) {
+        setEndDate(todayStr);
+      }
+    } catch (e) {
+      toast.error('Erro ao adicionar transação.');
     }
   };
 
-  // Filtrar transações por data
+  // Filtrar transações por data e busca
   const filteredTransactions = transactions.filter(t => {
     const [day, month, year] = t.date.split('/');
     const transactionDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
-    
-    return transactionDate >= start && transactionDate <= end;
+    const matchesDate = transactionDate >= start && transactionDate <= end;
+    const matchesSearch = !search.trim() ||
+      t.description.toLowerCase().includes(search.toLowerCase()) ||
+      t.category.toLowerCase().includes(search.toLowerCase());
+    return matchesDate && matchesSearch;
   });
 
   const incomeTransactions = filteredTransactions.filter(t => t.type === 'income');
@@ -56,14 +65,13 @@ export function Transactions({ transactions, onAddTransaction }: TransactionsPro
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50">
       <div className="p-8">
-        {/* Header with Date Filter */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Header with Date Filter and Search */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-slate-900 mb-2">Financeiro</h1>
             <p className="text-slate-600">Controle de entradas e saídas do hotel</p>
           </div>
-          
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-slate-400" />
               <span className="text-sm text-slate-600">Período:</span>
@@ -80,6 +88,14 @@ export function Transactions({ transactions, onAddTransaction }: TransactionsPro
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="w-36 h-9 text-sm"
+            />
+            <Input
+              type="text"
+              placeholder="Buscar por descrição ou categoria..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-64 h-9 text-sm"
+              aria-label="Buscar transação"
             />
           </div>
         </div>

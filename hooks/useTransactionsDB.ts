@@ -42,6 +42,8 @@ export function useTransactionsDB() {
     transaction: Omit<Transaction, 'id' | 'date' | 'time'>
   ) => {
     try {
+      console.log('💾 Salvando transação:', transaction);
+      
       const { error } = await supabase
         .from('transactions')
         .insert({
@@ -53,8 +55,10 @@ export function useTransactionsDB() {
 
       if (error) throw error;
 
+      console.log('✅ Transação salva, recarregando lista...');
       toast.success('Transação adicionada');
       await fetchTransactions();
+      console.log('📊 Lista atualizada, total:', transactions.length);
     } catch (error: any) {
       console.error('Erro ao adicionar transação:', error);
       toast.error('Erro ao adicionar transação');

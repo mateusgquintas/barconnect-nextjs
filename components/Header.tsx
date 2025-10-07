@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { UserRole } from '@/types/user';
 
-export type PageView = 'pdv' | 'dashboard' | 'hotel' | 'inventory' | 'transactions';
+export type PageView = 'pdv' | 'dashboard' | 'hotel' | 'hotel-pilgrimages' | 'inventory' | 'transactions';
 
 interface HeaderProps {
   onNewComanda: () => void;
@@ -23,7 +23,7 @@ export function Header({ onNewComanda, onDirectSale, currentView, onViewChange, 
   const allNavItems = [
     { id: 'pdv' as PageView, label: 'PDV', icon: ShoppingBag, roles: ['operator', 'admin'] },
     { id: 'dashboard' as PageView, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
-    { id: 'hotel' as PageView, label: 'Hotel', icon: HotelIcon, roles: ['admin'] },
+  { id: 'hotel' as PageView, label: 'Hotel', icon: HotelIcon, roles: ['admin'] },
     { id: 'inventory' as PageView, label: 'Estoque', icon: Package, roles: ['admin'] },
     { id: 'transactions' as PageView, label: 'Financeiro', icon: TrendingUpDown, roles: ['admin'] },
   ];
@@ -38,7 +38,7 @@ export function Header({ onNewComanda, onDirectSale, currentView, onViewChange, 
             <Receipt className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-white">BarConnect</h1>
+            <h1 className="text-white">ERP Hotelaria</h1>
             <p className="text-slate-400 text-sm">Sistema de Gestão</p>
           </div>
         </div>
@@ -93,6 +93,51 @@ export function Header({ onNewComanda, onDirectSale, currentView, onViewChange, 
                       }`}
                     >
                       Controladoria
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+            // Hotel com dropdown customizado
+            if (item.id === 'hotel') {
+              return (
+                <DropdownMenu key={item.id}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                        currentView === item.id
+                          ? 'bg-white/20 text-white'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-sm">{item.label}</span>
+                      <ChevronDown className="w-3 h-3 ml-1" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="start" 
+                    className="bg-slate-900 border-slate-700 text-white min-w-[200px]"
+                  >
+                    <DropdownMenuItem
+                      onClick={() => onViewChange('hotel')}
+                      className={`cursor-pointer ${
+                        currentView === 'hotel'
+                          ? 'bg-white/10 text-white'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      Gestão de Quartos
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onViewChange('hotel-pilgrimages')}
+                      className={`cursor-pointer ${
+                        currentView === 'hotel-pilgrimages'
+                          ? 'bg-white/10 text-white'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      Gestão de Romarias
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

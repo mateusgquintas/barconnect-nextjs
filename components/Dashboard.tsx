@@ -15,7 +15,7 @@ export function Dashboard({ activeView, transactions, comandas, salesRecords }: 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
       {activeView === 'bar' && <DashboardBar transactions={transactions} comandas={comandas} salesRecords={salesRecords} />}
-      {activeView === 'controladoria' && <DashboardControladoria transactions={transactions} />}
+      {activeView === 'controladoria' && <DashboardControladoria transactions={transactions} salesRecords={salesRecords} />}
     </div>
   );
 }

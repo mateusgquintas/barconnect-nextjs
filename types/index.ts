@@ -19,6 +19,7 @@ export interface Comanda {
   items: OrderItem[];
   createdAt: Date;
   status: 'open' | 'closed';
+  createdBy?: string; // Nome do usuário que criou
 }
 
 export type PaymentMethod = 'cash' | 'credit' | 'debit' | 'pix' | 'courtesy';
@@ -44,4 +45,17 @@ export interface SaleRecord {
   time: string;
   isDirectSale: boolean;
   isCourtesy: boolean;
+  createdBy?: string; // Nome do usuário que registrou
+}
+
+export interface Pilgrimage {
+  id: string;
+  name: string;              // Ex: "Romaria Aparecida 2025"
+  arrivalDate: string;       // Data de chegada
+  departureDate: string;     // Data de saída
+  numberOfPeople: number;    // Número de pessoas
+  busGroup: string;          // Ex: "Ônibus 1 - Aparecida"
+  contactPhone?: string;     // Telefone de contato do responsável
+  status?: 'active' | 'completed' | 'cancelled'; // Status da romaria
+  notes?: string;            // Observações
 }

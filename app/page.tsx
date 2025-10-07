@@ -23,10 +23,11 @@ import {
 } from "@/types";
 import { User } from "@/types/user";
 import { toast } from "sonner";
-import { useComandasDB } from "@/hooks/useComandasDB";
 import { useProductsDB } from "@/hooks/useProductsDB";
+import { useComandasDB } from "@/hooks/useComandasDB";
 import { useTransactionsDB } from "@/hooks/useTransactionsDB";
 import { useSalesDB } from "@/hooks/useSalesDB";
+import { useStockManager } from "@/hooks/useStockManager";
 import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
 import { formatDate, formatTime } from "@/utils/calculations";
 
@@ -39,6 +40,7 @@ export default function Home() {
   const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda } = useComandasDB();
   const { products } = useProductsDB();
   const { transactions, addTransaction } = useTransactionsDB();
+  const { decreaseStock } = useStockManager();
   
   // Vendas agora usam Supabase
   const { sales: salesRecords, addSale, loading: loadingSales } = useSalesDB();
@@ -99,6 +101,12 @@ export default function Home() {
   };
 
   const handleAddProduct = async (product: any) => {
+    console.log('🛍️ handleAddProduct:', { 
+      productName: product.name, 
+      isDirectSale, 
+      selectedComandaId 
+    });
+
     if (isDirectSale) {
       const existingItemIndex = directSaleItems.findIndex(
         (item) => item.product.id === product.id,
@@ -113,14 +121,21 @@ export default function Home() {
       } else {
         setDirectSaleItems([...directSaleItems, { product, quantity: 1 }]);
       }
-      toast.success(`${product.name} adicionado`);
+      toast.success(`${product.name} adicionado à venda direta`);
     } else if (selectedComandaId) {
-      await addItemToComanda(
-        selectedComandaId,
-        product.id,
-        product.name,
-        product.price
-      );
+      console.log('📋 Adicionando à comanda:', selectedComandaId);
+      try {
+        await addItemToComanda(
+          selectedComandaId,
+          product.id,
+          product.name,
+          product.price
+        );
+        toast.success(`${product.name} adicionado à comanda`);
+      } catch (error) {
+        console.error('❌ Erro ao adicionar à comanda:', error);
+        toast.error('Erro ao adicionar item à comanda');
+      }
     } else {
       toast.error("Selecione uma comanda ou ative venda direta");
     }
@@ -156,6 +171,9 @@ export default function Home() {
         0,
       );
 
+      // Reduzir estoque dos produtos vendidos
+      await decreaseStock(directSaleItems);
+
       const saleRecord: Omit<SaleRecord, 'id'> = {
         items: [...directSaleItems],
         total,
@@ -164,6 +182,7 @@ export default function Home() {
         time: formatTime(now),
         isDirectSale: true,
         isCourtesy,
+        createdBy: currentUser?.name, // Usuário que registrou a venda
       };
       await addSale(saleRecord);
 
@@ -185,6 +204,9 @@ export default function Home() {
         0,
       );
 
+      // Reduzir estoque dos produtos vendidos
+      await decreaseStock(selectedComanda.items);
+
       const saleRecord: Omit<SaleRecord, 'id'> = {
         comandaNumber: selectedComanda.number,
         customerName: selectedComanda.customerName,
@@ -195,6 +217,7 @@ export default function Home() {
         time: formatTime(now),
         isDirectSale: false,
         isCourtesy,
+        createdBy: selectedComanda.createdBy || currentUser?.name, // Quem criou a comanda ou quem está finalizando
       };
       await addSale(saleRecord);
 

@@ -24,23 +24,94 @@ export function useComandasDB() {
       if (error) throw error;
 
       // Transformar dados do banco para formato do app
-      const formatted = (data || []).map((comanda: any) => ({
-        id: comanda.id,
-        number: comanda.number,
-        customerName: comanda.customer_name,
-        items: comanda.comanda_items.map((item: any) => ({
-          product: {
-            id: item.product_id || item.id,
-            name: item.product_name,
-            price: parseFloat(item.product_price),
-            stock: 999,
-            category: 'unknown',
-          },
-          quantity: item.quantity,
-        })),
-        createdAt: new Date(comanda.created_at),
-        status: comanda.status as 'open' | 'closed',
-      }));
+      const formatted = (data || []).map((comanda: any) => {
+        let items = [];
+        
+        // PRIORIZAR localStorage (solução mais robusta)
+        try {
+          const comandaKey = `comanda_items_${comanda.id}`;
+          const localItems = localStorage.getItem(comandaKey);
+          if (localItems) {
+            console.log('📋 Usando itens do localStorage para comanda:', comanda.number);
+            const itensJson = JSON.parse(localItems);
+            items = itensJson.map((item: any) => ({
+              product: {
+                id: item.product_id,
+                name: item.product_name,
+                price: parseFloat(item.product_price),
+                stock: 999,
+                category: 'unknown',
+              },
+              quantity: item.quantity,
+            }));
+          }
+        } catch (e) {
+          console.log('⚠️ Erro ao buscar itens do localStorage:', e);
+        }
+
+        // Se não encontrou no localStorage, tentar outras fontes
+        if (items.length === 0) {
+          // Tentar buscar itens da tabela comanda_items
+          if (comanda.comanda_items && comanda.comanda_items.length > 0) {
+            console.log('📋 Usando itens da tabela comanda_items');
+            items = comanda.comanda_items.map((item: any) => ({
+              product: {
+                id: item.product_id || item.id,
+                name: item.product_name,
+                price: parseFloat(item.product_price),
+                stock: 999,
+                category: 'unknown',
+              },
+              quantity: item.quantity,
+            }));
+          } else if (comanda.items) {
+            // Tentar buscar itens do JSON da comanda (campo items)
+            try {
+              console.log('📋 Usando itens do campo items da comanda');
+              const itensJson = JSON.parse(comanda.items);
+              items = itensJson.map((item: any) => ({
+                product: {
+                  id: item.product_id,
+                  name: item.product_name,
+                  price: parseFloat(item.product_price),
+                  stock: 999,
+                  category: 'unknown',
+                },
+                quantity: item.quantity,
+              }));
+            } catch (e) {
+              console.log('⚠️ Erro ao parsear JSON do campo items:', e);
+            }
+          } else if (comanda.data) {
+            // Tentar buscar itens do JSON da comanda (campo data)
+            try {
+              console.log('📋 Usando itens do campo data da comanda');
+              const itensJson = JSON.parse(comanda.data);
+              items = itensJson.map((item: any) => ({
+                product: {
+                  id: item.product_id,
+                  name: item.product_name,
+                  price: parseFloat(item.product_price),
+                  stock: 999,
+                  category: 'unknown',
+                },
+                quantity: item.quantity,
+              }));
+            } catch (e) {
+              console.log('⚠️ Erro ao parsear JSON do campo data:', e);
+            }
+          }
+        }
+
+        return {
+          id: comanda.id,
+          number: comanda.number,
+          customerName: comanda.customer_name,
+          items: items,
+          createdAt: new Date(comanda.created_at),
+          status: comanda.status as 'open' | 'closed',
+        };
+      });
 
       setComandas(formatted);
       setLoading(false);
@@ -76,47 +147,60 @@ export function useComandasDB() {
     }
   };
 
-  // Adicionar item na comanda
+  // Adicionar item na comanda - VERSÃO NOVA E ROBUSTA
   const addItemToComanda = async (
     comandaId: string,
     productId: string,
     productName: string,
     productPrice: number
   ) => {
+    console.log('� NOVA FUNÇÃO: Adicionando item à comanda:', { 
+      comandaId, 
+      productId, 
+      productName, 
+      productPrice 
+    });
+
     try {
-      const { data: existing } = await supabase
-        .from('comanda_items')
-        .select('*')
-        .eq('comanda_id', comandaId)
-        .eq('product_id', productId)
-        .single();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('comanda_items')
-          .update({ quantity: existing.quantity + 1 })
-          .eq('id', existing.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('comanda_items')
-          .insert({
-            comanda_id: comandaId,
-            product_id: productId,
-            product_name: productName,
-            product_price: productPrice,
-            quantity: 1
-          });
-
-        if (error) throw error;
+      // Usar localStorage diretamente como solução mais simples
+      const comandaKey = `comanda_items_${comandaId}`;
+      
+      // Buscar itens existentes do localStorage
+      let itensAtuais = [];
+      try {
+        const existingItems = localStorage.getItem(comandaKey);
+        itensAtuais = existingItems ? JSON.parse(existingItems) : [];
+      } catch (e) {
+        console.log('📝 Criando nova lista de itens no localStorage');
+        itensAtuais = [];
       }
 
+      // Verificar se produto já existe nos itens
+      const itemExistente = itensAtuais.find((item: any) => item.product_id === productId);
+      
+      if (itemExistente) {
+        console.log('📈 Atualizando quantidade do item existente');
+        itemExistente.quantity += 1;
+      } else {
+        console.log('➕ Adicionando novo item');
+        itensAtuais.push({
+          product_id: productId,
+          product_name: productName,
+          product_price: productPrice,
+          quantity: 1
+        });
+      }
+
+      // Salvar no localStorage
+      localStorage.setItem(comandaKey, JSON.stringify(itensAtuais));
+      console.log('💾 Itens salvos no localStorage:', itensAtuais);
+
+      console.log('✅ Item adicionado com sucesso à comanda (localStorage)');
       toast.success(`${productName} adicionado`);
       await fetchComandas();
     } catch (error: any) {
-      console.error('Erro ao adicionar item:', error);
-      toast.error('Erro ao adicionar item');
+      console.error('💥 Erro na nova função:', error);
+      toast.error(`Erro ao adicionar item: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
