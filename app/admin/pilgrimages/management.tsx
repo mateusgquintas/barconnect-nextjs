@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
 import { useRoomsDB } from '@/hooks/useRoomsDB';
+import { toast } from 'sonner';
 import { Pilgrimage } from '@/types';
 import { Room } from '@/hooks/useRoomsDB';
 import { Button } from '@/components/ui/button';
@@ -28,13 +29,19 @@ export default function PilgrimagesManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) {
-      await updatePilgrimage(editingId, form);
-      setEditingId(null);
-    } else {
-      await createPilgrimage(form);
+    try {
+      if (editingId) {
+        await updatePilgrimage(editingId, form);
+        toast.success('Romaria atualizada com sucesso!');
+        setEditingId(null);
+      } else {
+        await createPilgrimage(form);
+        toast.success('Romaria cadastrada com sucesso!');
+      }
+      setForm({ name: '', arrivalDate: '', departureDate: '', numberOfPeople: 0, busGroup: '' });
+    } catch (err) {
+      toast.error('Erro ao salvar romaria.');
     }
-    setForm({ name: '', arrivalDate: '', departureDate: '', numberOfPeople: 0, busGroup: '' });
   };
 
   const handleEdit = (pilgrimage: Pilgrimage) => {
@@ -46,6 +53,15 @@ export default function PilgrimagesManagement() {
       busGroup: pilgrimage.busGroup,
     });
     setEditingId(pilgrimage.id);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePilgrimage(id);
+      toast.success('Romaria excluída com sucesso!');
+    } catch {
+      toast.error('Erro ao excluir romaria.');
+    }
   };
 
   // Quartos associados à romaria selecionada
@@ -70,8 +86,8 @@ export default function PilgrimagesManagement() {
                     <div className="text-xs text-slate-500">{p.arrivalDate} até {p.departureDate} | {p.numberOfPeople} pessoas | {p.busGroup}</div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="outline" onClick={e => { e.stopPropagation(); handleEdit(p); }}><Edit className="w-4 h-4" /></Button>
-                    <Button size="icon" variant="destructive" onClick={e => { e.stopPropagation(); deletePilgrimage(p.id); }}><Trash2 className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="outline" aria-label="Editar romaria" tabIndex={0} onClick={e => { e.stopPropagation(); handleEdit(p); }} className="focus:ring-2 focus:ring-blue-500"><Edit className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="destructive" aria-label="Excluir romaria" tabIndex={0} onClick={e => { e.stopPropagation(); handleDelete(p.id); }} className="focus:ring-2 focus:ring-red-500"><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </Card>
               </li>
@@ -85,9 +101,9 @@ export default function PilgrimagesManagement() {
           <Input name="departureDate" type="date" placeholder="Data de Saída" value={form.departureDate} onChange={handleChange} required />
           <Input name="numberOfPeople" type="number" placeholder="Nº de Pessoas" value={form.numberOfPeople} onChange={handleChange} required />
           <Input name="busGroup" placeholder="Ônibus/Grupo" value={form.busGroup} onChange={handleChange} required />
-          <Button type="submit" className="w-full">{editingId ? 'Salvar Alterações' : 'Cadastrar Romaria'}</Button>
+          <Button type="submit" className="w-full focus:ring-2 focus:ring-blue-500" aria-label={editingId ? 'Salvar alterações da romaria' : 'Cadastrar nova romaria'}>{editingId ? 'Salvar Alterações' : 'Cadastrar Romaria'}</Button>
           {editingId && (
-            <Button type="button" variant="outline" className="w-full" onClick={() => { setEditingId(null); setForm({ name: '', arrivalDate: '', departureDate: '', numberOfPeople: 0, busGroup: '' }); }}>Cancelar</Button>
+            <Button type="button" variant="outline" className="w-full focus:ring-2 focus:ring-slate-500" aria-label="Cancelar edição" onClick={() => { setEditingId(null); setForm({ name: '', arrivalDate: '', departureDate: '', numberOfPeople: 0, busGroup: '' }); }}>Cancelar</Button>
           )}
         </form>
       </div>
@@ -113,7 +129,10 @@ export default function PilgrimagesManagement() {
                   <li key={room.id} className="flex items-center gap-2">
                     <Card className="flex-1 p-2 flex items-center justify-between">
                       <span>Quarto {room.number} {room.guest_name && <span className="text-xs text-slate-500">({room.guest_name})</span>}</span>
-                      <Button size="sm" variant="outline" onClick={() => updateRoom(room.id, { pilgrimage_id: undefined })}>Desvincular</Button>
+                      <Button size="sm" variant="outline" aria-label="Desvincular quarto" className="focus:ring-2 focus:ring-slate-500" onClick={async () => {
+                        await updateRoom(room.id, { pilgrimage_id: undefined });
+                        toast.success('Quarto desvinculado da romaria!');
+                      }}>Desvincular</Button>
                     </Card>
                   </li>
                 ))}
@@ -123,6 +142,7 @@ export default function PilgrimagesManagement() {
               <h3 className="font-semibold mb-2">Associar Quarto</h3>
               <Select onValueChange={async (roomId) => {
                 await updateRoom(roomId, { pilgrimage_id: selectedId! });
+                toast.success('Quarto associado à romaria!');
               }}>
                 <SelectTrigger className="w-80">
                   <SelectValue placeholder="Selecione um quarto disponível" />

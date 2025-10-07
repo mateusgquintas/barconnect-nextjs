@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { Card } from './ui/card';
-import { DollarSign, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Calendar, FileSpreadsheet } from 'lucide-react';
 import { Input } from './ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Transaction, SaleRecord } from '@/types';
+import { exportDashboardToExcel } from '@/utils/exportToExcel';
 
 interface DashboardControladoria {
   transactions: Transaction[];
@@ -141,13 +142,12 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="p-8 pt-6">
-        {/* Header with Date Filter */}
+        {/* Header with Date Filter and Export */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-slate-900 mb-1">Dashboard - Controladoria</h1>
             <p className="text-slate-600 text-sm">Análise financeira detalhada</p>
           </div>
-          
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-slate-400" />
@@ -166,6 +166,20 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
               onChange={(e) => setEndDate(e.target.value)}
               className="w-36 h-9 text-sm"
             />
+            <button
+              className="ml-4 flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow focus:ring-2 focus:ring-green-400"
+              onClick={() => exportDashboardToExcel({
+                transactions: filteredTransactions,
+                salesRecords: filteredSales,
+                startDate,
+                endDate
+              })}
+              aria-label="Exportar para Excel"
+              type="button"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Exportar Excel
+            </button>
           </div>
         </div>
 
