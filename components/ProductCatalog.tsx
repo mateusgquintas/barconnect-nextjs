@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { Plus, Search, Pencil } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -9,10 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Product } from '@/types';
+
 import { useProductsDB } from '@/hooks/useProductsDB';
 
 interface ProductCatalogProps {
   onAddProduct: (product: Product) => void;
+  currentView?: string;
 }
 
 type Category = 'bebidas' | 'porcoes' | 'almoco' | 'outros';
@@ -26,7 +29,8 @@ const categoryLabels: Record<Category, string> = {
   outros: 'Outros',
 };
 
-export default function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
+export default function ProductCatalog({ onAddProduct, currentView }: ProductCatalogProps) {
+  const { user } = useAuth();
   const { products, loading } = useProductsDB();
   const [activeCategory, setActiveCategory] = useState<Category>('bebidas');
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,7 +191,7 @@ export default function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+  <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
@@ -198,9 +202,11 @@ export default function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
             className="pl-9 bg-slate-50 border-slate-200"
           />
         </div>
-        <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={openAddProductDialog}>
-          <Plus className="w-4 h-4" /> Novo Produto
-        </Button>
+        {user?.role === 'admin' && currentView === 'inventory' && (
+          <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={openAddProductDialog}>
+            <Plus className="w-4 h-4" /> Novo Produto
+          </Button>
+        )}
       </div>
 
       {isSearching ? (
@@ -244,15 +250,17 @@ export default function ProductCatalog({ onAddProduct }: ProductCatalogProps) {
                         <Plus className="w-4 h-4" />
                         {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="border-slate-300"
-                        onClick={() => openEditProductDialog(product)}
-                        aria-label="Editar produto"
-                      >
-                        <Pencil className="w-4 h-4 text-slate-500" />
-                      </Button>
+                      {user?.role === 'admin' && currentView === 'inventory' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="border-slate-300"
+                          onClick={() => openEditProductDialog(product)}
+                          aria-label="Editar produto"
+                        >
+                          <Pencil className="w-4 h-4 text-slate-500" />
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 ))}

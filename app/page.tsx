@@ -318,7 +318,7 @@ export default function Home() {
 
               <div className="flex-1 flex overflow-hidden">
                 <div className="flex-1 bg-white overflow-hidden">
-                  <ProductCatalog onAddProduct={handleAddProduct} />
+                  <ProductCatalog onAddProduct={handleAddProduct} currentView={currentView} />
                 </div>
 
                 <div className="w-96 border-l border-slate-200 overflow-hidden">
