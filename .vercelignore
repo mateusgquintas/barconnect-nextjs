@@ -1,0 +1,15 @@
+# Excluir testes e setup de testes do deploy
+__tests__/
+tests/
+jest.setup.ts
+
+# Excluir rotas/pages de debug e teste (não públicas)
+app/test-db/
+app/test-dashboard/
+app/debug-sales
+app/debug-schema
+app/debug-supabase
+
+# Scripts locais de diagnóstico
+diagnostico.js
+testar-funcionalidades.js
