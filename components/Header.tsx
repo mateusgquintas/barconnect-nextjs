@@ -4,6 +4,7 @@ import { Receipt, ShoppingCart, Plus, LayoutDashboard, Package, TrendingUpDown, 
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { UserRole } from '@/types/user';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export type PageView = 'pdv' | 'dashboard' | 'hotel' | 'hotel-pilgrimages' | 'inventory' | 'transactions';
 
@@ -20,15 +21,17 @@ interface HeaderProps {
 }
 
 export function Header({ onNewComanda, onDirectSale, currentView, onViewChange, dashboardView, onDashboardViewChange, userRole, userName, onLogout }: HeaderProps) {
+  const permissions = usePermissions();
+  
   const allNavItems = [
-    { id: 'pdv' as PageView, label: 'PDV', icon: ShoppingBag, roles: ['operator', 'admin'] },
-    { id: 'dashboard' as PageView, label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
-  { id: 'hotel' as PageView, label: 'Hotel', icon: HotelIcon, roles: ['admin'] },
-    { id: 'inventory' as PageView, label: 'Estoque', icon: Package, roles: ['admin'] },
-    { id: 'transactions' as PageView, label: 'Financeiro', icon: TrendingUpDown, roles: ['admin'] },
+    { id: 'pdv' as PageView, label: 'PDV', icon: ShoppingBag, permission: 'pdv' as const },
+    { id: 'dashboard' as PageView, label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' as const },
+    { id: 'hotel' as PageView, label: 'Hotel', icon: HotelIcon, permission: 'hotel' as const },
+    { id: 'inventory' as PageView, label: 'Estoque', icon: Package, permission: 'estoque' as const },
+    { id: 'transactions' as PageView, label: 'Financeiro', icon: TrendingUpDown, permission: 'financeiro' as const },
   ];
 
-  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
+  const navItems = allNavItems.filter(item => permissions[item.permission]);
 
   return (
     <header className="h-16 bg-slate-900 text-white px-6 flex items-center justify-between border-b border-slate-800">

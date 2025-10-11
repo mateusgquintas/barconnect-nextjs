@@ -39,8 +39,17 @@ export function Inventory() {
     return products.filter(p => p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
   }, [products, searchQuery]);
 
-  // Estatísticas simples
+  // Estatísticas calculadas
   const lowStockCount = useMemo(() => products.filter(p => p.stock <= 20).length, [products]);
+  
+  // Valor total do estoque e valor médio por produto
+  const totalStockValue = useMemo(() => 
+    products.reduce((sum, p) => sum + (p.price * p.stock), 0), [products]
+  );
+  
+  const averageStockValue = useMemo(() => 
+    products.length > 0 ? totalStockValue / products.length : 0, [totalStockValue, products.length]
+  );
 
   // Status de estoque uniforme
   const getStockStatus = useCallback((stock: number) => {
@@ -76,7 +85,7 @@ export function Inventory() {
   };
 
   return (
-    <main className="space-y-6" aria-labelledby="inventory-heading">
+    <main className="space-y-6 overflow-y-auto max-h-screen pb-6" aria-labelledby="inventory-heading">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -94,8 +103,14 @@ export function Inventory() {
               aria-label="Buscar produtos"
             />
           </div>
-          <Button onClick={handleCreateProduct} className="gap-2" aria-label="Adicionar novo produto">
-            <Plus className="w-4 h-4" aria-hidden="true" />
+          <Button
+            onClick={handleCreateProduct}
+            size="lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-md transition-all duration-200 min-w-[170px] font-semibold text-base"
+            aria-label="Adicionar novo produto"
+            style={{ boxShadow: '0 2px 8px 0 rgba(16, 185, 129, 0.10)' }}
+          >
+            <Plus className="w-5 h-5" aria-hidden="true" />
             Novo Produto
           </Button>
         </div>
@@ -125,21 +140,25 @@ export function Inventory() {
             </div>
           </div>
         </Card>
-        <Card className="p-6 hidden lg:block">
-          <div className="flex items-center gap-3 opacity-40">
-            <div className="w-12 h-12 bg-slate-300 rounded-lg" />
+        <Card className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <Package className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <p className="text-sm text-slate-600">—</p>
-              <p className="text-2xl text-slate-900">—</p>
+              <p className="text-sm text-slate-600">Valor Total</p>
+              <p className="text-2xl text-slate-900">{formatCurrency(totalStockValue)}</p>
             </div>
           </div>
         </Card>
-        <Card className="p-6 hidden lg:block">
-          <div className="flex items-center gap-3 opacity-40">
-            <div className="w-12 h-12 bg-slate-300 rounded-lg" />
+        <Card className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+              <Package className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <p className="text-sm text-slate-600">—</p>
-              <p className="text-2xl text-slate-900">—</p>
+              <p className="text-sm text-slate-600">Valor Médio</p>
+              <p className="text-2xl text-slate-900">{formatCurrency(averageStockValue)}</p>
             </div>
           </div>
         </Card>

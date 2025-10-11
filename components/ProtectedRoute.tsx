@@ -1,5 +1,4 @@
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 
 interface ProtectedRouteProps {
@@ -9,17 +8,20 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
   const { user } = useAuth();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!user) {
-      router.replace('/login');
-    } else if (allowedRoles && !allowedRoles.includes(user.role)) {
-      router.replace('/unauthorized');
-    }
-  }, [user, allowedRoles, router]);
 
   if (!user) return null;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return null;
+  
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center p-8">
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Acesso Negado</h2>
+          <p className="text-slate-600">Você não tem permissão para acessar esta página.</p>
+        </div>
+      </div>
+    );
+  }
+  
   return <>{children}</>;
 }

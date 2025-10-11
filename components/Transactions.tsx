@@ -140,19 +140,20 @@ export function Transactions({ transactions, salesRecords, onAddTransaction, sta
                 className="w-56 h-9 text-sm"
                 aria-label="Buscar transação ou venda"
               />
-              <Button
+              <button
                 onClick={() => exportDashboardToExcel({
                   transactions: incomeTransactions.concat(expenseTransactions),
                   salesRecords,
                   startDate,
                   endDate
                 })}
-                className="h-9 px-4 bg-green-600 hover:bg-green-700 gap-2"
-                aria-label="Exportar dados filtrados para Excel"
+                className="ml-4 flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow focus:ring-2 focus:ring-green-400"
+                aria-label="Exportar para Excel"
+                type="button"
               >
-                <FileSpreadsheet className="w-4 h-4" aria-hidden="true" />
-                Exportar
-              </Button>
+                <FileSpreadsheet className="w-4 h-4" />
+                Exportar Excel
+              </button>
             </form>
           </div>
         </div>

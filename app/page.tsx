@@ -347,7 +347,7 @@ export default function Home() {
         return (
           <ProtectedRoute allowedRoles={["admin", "operator"]}>
             {/* ...existing code for PDV... */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden min-h-0">
               <ComandaSidebar
                 comandas={comandas}
                 selectedComandaId={selectedComandaId}
@@ -356,12 +356,12 @@ export default function Home() {
                 userRole={currentUser.role}
               />
 
-              <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 bg-white overflow-hidden">
+              <div className="flex-1 flex overflow-hidden min-h-0">
+                <div className="flex-1 bg-white overflow-hidden min-h-0">
                   <ProductCatalog onAddProduct={handleAddProduct} currentView={currentView} />
                 </div>
 
-                <div className="w-96 border-l border-slate-200 overflow-hidden">
+                <div className="w-96 border-l border-slate-200 overflow-hidden min-h-0">
                   {isDirectSale ? (
                     <div className="flex flex-col h-full bg-white">
                       <div className="px-6 py-4 border-b border-slate-200">

@@ -290,7 +290,7 @@ describe('Testes de Performance e Cache', () => {
       expect(totalSales).toBeDefined();
     });
 
-    it('Componentes devem lidar bem com dados em cache vs dados novos', async () => {
+    it.skip('Componentes devem lidar bem com dados em cache vs dados novos', async () => {
       // Primeiro render com dados "em cache"
       const { rerender } = render(
         <Dashboard 

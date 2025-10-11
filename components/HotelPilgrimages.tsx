@@ -143,8 +143,15 @@ export function HotelPilgrimages() {
             <h1 className="text-slate-900 mb-2">Gestão de Romarias</h1>
             <p className="text-slate-600">Controle de grupos e ônibus de viagem</p>
           </div>
-          <Button onClick={handleOpenAddDialog} className="bg-purple-600 hover:bg-purple-700 gap-2">
-            <Plus className="w-4 h-4" /> Nova Romaria
+          <Button
+            onClick={handleOpenAddDialog}
+            size="lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-md transition-all duration-200 min-w-[170px] font-semibold text-base"
+            aria-label="Adicionar nova romaria"
+            style={{ boxShadow: '0 2px 8px 0 rgba(16, 185, 129, 0.10)' }}
+          >
+            <Plus className="w-5 h-5" aria-hidden="true" />
+            <span className="font-semibold text-lg">Romaria</span>
           </Button>
         </div>
         {/* Stats */}

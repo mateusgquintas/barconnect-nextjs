@@ -6,6 +6,7 @@ import { Card } from './ui/card';
 import { Receipt, Lock, User as UserIcon } from 'lucide-react';
 import { User } from '@/types/user';
 import { getToast } from '@/utils/notify';
+import { validateCredentials } from '@/lib/authService';
 
 interface LoginScreenProps {
   onLogin: (user: User) => void | Promise<void>;
@@ -19,23 +20,26 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
-      // Delegar a lógica de autenticação ao onLogin fornecido pelo app
-      const user: User = {
-        id: 'temp',
-        name: username || 'Usuário',
-        username,
-        password,
-        role: 'operator',
-      };
-      const maybePromise = onLogin(user);
+      // Validar credenciais usando o serviço de autenticação
+      const validatedUser = validateCredentials(username, password);
+      
+      if (!validatedUser) {
+        try { getToast()?.error?.('Usuário ou senha incorretos'); } catch {}
+        return;
+      }
+
+      // Login bem-sucedido
+      const maybePromise = onLogin(validatedUser);
       if (maybePromise && typeof (maybePromise as any).then === 'function') {
         await (maybePromise as Promise<void>);
       }
-  try { getToast()?.success?.(`Bem-vindo, ${user.name}!`); } catch {}
+      
+      try { getToast()?.success?.(`Bem-vindo, ${validatedUser.name}!`); } catch {}
     } catch (err) {
       // Em caso de falha na autenticação, apenas exibir feedback
-  try { getToast()?.error?.('Usuário ou senha incorretos'); } catch {}
+      try { getToast()?.error?.('Erro ao fazer login. Tente novamente.'); } catch {}
     } finally {
       setIsLoading(false);
     }

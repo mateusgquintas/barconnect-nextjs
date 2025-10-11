@@ -230,8 +230,8 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+  <div className="flex flex-col h-full overflow-hidden min-h-0">
+        <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 flex-shrink-0">
         <div className="flex flex-1 gap-4 items-center">
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -243,31 +243,37 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
               className="pl-9 bg-slate-50 border-slate-200"
             />
           </div>
-          {/* Botões PDV discretos e alinhados à direita */}
-          {user?.role === 'admin' && currentView === 'pdv' && (
-            <div className="flex gap-2 ml-auto">
+          
+          {/* Botões PDV melhorados */}
+          {currentView === 'pdv' && (
+              <div className="flex flex-col sm:flex-row gap-3 ml-auto w-full sm:w-auto">
               <Button
-                className="border-blue-600 text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 shadow-none"
+                size="lg"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow-md min-w-[160px] font-medium text-base"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('pdv:directSale', { detail: { source: 'button' } }));
                   }
                 }}
               >
-                <ShoppingCart className="w-5 h-5 text-white" /> Venda Direta
+                <ShoppingCart className="w-5 h-5" />
+                <span className="font-medium">Venda Direta</span>
               </Button>
               <Button
-                className="border-blue-600 text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 shadow-none"
+                size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow-md min-w-[160px] font-medium text-base"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('pdv:newComanda', { detail: { source: 'button' } }));
                   }
                 }}
               >
-                <Plus className="w-5 h-5 text-white" /> Nova Comanda
+                <Plus className="w-5 h-5" />
+                <span className="font-medium">Nova Comanda</span>
               </Button>
             </div>
           )}
+          
           {user?.role === 'admin' && currentView === 'inventory' && (
             <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={openAddProductDialog}>
               <Plus className="w-4 h-4" /> Novo Produto
@@ -277,7 +283,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
       </div>
 
       {isSearching ? (
-        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4 min-h-0">
           {searchResults.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <p>Nenhum produto encontrado</p>
@@ -336,7 +342,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           )}
         </div>
       ) : (
-        <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as Category)} className="flex-1 flex flex-col">
+  <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as Category)} className="flex-1 flex flex-col min-h-0">
           <div className="px-6 pt-4 pb-4">
             <TabsList className="grid grid-cols-4 w-full max-w-3xl">
               {(Object.keys(categoryLabels) as Category[]).map((cat) => (
@@ -347,7 +353,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
             </TabsList>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
             <Legend />
             {(Object.keys(categoryLabels) as Category[]).map((cat) => (
               <TabsContent key={cat} value={cat} className="mt-0">

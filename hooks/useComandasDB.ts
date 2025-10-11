@@ -17,6 +17,7 @@ export function useComandasDB() {
       setLoading(true);
 
       const { data, error } = await (supabase.from('comandas') as any)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
