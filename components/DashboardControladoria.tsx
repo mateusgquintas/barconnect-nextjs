@@ -13,6 +13,9 @@ interface DashboardControladoria {
   salesRecords: SaleRecord[];
 }
 
+// Garantir formatação consistente independente do locale do ambiente (ex.: CI)
+const formatNumberBR = (value: number) => value.toLocaleString('pt-BR');
+
 // Utility functions moved outside component to prevent recreation
 const parseDate = (dateString: string): Date => {
   const [day, month, year] = dateString.split('/');
@@ -233,7 +236,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
               </div>
               <div>
                 <p className="text-sm text-slate-600">Faturamento Total</p>
-                <p className="text-2xl text-emerald-600">R$ {totals.totalIncome.toLocaleString()}</p>
+                <p className="text-2xl text-emerald-600">R$ {formatNumberBR(totals.totalIncome)}</p>
               </div>
             </div>
           </Card>
@@ -245,7 +248,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
               </div>
               <div>
                 <p className="text-sm text-slate-600">Despesas Total</p>
-                <p className="text-2xl text-rose-600">R$ {totals.totalExpense.toLocaleString()}</p>
+                <p className="text-2xl text-rose-600">R$ {formatNumberBR(totals.totalExpense)}</p>
               </div>
             </div>
           </Card>
@@ -257,7 +260,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
               </div>
               <div>
                 <p className="text-sm text-slate-600">Lucro Líquido</p>
-                <p className="text-2xl text-blue-600">R$ {totals.profit.toLocaleString()}</p>
+                <p className="text-2xl text-blue-600">R$ {formatNumberBR(totals.profit)}</p>
               </div>
             </div>
           </Card>
@@ -284,7 +287,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
               <XAxis dataKey="month" stroke="#64748b" />
               <YAxis stroke="#64748b" />
               <Tooltip 
-                formatter={(value: number) => `R$ ${value.toLocaleString()}`}
+                formatter={(value: number) => `R$ ${formatNumberBR(value as number)}`}
                 contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
               />
               <Legend />
@@ -306,7 +309,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
                 <XAxis type="number" stroke="#64748b" />
                 <YAxis dataKey="category" type="category" width={100} stroke="#64748b" />
                 <Tooltip 
-                  formatter={(value: number) => `R$ ${value.toLocaleString()}`}
+                  formatter={(value: number) => `R$ ${formatNumberBR(value as number)}`}
                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
                 />
                 <Bar dataKey="value" fill="#10b981" radius={[0, 8, 8, 0]} />
@@ -320,7 +323,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
                   <div className="flex items-center justify-between">
                     <p className="text-slate-900 text-sm">{item.category}</p>
                     <p className="text-xs text-slate-600">
-                      R$ {item.value.toLocaleString()} ({item.percentage.toFixed(1)}%)
+                      R$ {formatNumberBR(item.value)} ({item.percentage.toFixed(1)}%)
                     </p>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
@@ -345,7 +348,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
                 <XAxis type="number" stroke="#64748b" />
                 <YAxis dataKey="category" type="category" width={100} stroke="#64748b" />
                 <Tooltip 
-                  formatter={(value: number) => `R$ ${value.toLocaleString()}`}
+                  formatter={(value: number) => `R$ ${formatNumberBR(value as number)}`}
                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
                 />
                 <Bar dataKey="value" fill="#ef4444" radius={[0, 8, 8, 0]} />
@@ -359,7 +362,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
                   <div className="flex items-center justify-between">
                     <p className="text-slate-900 text-sm">{item.category}</p>
                     <p className="text-xs text-slate-600">
-                      R$ {item.value.toLocaleString()} ({item.percentage.toFixed(1)}%)
+                      R$ {formatNumberBR(item.value)} ({item.percentage.toFixed(1)}%)
                     </p>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
