@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Plus, Search, Pencil } from 'lucide-react';
+import { Plus, Search, Pencil, ShoppingCart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
@@ -168,6 +168,46 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
     return colors[subcategory || ''] || '';
   };
 
+  // Ordem de subcategorias por categoria para layout consistente
+  const subcategoryOrder: Record<string, string[]> = {
+    bebidas: ['cerveja', 'refrigerante', 'drink'],
+    porcoes: ['frita', 'carne', 'mista'],
+    almoco: ['executivo'],
+    outros: [],
+  };
+
+  const groupBySubcategory = (list: Product[], category: string) => {
+    const groups: Record<string, Product[]> = {};
+    list.forEach(p => {
+      const key = p.subcategory || 'outros';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+    const order = subcategoryOrder[category] || [];
+    const orderedExisting = order.filter(sc => groups[sc]);
+    const remaining = Object.keys(groups).filter(sc => !order.includes(sc));
+    return [...orderedExisting, ...remaining].map(sc => ({ subcategory: sc, products: groups[sc] }));
+  };
+
+  const groupedProducts = useMemo(() => {
+    const result: Record<string, { subcategory: string; products: Product[] }[]> = {};
+    (Object.keys(productsByCategory) as Category[]).forEach(cat => {
+      result[cat] = groupBySubcategory(productsByCategory[cat], cat);
+    });
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, productsByCategory.bebidas.length, productsByCategory.porcoes.length, productsByCategory.almoco.length]);
+
+  const Legend = () => (
+    <div className="flex flex-wrap gap-2 text-xs mb-4">
+      {['cerveja','refrigerante','drink','frita','carne','mista','executivo'].map(key => (
+        <span key={key} className={`px-2 py-1 rounded-full border border-slate-200 flex items-center gap-1 ${getSubcategoryColor(key)}`}>
+          <span className="font-medium">{getSubcategoryLabel(key)}</span>
+        </span>
+      ))}
+    </div>
+  );
+
   const handleAddCustomItem = () => {
     const price = parseFloat(customItemPrice);
     if (isNaN(price) || price <= 0) {
@@ -191,22 +231,49 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
 
   return (
     <div className="flex flex-col h-full">
-  <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            type="text"
-            placeholder="Buscar produto..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-slate-50 border-slate-200"
-          />
+      <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-1 gap-4 items-center">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              type="text"
+              placeholder="Buscar produto..."
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-slate-50 border-slate-200"
+            />
+          </div>
+          {/* Botões PDV discretos e alinhados à direita */}
+          {user?.role === 'admin' && currentView === 'pdv' && (
+            <div className="flex gap-2 ml-auto">
+              <Button
+                className="border-blue-600 text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 shadow-none"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('pdv:directSale', { detail: { source: 'button' } }));
+                  }
+                }}
+              >
+                <ShoppingCart className="w-5 h-5 text-white" /> Venda Direta
+              </Button>
+              <Button
+                className="border-blue-600 text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 shadow-none"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('pdv:newComanda', { detail: { source: 'button' } }));
+                  }
+                }}
+              >
+                <Plus className="w-5 h-5 text-white" /> Nova Comanda
+              </Button>
+            </div>
+          )}
+          {user?.role === 'admin' && currentView === 'inventory' && (
+            <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={openAddProductDialog}>
+              <Plus className="w-4 h-4" /> Novo Produto
+            </Button>
+          )}
         </div>
-        {user?.role === 'admin' && currentView === 'inventory' && (
-          <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={openAddProductDialog}>
-            <Plus className="w-4 h-4" /> Novo Produto
-          </Button>
-        )}
       </div>
 
       {isSearching ? (
@@ -219,7 +286,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
             <>
               <p className="text-sm text-slate-500 mb-4">{searchResults.length} produto(s) encontrado(s)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {searchResults.map((product) => (
+                {searchResults.map((product: Product) => (
                   <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
                     <div className="flex-1 mb-3">
                       <div className="flex items-start justify-between mb-2">
@@ -281,6 +348,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <Legend />
             {(Object.keys(categoryLabels) as Category[]).map((cat) => (
               <TabsContent key={cat} value={cat} className="mt-0">
                 {cat === 'outros' ? (
@@ -300,48 +368,82 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                     </Card>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filterProducts(productsByCategory[cat]).map((product) => (
-                      <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
-                        <div className="flex-1 mb-3">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="text-slate-900">{product.name}</h4>
-                              {getSubcategoryLabel(product.subcategory) && (
-                                <span className={`text-xs px-2 py-1 rounded-full ${getSubcategoryColor(product.subcategory)} mt-1 inline-block`}>
-                                  {getSubcategoryLabel(product.subcategory)}
-                                </span>
-                              )}
+                  <div className="space-y-8">
+                    {groupedProducts[cat]
+                      .filter(group => filterProducts(group.products).length > 0)
+                      .map(group => {
+                        const filtered = filterProducts(group.products);
+                        return (
+                          <div key={group.subcategory}>
+                            {group.subcategory !== 'outros' && (
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getSubcategoryColor(group.subcategory)}`}>
+                                    {getSubcategoryLabel(group.subcategory)}
+                                  </span>
+                                  <span className="text-slate-400 text-xs">({filtered.length})</span>
+                                </h3>
+                                <div className="h-px bg-slate-200 flex-1 ml-4" />
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                              {filtered.map((product: Product) => (
+                                <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
+                                  <div className="flex-1 mb-3">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div>
+                                        <h4 className="text-slate-900">{product.name}</h4>
+                                        {getSubcategoryLabel(product.subcategory) && (
+                                          <span className={`text-xs px-2 py-1 rounded-full ${getSubcategoryColor(product.subcategory)} mt-1 inline-block`}>
+                                            {getSubcategoryLabel(product.subcategory)}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        product.stock <= 20 ? 'bg-red-100 text-red-600' :
+                                        product.stock <= 50 ? 'bg-orange-100 text-orange-600' :
+                                        'bg-green-100 text-green-600'
+                                      }`}>
+                                        {product.stock} un.
+                                      </span>
+                                    </div>
+                                    <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      className="flex-1 gap-2 bg-slate-900 hover:bg-slate-800"
+                                      onClick={() => onAddProduct(product)}
+                                      disabled={product.stock === 0}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
+                                    </Button>
+                                    {user?.role === 'admin' && currentView === 'inventory' && (
+                                      <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="border-slate-300"
+                                        onClick={() => openEditProductDialog(product)}
+                                        aria-label="Editar produto"
+                                      >
+                                        <Pencil className="w-4 h-4 text-slate-500" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </Card>
+                              ))}
                             </div>
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              product.stock <= 20 ? 'bg-red-100 text-red-600' :
-                              product.stock <= 50 ? 'bg-orange-100 text-orange-600' :
-                              'bg-green-100 text-green-600'
-                            }`}>
-                              {product.stock} un.
-                            </span>
                           </div>
-                          <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            className="flex-1 gap-2 bg-slate-900 hover:bg-slate-800"
-                            onClick={() => onAddProduct(product)}
-                            disabled={product.stock === 0}
-                          >
-                            <Plus className="w-4 h-4" />
-                            {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="border-slate-300"
-                            onClick={() => openEditProductDialog(product)}
-                            aria-label="Editar produto"
-                          >
-                            <Pencil className="w-4 h-4 text-slate-500" />
-                          </Button>
-                        </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </div>
+        </Tabs>
+      )}
+
       {/* Modal de Adicionar/Editar Produto */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
         <DialogContent>
@@ -410,14 +512,23 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
               </div>
               <div>
                 <Label htmlFor="productSubcategory">Subcategoria</Label>
-                <Input
+                <select
                   id="productSubcategory"
                   name="subcategory"
                   value={productForm.subcategory}
                   onChange={handleProductFormChange}
-                  placeholder="Ex: cerveja, refrigerante, carne..."
-                  className="mt-1"
-                />
+                  className="mt-1 w-full border rounded px-2 py-2"
+                >
+                  <option value="">Selecione</option>
+                  <option value="cerveja">Cerveja</option>
+                  <option value="refrigerante">Refrigerante</option>
+                  <option value="drink">Drink</option>
+                  <option value="frita">Frita</option>
+                  <option value="carne">Carne</option>
+                  <option value="mista">Mista</option>
+                  <option value="executivo">Executivo</option>
+                  <option value="outros">Outros</option>
+                </select>
               </div>
             </div>
           </div>
@@ -427,15 +538,6 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           </DialogFooter>
         </DialogContent>
       </Dialog>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            ))}
-          </div>
-        </Tabs>
-      )}
 
       {/* Custom Item Dialog */}
       <Dialog open={showCustomItemDialog} onOpenChange={setShowCustomItemDialog}>
@@ -457,7 +559,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                 min="0"
                 placeholder="0.00"
                 value={customItemPrice}
-                onChange={(e) => setCustomItemPrice(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomItemPrice(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -468,7 +570,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                 id="customNote"
                 placeholder="Ex: Taxa de serviço, item especial..."
                 value={customItemNote}
-                onChange={(e) => setCustomItemNote(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCustomItemNote(e.target.value)}
                 className="mt-1"
                 rows={3}
               />

@@ -60,7 +60,7 @@ export function AddItemDialog({ open, onClose, onAddItem }: AddItemDialogProps) 
           <Input
             placeholder="Buscar produto..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             className="pl-10 h-12"
           />
         </div>

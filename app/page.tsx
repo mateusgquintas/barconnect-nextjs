@@ -1,8 +1,6 @@
-
-
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { Header, PageView } from "@/components/Header";
@@ -13,6 +11,7 @@ import { PaymentScreen } from "@/components/PaymentScreen";
 import { NewComandaDialog } from "@/components/NewComandaDialog";
 import { Dashboard } from "@/components/Dashboard";
 import { Hotel } from "@/components/Hotel";
+import { HotelPilgrimages } from "@/components/HotelPilgrimages";
 import { Inventory } from "@/components/Inventory";
 import { Transactions } from "@/components/Transactions";
 import { LoginScreen } from "@/components/LoginScreen";
@@ -30,6 +29,7 @@ import { useSalesDB } from "@/hooks/useSalesDB";
 import { useStockManager } from "@/hooks/useStockManager";
 import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
 import { formatDate, formatTime } from "@/utils/calculations";
+import { registerSale } from '@/lib/salesService';
 
 export default function Home() {
   const { user: currentUser, setUser: setCurrentUser } = useAuth();
@@ -39,7 +39,7 @@ export default function Home() {
   // Hooks do Supabase
   const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda } = useComandasDB();
   const { products } = useProductsDB();
-  const { transactions, addTransaction } = useTransactionsDB();
+  const { transactions, addTransaction, refetch: refetchTransactions } = useTransactionsDB();
   const { decreaseStock } = useStockManager();
   
   // Vendas agora usam Supabase
@@ -51,6 +51,7 @@ export default function Home() {
   const [showNewComandaDialog, setShowNewComandaDialog] = useState(false);
   const [directSaleItems, setDirectSaleItems] = useState<OrderItem[]>([]);
   const [isDirectSale, setIsDirectSale] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag para evitar duplicação
 
   const selectedComanda = comandas.find((c) => c.id === selectedComandaId) || null;
 
@@ -68,7 +69,7 @@ export default function Home() {
       return;
     }
 
-    const comandaId = await createComanda(comandaNumber, customerName);
+  const comandaId = await createComanda(String(comandaNumber), customerName || "");
     if (comandaId) {
       setSelectedComandaId(comandaId);
       setIsDirectSale(false);
@@ -141,6 +142,27 @@ export default function Home() {
     }
   };
 
+  // Configurar event listeners para os botões PDV
+  useEffect(() => {
+    const handlePDVDirectSale = () => {
+      handleDirectSale();
+    };
+
+    const handlePDVNewComanda = () => {
+      handleNewComanda();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pdv:directSale', handlePDVDirectSale);
+      window.addEventListener('pdv:newComanda', handlePDVNewComanda);
+
+      return () => {
+        window.removeEventListener('pdv:directSale', handlePDVDirectSale);
+        window.removeEventListener('pdv:newComanda', handlePDVNewComanda);
+      };
+    }
+  }, []); // Empty dependency array para rodar apenas uma vez
+
   const handleRemoveItem = async (productId: string) => {
     if (isDirectSale) {
       setDirectSaleItems(
@@ -162,77 +184,85 @@ export default function Home() {
   };
 
   const handleConfirmPayment = async (method: PaymentMethod) => {
-    const now = new Date();
-    const isCourtesy = method === "courtesy";
-
-    if (isDirectSale) {
-      const total = directSaleItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0,
-      );
-
-      // Reduzir estoque dos produtos vendidos
-      await decreaseStock(directSaleItems);
-
-      const saleRecord: Omit<SaleRecord, 'id'> = {
-        items: [...directSaleItems],
-        total,
-        paymentMethod: method,
-        date: formatDate(now),
-        time: formatTime(now),
-        isDirectSale: true,
-        isCourtesy,
-        createdBy: currentUser?.name, // Usuário que registrou a venda
-      };
-      await addSale(saleRecord);
-
-      if (!isCourtesy) {
-        await addTransaction({
-          type: "income",
-          description: "Venda Direta",
-          amount: total,
-          category: "Vendas",
-        });
-      }
-
-      setDirectSaleItems([]);
-      setIsDirectSale(false);
-      toast.success(`Venda direta finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
-    } else if (selectedComandaId && selectedComanda) {
-      const total = selectedComanda.items.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0,
-      );
-
-      // Reduzir estoque dos produtos vendidos
-      await decreaseStock(selectedComanda.items);
-
-      const saleRecord: Omit<SaleRecord, 'id'> = {
-        comandaNumber: selectedComanda.number,
-        customerName: selectedComanda.customerName,
-        items: [...selectedComanda.items],
-        total,
-        paymentMethod: method,
-        date: formatDate(now),
-        time: formatTime(now),
-        isDirectSale: false,
-        isCourtesy,
-        createdBy: selectedComanda.createdBy || currentUser?.name, // Quem criou a comanda ou quem está finalizando
-      };
-      await addSale(saleRecord);
-
-      await addTransaction({
-        type: "income",
-        description: `Venda Comanda #${String(selectedComanda.number).padStart(3, "0")}`,
-        amount: total,
-        category: "Vendas",
-      });
-
-      await closeComanda(selectedComandaId);
-      setSelectedComandaId(null);
-      toast.success(`Comanda #${selectedComanda.number} finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+    // Evitar múltiplas execuções simultâneas
+    if (isProcessingPayment) {
+      console.log('⚠️ Pagamento já está sendo processado, ignorando...');
+      return;
     }
-    setShowPayment(false);
+
+    setIsProcessingPayment(true);
+    
+    try {
+      const now = new Date();
+      const isCourtesy = method === "courtesy";
+
+      if (isDirectSale) {
+        const total = directSaleItems.reduce(
+          (sum, item) => sum + item.product.price * item.quantity,
+          0,
+        );
+
+        // Reduzir estoque dos produtos vendidos
+        console.log('🔄 Atualizando estoque para venda direta...');
+        await decreaseStock(directSaleItems);
+
+        const saleRecordInput = {
+          items: [...directSaleItems],
+          total,
+          paymentMethod: method,
+          isDirectSale: true,
+          isCourtesy,
+        } as const;
+        
+        console.log('💾 Registrando venda direta...');
+        await registerSale(saleRecordInput);
+        
+        // Refrescar dados após venda
+        console.log('🔄 Atualizando transações...');
+        await refetchTransactions();
+
+        setDirectSaleItems([]);
+        setIsDirectSale(false);
+        toast.success(`Venda direta finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+      } else if (selectedComandaId && selectedComanda) {
+        const total = selectedComanda.items.reduce(
+          (sum, item) => sum + item.product.price * item.quantity,
+          0,
+        );
+
+        // Reduzir estoque dos produtos vendidos
+        console.log('🔄 Atualizando estoque para comanda...');
+        await decreaseStock(selectedComanda.items);
+
+        const saleRecordInput2 = {
+          comandaNumber: selectedComanda.number,
+          customerName: selectedComanda.customerName,
+          items: [...selectedComanda.items],
+          total,
+          paymentMethod: method,
+          isDirectSale: false,
+          isCourtesy,
+        } as const;
+        
+        console.log('💾 Registrando venda da comanda...');
+        await registerSale(saleRecordInput2);
+        
+        // Refrescar dados após venda
+        console.log('🔄 Atualizando transações...');
+        await refetchTransactions();
+
+        console.log('🗂️ Fechando comanda...');
+        await closeComanda(selectedComandaId);
+        setSelectedComandaId(null);
+        toast.success(`Comanda #${selectedComanda.number} finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+      }
+      setShowPayment(false);
+    } catch (error) {
+      console.error('❌ Erro ao processar pagamento:', error);
+      toast.error('Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const currentItems = isDirectSale
@@ -278,6 +308,7 @@ export default function Home() {
               transactions={transactions}
               comandas={comandas}
               salesRecords={salesRecords}
+              products={products}
             />
           </ProtectedRoute>
         );
@@ -285,6 +316,12 @@ export default function Home() {
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
             <Hotel />
+          </ProtectedRoute>
+        );
+      case "hotel-pilgrimages":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <HotelPilgrimages />
           </ProtectedRoute>
         );
       case "inventory":
@@ -298,7 +335,10 @@ export default function Home() {
           <ProtectedRoute allowedRoles={["admin"]}>
             <Transactions
               transactions={transactions}
+              salesRecords={salesRecords}
               onAddTransaction={addTransaction}
+              startDate={new Date().toISOString().split('T')[0]}
+              endDate={new Date().toISOString().split('T')[0]}
             />
           </ProtectedRoute>
         );

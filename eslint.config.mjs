@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "coverage/**",
+      "hooks/**/*.backup.ts",
     ],
   },
   {
@@ -25,6 +27,55 @@ const eslintConfig = [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  // Regras específicas para testes/legado: permitir require em testes e setup
+  {
+    files: [
+      "__tests__/**",
+      "jest.*",
+      "jest.setup.ts",
+      "tests/**",
+      "coverage/**",
+      "diagnostico.js",
+      "testar-funcionalidades.js",
+    ],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'react/display-name': 'off',
+      'prefer-const': 'warn',
+      'react/no-unescaped-entities': 'off'
+    }
+  },
+  // Regras específicas para app/components: não exigir entidades escapadas em textos
+  {
+    files: [
+      "app/**",
+      "components/**",
+    ],
+    rules: {
+      'react/no-unescaped-entities': 'off',
+    }
+  },
+  // Exceção pontual: página de debug de DB pode conter ts-ignore por experimento
+  {
+    files: [
+      "app/test-db/page.tsx"
+    ],
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off'
+    }
+  },
+  // Permitir require somente em arquivos que dependem de comportamento de runtime (interop com jest/sonner e debug)
+  {
+    files: [
+      "components/NewTransactionDialog.tsx",
+      "utils/notify.ts",
+      "app/test-db/page.tsx"
+    ],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn']
+    }
+  }
 ];
 
 export default eslintConfig;

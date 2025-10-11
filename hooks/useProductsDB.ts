@@ -1,33 +1,43 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase';
+import { withCache, invalidateCache } from '../lib/cache';
 import { Product } from '@/types';
+
+interface DBProduct {
+  id: string;
+  name: string;
+  price: number | string;
+  stock: number;
+  category?: string | null;
+  subcategory?: string | null;
+}
 import { toast } from 'sonner';
 
 export function useProductsDB() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (options?: { force?: boolean }) => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-
-      const formatted = (data || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        price: parseFloat(p.price),
-        stock: p.stock,
-        category: p.category,
-        subcategory: p.subcategory,
-      }));
-
-      setProducts(formatted);
+      const result = await withCache('products:list', async () => {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('name');
+        if (error) throw error;
+        const formatted: Product[] = (data as DBProduct[] | null || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
+          stock: p.stock,
+          category: p.category || undefined,
+          subcategory: p.subcategory || undefined,
+        }));
+        return formatted;
+      }, { force: options?.force, ttlMs: 8000 });
+      setProducts(result);
       setLoading(false);
     } catch (error: any) {
       console.error('Erro ao buscar produtos:', error);
@@ -45,8 +55,9 @@ export function useProductsDB() {
 
       if (error) throw error;
 
-      toast.success('Estoque atualizado');
-      await fetchProducts();
+      // Remover toast de sucesso para não poluir durante vendas
+      invalidateCache(/products:list/);
+      await fetchProducts({ force: true });
     } catch (error: any) {
       console.error('Erro ao atualizar estoque:', error);
       toast.error('Erro ao atualizar estoque');
@@ -61,10 +72,12 @@ export function useProductsDB() {
         .insert([product]);
       if (error) throw error;
       toast.success('Produto adicionado!');
-      await fetchProducts();
+      invalidateCache(/products:list/);
+      await fetchProducts({ force: true });
     } catch (error: any) {
       console.error('Erro ao adicionar produto:', error);
       toast.error('Erro ao adicionar produto');
+      // Não chama fetchProducts em caso de erro no insert
     }
   };
 
@@ -76,8 +89,9 @@ export function useProductsDB() {
         .update(updates)
         .eq('id', id);
       if (error) throw error;
-      toast.success('Produto atualizado!');
-      await fetchProducts();
+  toast.success('Produto atualizado!');
+  invalidateCache(/products:list/);
+  await fetchProducts({ force: true });
     } catch (error: any) {
       console.error('Erro ao atualizar produto:', error);
       toast.error('Erro ao atualizar produto');
@@ -88,5 +102,5 @@ export function useProductsDB() {
     fetchProducts();
   }, []);
 
-  return { products, loading, updateStock, addProduct, updateProduct, refetch: fetchProducts };
+  return { products, loading, updateStock, addProduct, updateProduct, refetch: () => fetchProducts({ force: true }) };
 }

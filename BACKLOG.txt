@@ -1,0 +1,113 @@
+# BACKLOG DO PROJETO (BarConnect Next.js)
+# Última atualização: 2025-10-07
+
+---
+SEÇÕES
+1. Sincronização & Offline
+2. Vendas & Financeiro
+3. Estoque & Produtos
+4. PDV (UX / Operação)
+5. Hotel & Ocupação
+6. Relatórios & Exportações
+7. Observabilidade & Auditoria
+8. Testes & Qualidade
+9. Performance & Escalabilidade
+10. Refatorações Técnicas Futuras
+11. Ideias Futuras / Brainstorm
+---
+
+## 1. Sincronização & Offline
+- [ ] Implementar função syncPending() em salesService para reenviar vendas (sales_records) e transações pendentes.
+- [ ] Consolidar fila local: unificar LOCAL_SALES_KEY e LOCAL_TRANSACTIONS_KEY com metadados (timestamp, retries, hash).
+- [ ] Política de retries exponencial + limitação de tentativas.
+- [ ] Indicador visual (badge ou ícone nuvem) para vendas pendentes de sync.
+- [ ] Escuta de eventos: online/offline (window.addEventListener('online')).
+- [ ] Log de sincronização (último sync ok / falha) em algum painel.
+
+## 2. Vendas & Financeiro
+- [ ] Calcular ticket médio (período selecionado).
+- [ ] Análises por método de pagamento (percentual, soma, contagem).
+- [ ] Margem e custo: adicionar campos cost_price e opcional markup.
+- [ ] Relacionar comanda → venda (persistir comanda_id direto na venda se houver coluna).
+- [ ] Unificar origem da leitura de vendas (hook pode delegar formatação ao serviço).
+- [ ] Criar endpoint/rotina de export de vendas filtradas.
+
+## 3. Estoque & Produtos
+- [ ] Campos adicionais: custo unitário, fornecedor, unidade de medida.
+- [ ] Log de movimentações (entrada/ajuste/baixa por venda) com responsável.
+- [ ] Alerta proativo de estoque crítico via toast ao entrar no PDV.
+- [ ] Integração automática: decrementar estoque ao registrar venda (já existe em parte? validar caminhos).
+- [ ] Planejar suporte a múltiplos depósitos / locais.
+
+## 4. PDV (UX / Operação)
+- [ ] Quantidade incremental rápida (pressão longa em botão + ou slider de quantidade).
+- [ ] Edição inline de quantidade em itens de comanda.
+- [ ] Modal de confirmação para exclusão de item de comanda (atualmente remove direto).
+- [ ] Filtros adicionais: por subcategoria, por faixa de preço.
+- [ ] Modo compacto / densidade alta para tablets pequenos.
+- [ ] Acesso rápido a histórico recente de vendas diretas.
+
+## 5. Hotel & Ocupação
+- [ ] Timeline visual de ocupação (gantt simplificado) para período selecionado.
+- [ ] Cálculo de diária automática (check-in/out) vinculado a transação financeira.
+- [ ] Regras de transição de status (máquina de estados formal) evitando estados inválidos.
+- [ ] Alertar quartos em manutenção há muito tempo (> X dias).
+- [ ] Integração com romarias: alocação automática de blocos de quartos.
+- [ ] Relatório taxa de ocupação comparativa (semana atual vs anterior).
+
+## 6. Relatórios & Exportações
+- [ ] Export XLSX consolidado (vendas + transações) com filtros aplicados.
+- [ ] Relatório de giro de estoque (consumo vs estoque inicial do período).
+- [ ] Dashboard de subcategorias (top N, heatmap por hora).
+- [ ] Export PDF (usar lib headless, ex: pdfkit ou gerar via API server-side).
+- [ ] Agendamento de envio de relatório por e-mail (cron / edge function supabase).
+
+## 7. Observabilidade & Auditoria
+- [ ] Registro de auditoria: tabela logs (ação, entidade, antes/depois, user, timestamp).
+- [ ] Console interno de eventos de sincronização.
+- [ ] Métricas: tempo médio entre venda e sincronização.
+- [ ] Alertas (ex: mais de N falhas seguidas de sync) via toast ou badge vermelho no header.
+
+## 8. Testes & Qualidade
+- [ ] Testes unitários: salesService (fluxos sucesso, fallback venda, fallback transação).
+- [ ] Teste de integração: adicionar item à comanda, fechar, gerar venda e transação.
+- [ ] Mock supabase em ambiente de teste (abstrair cliente via interface).
+- [ ] Cypress / Playwright: fluxo PDV completo (adicionar, remover, pagar, conferir financeiro).
+- [ ] Snapshot visual básico das principais telas.
+
+## 9. Performance & Escalabilidade
+- [ ] Virtualização de listas (produtos / comandas) se > 200 itens.
+- [ ] Suspense + streaming para dashboards mais pesados.
+- [ ] Cache de vendas recentes em memória (swr/ react-query) com revalidação em foco.
+- [ ] Lazy load de ícones / módulos raramente usados.
+- [ ] Split do bundle de admin vs operador (dynamic imports). 
+
+## 10. Refatorações Técnicas Futuras
+- [ ] Unificar schema de produtos (garantir subcategoria enumerada centralizada).
+- [ ] Criar camada de repositórios (SalesRepository, TransactionsRepository) isolando supabase.
+- [ ] Migrar chaves de localStorage para prefixo de namespace (ex: bc_sales_, bc_tx_...).
+- [ ] Tipos derivados (Ex: ComputedSale) ao invés de recalcular em cada componente.
+- [ ] Adicionar zod para validar payloads externos antes de salvar.
+
+## 11. Ideias Futuras / Brainstorm
+- [ ] Programa de fidelidade (saldo de pontos por cliente).
+- [ ] Suporte multi-empresa / multi-filial.
+- [ ] Integração fiscal (NFC-e / SAT) – análise de viabilidade.
+- [ ] Modo escuro completo (tema toggle persistido).
+- [ ] Websocket/subscribe para atualizar comandas em tempo real.
+- [ ] KPI TV Mode (painel só de métricas para exibição em monitor).
+- [ ] API pública para integração com outros sistemas.
+
+---
+CRITÉRIOS DE PRIORIZAÇÃO (SUGESTÃO)
+P1 (Alta): Sincronização offline, auditoria mínima, decremento de estoque consistente.
+P2 (Média): Relatórios financeiros avançados, dashboard de giro de estoque, testes críticos.
+P3 (Baixa): Brainstorm / features de expansão (multi-filial, fidelidade, API pública).
+
+---
+NOTAS
+- Itens marcados [ ] ainda não iniciados.
+- Quando implementar sync: criar campo "synced_at" nas vendas / transações.
+- Evitar divergência duplicando lógica: sempre passar por salesService ao registrar vendas.
+
+FIM

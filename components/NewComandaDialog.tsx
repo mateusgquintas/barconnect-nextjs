@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
+import { getToast } from '@/utils/notify';
 
 interface NewComandaDialogProps {
   open: boolean;
@@ -18,21 +19,14 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!comandaNumber.trim()) {
-      setError('Número da comanda é obrigatório');
-      return;
-    }
-
-    const number = parseInt(comandaNumber);
+    const number = comandaNumber?.trim() ? parseInt(comandaNumber) : 1;
     if (isNaN(number) || number <= 0) {
       setError('Digite um número válido');
       return;
     }
 
     onCreateComanda(number, customerName.trim() || undefined);
-    
-    // Reset form
+  try { getToast()?.success?.('Comanda criada com sucesso'); } catch {}    // Reset form
     setComandaNumber('');
     setCustomerName('');
     setError('');
@@ -66,7 +60,7 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
               type="number"
               placeholder="Ex: 001"
               value={comandaNumber}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setComandaNumber(e.target.value);
                 setError('');
               }}
@@ -74,7 +68,7 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
               className="bg-input-background"
             />
             {error && (
-              <p className="text-sm text-red-600">{error}</p>
+              <p role="alert" className="text-sm text-red-600">{error}</p>
             )}
           </div>
 
@@ -85,7 +79,7 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
               type="text"
               placeholder="Ex: João Silva"
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomerName(e.target.value)}
               className="bg-input-background"
             />
           </div>

@@ -30,7 +30,8 @@ To learn more about Next.js, take a look at the following resources:
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
 
-## Deploy (Vercel Git Integration)
+
+<!-- Trigger redeploy: ajuste mínimo para forçar build no Vercel -->
 
 O deploy de produção é automático: todo push na branch `master` dispara build e publicação no Vercel.
 

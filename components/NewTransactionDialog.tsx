@@ -41,6 +41,8 @@ export function NewTransactionDialog({
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const incomeCategories = [
     "Vendas",
@@ -70,33 +72,58 @@ export function NewTransactionDialog({
   const categories =
     type === "income" ? incomeCategories : expenseCategories;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setFormError(null);
 
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      toast.error("Valor inválido");
+  if (amount === '' || amount === null || isNaN(Number(amount))) {
+  const msg = "Valor inválido";
+      setFormError(msg);
+  try { const { toast: t } = require('sonner'); (t as any)?.error?.(msg); } catch {}
+      // manter desabilitado brevemente para feedback visual
+      setTimeout(() => setIsSubmitting(false), 300);
       return;
     }
 
-    if (!category) {
-      toast.error("Selecione uma categoria");
+  const numAmount = parseFloat(amount);
+    if (numAmount <= 0) {
+  const msg = "Valor inválido";
+      setFormError(msg);
+  try { const { toast: t } = require('sonner'); (t as any)?.error?.(msg); } catch {}
+      setTimeout(() => setIsSubmitting(false), 300);
       return;
     }
 
-    onAddTransaction({
-      type,
-      description,
-      amount: numAmount,
-      category,
-    });
+    // Para facilitar o fluxo, usar categoria padrão quando não selecionada
+    const finalCategory = category || (type === 'income' ? 'Vendas' : 'Outras Despesas');
+    try {
+      setIsSubmitting(true);
+      await onAddTransaction({
+        type,
+        description,
+        amount: numAmount,
+        category: finalCategory,
+      });
 
-    toast.success(
-      type === "income"
-        ? "Entrada registrada"
-        : "Saída registrada",
-    );
-    handleClose();
+      try {
+        const { toast: t } = require('sonner');
+        const msg = type === "income" ? "Entrada registrada" : "Saída registrada";
+        (t as any)?.success?.(msg);
+      } catch {}
+      handleClose();
+    } catch (e) {
+      const msg = 'Erro ao registrar transação';
+      setFormError(msg);
+      try { const { toast: t } = require('sonner'); (t as any)?.error?.(msg); } catch {}
+      // manter desabilitado brevemente para dar feedback visual
+      setTimeout(() => setIsSubmitting(false), 300);
+      return;
+    } finally {
+      // garantir que volta ao normal caso não tenha retornado no catch
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -107,7 +134,7 @@ export function NewTransactionDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+  <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -120,28 +147,36 @@ export function NewTransactionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+  <form onSubmit={handleSubmit} noValidate>
+          {formError && (
+            <div role="alert" className="sr-only">{formError}</div>
+          )}
           <div className="space-y-4 py-4">
             <div>
               <Label htmlFor="description">Descrição</Label>
               <Input
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
                 placeholder="Digite a descrição"
                 className="mt-2"
+                disabled={isSubmitting}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="category">Categoria</Label>
+              <Label id="category-label" htmlFor="category-select-trigger">Categoria</Label>
               <Select
                 value={category}
                 onValueChange={setCategory}
-                required
+                disabled={isSubmitting}
               >
-                <SelectTrigger className="mt-2">
+                <SelectTrigger
+                  id="category-select-trigger"
+                  className="mt-2"
+                  aria-labelledby="category-label"
+                >
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -160,13 +195,18 @@ export function NewTransactionDialog({
                 id="amount"
                 type="number"
                 step="0.01"
-                min="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                min="0"
+                value={amount === null || amount === undefined ? '' : amount}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
                 placeholder="0.00"
                 className="mt-2"
+                aria-describedby="amount-help"
+                disabled={isSubmitting}
+                role="textbox"
+                aria-label="Valor"
                 required
               />
+              <span id="amount-help" className="sr-only">Informe o valor em reais, use ponto para decimais</span>
             </div>
           </div>
 
@@ -175,6 +215,7 @@ export function NewTransactionDialog({
               type="button"
               variant="outline"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
@@ -185,6 +226,8 @@ export function NewTransactionDialog({
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
               }
+              aria-label="Salvar"
+              disabled={isSubmitting}
             >
               {type === "income"
                 ? "Registrar Entrada"

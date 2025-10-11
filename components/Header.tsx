@@ -162,47 +162,22 @@ export function Header({ onNewComanda, onDirectSale, currentView, onViewChange, 
           })}
         </nav>
       </div>
-      
       <div className="flex items-center gap-3">
-        {currentView === 'pdv' && (
-          <>
-            <Button 
-              variant="outline" 
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white gap-2"
-              onClick={onDirectSale}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              Venda Direta
-            </Button>
-            <Button 
-              className="bg-white text-slate-900 hover:bg-slate-100 gap-2"
-              onClick={onNewComanda}
-            >
-              <Plus className="w-4 h-4" />
-              Nova Comanda
-            </Button>
-            <div className="w-px h-8 bg-white/20 mx-2" />
-          </>
-        )}
-        
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-white">
-            <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
-              <UserIcon className="w-4 h-4" />
-            </div>
-            <span className="text-sm">{userName}</span>
+        <div className="flex items-center gap-2 text-white">
+          <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+            <UserIcon className="w-4 h-4" />
           </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onLogout}
-            className="text-white hover:bg-white/10 hover:text-white"
-            title="Sair"
-          >
-            <LogOut className="w-4 h-4" />
-          </Button>
+          <span className="text-sm">{userName}</span>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onLogout}
+          className="text-white hover:bg-white/10 hover:text-white"
+          title="Sair"
+        >
+          <LogOut className="w-4 h-4" />
+        </Button>
       </div>
     </header>
   );

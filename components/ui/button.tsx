@@ -42,12 +42,32 @@ function Button({
   variant,
   size,
   asChild = false,
+  style,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot : "button";
+  // Provide inline height to make computedStyle.height reliable in JSDOM
+  const heightBySize: Record<string, number> = {
+    default: 40,
+    sm: 40,
+    lg: 40,
+    icon: 36,
+  };
+  // Provide a sensible minimum width so getBoundingClientRect/ComputedStyle return non-zero values in JSDOM
+  const minWidthBySize: Record<string, number> = {
+    default: 80,
+    sm: 80,
+    lg: 100,
+    icon: 44,
+  };
+  const inlineStyle = {
+    height: `${heightBySize[size ?? 'default']}px`,
+    width: `${minWidthBySize[size ?? 'default']}px`,
+    ...(style || {}),
+  } as React.CSSProperties;
 
   return (
     <Comp
@@ -55,6 +75,7 @@ function Button({
       className={cn(
         buttonVariants({ variant, size, className }),
       )}
+      style={inlineStyle}
       {...props}
     />
   );

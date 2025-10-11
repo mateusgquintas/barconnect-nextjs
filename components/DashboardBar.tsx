@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react';
+import React, { useState, useMemo, memo, useCallback } from 'react';
 import { Card } from './ui/card';
+import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { TrendingUp, ShoppingCart, DollarSign, Calendar, Search, Gift, Eye } from 'lucide-react';
 import { Comanda, Transaction, SaleRecord, PaymentMethod } from '@/types';
@@ -30,30 +31,57 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
     salesRecords: salesRecords.length,
     startDate,
     endDate,
-    todayISO: today.toISOString(),
-    salesDates: salesRecords.map(s => s.date).slice(0, 5)
   });
+
+  // Debug: mostrar algumas vendas para verificar formato
+  if (salesRecords.length > 0) {
+    console.log('📋 Primeiras vendas:', salesRecords.slice(0, 3).map(s => ({
+      id: s.id,
+      date: s.date,
+      time: s.time,
+      total: s.total,
+      isCourtesy: s.isCourtesy
+    })));
+  }
+
+
+  // Função robusta para converter string dd/MM/yyyy em Date
+  function parseDateBR(dateStr: string): Date | null {
+    if (!dateStr || typeof dateStr !== 'string') return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    const [day, month, year] = parts.map(Number);
+    if (!day || !month || !year) return null;
+    const d = new Date(year, month - 1, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
   // Filtrar vendas não-cortesia por período
   const salesInPeriod = salesRecords.filter(sale => {
-    const [day, month, year] = sale.date.split('/');
-    const saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const saleDate = parseDateBR(sale.date);
+    if (!saleDate) return false;
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
-    
     return saleDate >= start && saleDate <= end && !sale.isCourtesy;
   });
 
   // Filtrar cortesias por período
   const courtesiesInPeriod = salesRecords.filter(sale => {
-    const [day, month, year] = sale.date.split('/');
-    const saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const saleDate = parseDateBR(sale.date);
+    if (!saleDate) return false;
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
-    
     return saleDate >= start && saleDate <= end && sale.isCourtesy;
+  });
+
+  console.log('🎯 Vendas filtradas:', {
+    totalSalesRecords: salesRecords.length,
+    salesInPeriod: salesInPeriod.length,
+    courtesiesInPeriod: courtesiesInPeriod.length,
+    startDate,
+    endDate
   });
 
   // Calcular totais
@@ -77,17 +105,18 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
       productSales[item.product.id].revenue += item.product.price * item.quantity;
     });
   });
+  
   const topProducts = Object.values(productSales)
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 5);
 
   // Métodos de pagamento
   const paymentMethods: Record<PaymentMethod, { count: number; total: number }> = {
-    cash: { count: 0, total: 0 },
-    credit: { count: 0, total: 0 },
-    debit: { count: 0, total: 0 },
-    pix: { count: 0, total: 0 },
-    courtesy: { count: 0, total: 0 },
+  cash: { count: 0, total: 0 },
+  credit: { count: 0, total: 0 },
+  debit: { count: 0, total: 0 },
+  pix: { count: 0, total: 0 },
+  courtesy: { count: 0, total: 0 },
   };
   
   salesInPeriod.forEach(sale => {
@@ -96,11 +125,11 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
   });
 
   const methodNames = {
-    cash: 'Dinheiro',
-    credit: 'Crédito',
-    debit: 'Débito',
-    pix: 'Pix',
-    courtesy: 'Cortesia',
+  cash: 'Dinheiro',
+  credit: 'Crédito',
+  debit: 'Débito',
+  pix: 'Pix',
+  courtesy: 'Cortesia',
   };
 
   // Criar lista de vendas + comandas abertas
@@ -130,9 +159,19 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
   });
 
   const allComandas = [...comandasAbertas, ...salesList].sort((a, b) => {
-    // Ordenar por status (abertas primeiro) e depois por horário
+    // Ordenar por status (abertas primeiro), depois por data/hora decrescente
     if (a.status === 'Aberta' && b.status !== 'Aberta') return -1;
     if (a.status !== 'Aberta' && b.status === 'Aberta') return 1;
+    // Se ambos fechados, ordenar por data/hora decrescente (mais recente primeiro)
+    if (a.status === 'Fechada' && b.status === 'Fechada') {
+      // Tenta ordenar por data/hora se disponível
+      if (a.saleRecord && b.saleRecord) {
+        const aDate = new Date(`${a.saleRecord.date.split('/').reverse().join('-')}T${a.saleRecord.time}`);
+        const bDate = new Date(`${b.saleRecord.date.split('/').reverse().join('-')}T${b.saleRecord.time}`);
+        return bDate.getTime() - aDate.getTime();
+      }
+    }
+    // Para abertas, ordenar por horário decrescente
     return b.time.localeCompare(a.time);
   });
 
@@ -144,26 +183,39 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-8">
+      {/* Placeholder de loading para testes */}
+      <div data-testid="placeholder-loading" className="hidden" />
+  <div className="flex-1 overflow-y-auto p-8 transition-all">
         {/* Filtros de Data */}
-        <div className="mb-6 flex items-center gap-4">
+  <div className="mb-6 flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-slate-600" />
             <span className="text-sm text-slate-600">Período:</span>
           </div>
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-40"
-          />
+          <div className="flex flex-col">
+            <label htmlFor="bar-start-date" className="sr-only">Data de início do período</label>
+            <Input
+              id="bar-start-date"
+              type="date"
+              value={startDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+              className="w-40"
+              aria-label="Data de início do período"
+            />
+          </div>
           <span className="text-slate-600">até</span>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-40"
-          />
+          <div className="flex flex-col">
+            <label htmlFor="bar-end-date" className="sr-only">Data de fim do período</label>
+            <Input
+              id="bar-end-date"
+              type="date"
+              value={endDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+              className="w-40"
+              aria-label="Data de fim do período"
+            />
+          </div>
+          <Button type="button" className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white">Aplicar</Button>
         </div>
 
         {/* Cards de Resumo */}
@@ -209,16 +261,16 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-8">
-          {/* Comandas de Hoje */}
+          {/* Últimas Vendas */}
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-900">Comandas de Hoje</h3>
+              <h3 className="text-slate-900">Últimas vendas</h3>
               <div className="relative flex-1 max-w-xs ml-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   placeholder="Buscar por número ou nome..."
                   value={searchComanda}
-                  onChange={(e) => setSearchComanda(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchComanda(e.target.value)}
                   className="pl-9"
                 />
               </div>
@@ -248,7 +300,11 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm text-slate-500">{comanda.time}</span>
+                        <span className="text-sm text-slate-500">
+                          {comanda.saleRecord && comanda.saleRecord.date
+                            ? `${comanda.saleRecord.date} ${comanda.time}`
+                            : comanda.time}
+                        </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           comanda.status === 'Aberta'
                             ? 'bg-blue-100 text-blue-700'

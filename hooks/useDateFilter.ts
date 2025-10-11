@@ -9,11 +9,13 @@ export function useDateFilter() {
 
   const isInPeriod = (dateStr: string) => {
     const [day, month, year] = dateStr.split('/');
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-    
+    if (!day || !month || !year) return false;
+    // Cria datas sempre em UTC para evitar problemas de fuso
+    const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const [ey, em, ed] = endDate.split('-').map(Number);
+    const start = new Date(Date.UTC(sy, sm - 1, sd));
+    const end = new Date(Date.UTC(ey, em - 1, ed));
     return date >= start && date <= end;
   };
 

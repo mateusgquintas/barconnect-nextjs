@@ -27,14 +27,14 @@ export function PaymentScreen({ title, items, onBack, onConfirmPayment, userRole
 
   const basePaymentMethods = [
     { id: 'cash' as PaymentMethod, name: 'Dinheiro', icon: DollarSign, color: 'bg-green-500' },
-    { id: 'credit' as PaymentMethod, name: 'Crédito', icon: CreditCard, color: 'bg-blue-500' },
+    { id: 'credit' as PaymentMethod, name: 'Cartão de Crédito', icon: CreditCard, color: 'bg-blue-500' },
     { id: 'debit' as PaymentMethod, name: 'Débito', icon: CreditCard, color: 'bg-indigo-500' },
     { id: 'pix' as PaymentMethod, name: 'Pix', icon: Smartphone, color: 'bg-teal-500' },
   ];
 
   // Adicionar Cortesia se for admin e venda direta
   const paymentMethods = userRole === 'admin' && isDirectSale 
-    ? [...basePaymentMethods, { id: 'courtesy' as PaymentMethod, name: 'Cortesia', icon: Gift, color: 'bg-purple-500' }]
+  ? [...basePaymentMethods, { id: 'courtesy' as PaymentMethod, name: 'Cortesia', icon: Gift, color: 'bg-purple-500' }]
     : basePaymentMethods;
 
   return (
@@ -80,6 +80,7 @@ export function PaymentScreen({ title, items, onBack, onConfirmPayment, userRole
                     isSelected ? 'border-2 border-primary bg-primary/5' : 'hover:border-primary'
                   }`}
                   onClick={() => setSelectedMethod(method.id)}
+                  data-testid={`payment-${method.id}`}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-full ${method.color} flex items-center justify-center`}>

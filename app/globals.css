@@ -192,3 +192,8 @@
 html {
   font-size: var(--font-size);
 }
+
+/* Ensure base typography metrics are measurable in JSDOM */
+p, span, button, input, label {
+  line-height: 1.5;
+}

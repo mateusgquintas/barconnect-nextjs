@@ -1,0 +1,1942 @@
+﻿// Acessibilidade básica// Testes básicos de acessibilidade para componentes principais
+
+import React from 'react';import React from 'react';
+
+import { render, screen } from '@testing-library/react';import { render, screen, waitFor } from '@testing-library/react';
+
+import userEvent from '@testing-library/user-event';import userEvent from '@testing-library/user-event';
+
+import { LoginScreen } from '@/components/LoginScreen';import { LoginScreen } from '@/components/LoginScreen';
+
+import { HomeScreen } from '@/components/HomeScreen';
+
+describe('Acessibilidade (mínimo)', () => {import { Dashboard } from '@/components/Dashboard';
+
+  it('LoginScreen: navegação por teclado e labels', async () => {import ProductCatalog from '@/components/ProductCatalog';
+
+    const user = userEvent.setup();import { NewComandaDialog } from '@/components/NewComandaDialog';
+
+    render(<LoginScreen onLogin={jest.fn()} />);import { NewTransactionDialog } from '@/components/NewTransactionDialog';
+
+import type { Product, Transaction, SaleRecord, Comanda } from '@/types';
+
+    const username = screen.getByLabelText(/usuário/i);
+
+    const password = screen.getByLabelText(/senha/i);// Mock do useAuth para componentes que dependem de contexto
+
+    const entrar = screen.getByRole('button', { name: /entrar/i });jest.mock('@/context/AuthContext', () => ({
+
+  useAuth: () => ({
+
+    await user.tab();    user: { id: 'test', name: 'Test User', username: 'test', role: 'operator' },
+
+    expect(username).toHaveFocus();    login: jest.fn(),
+
+    await user.tab();    logout: jest.fn(),
+
+    expect(password).toHaveFocus();    isAuthenticated: true
+
+    await user.tab();  })
+
+    expect(entrar).toHaveFocus();}));
+
+  });
+
+});describe('Acessibilidade (básico)', () => {
+  const mockProducts: Product[] = [
+    { id: 'p1', name: 'Cerveja', price: 8.5, stock: 10, category: 'Bebidas' }
+  ];
+  const mockTransactions: Transaction[] = [
+    { id: 't1', type: 'income', description: 'Venda', amount: 10, category: 'Bar', date: '2025-01-01', time: '12:00' }
+  ];
+  const mockSalesRecords: SaleRecord[] = [
+    { id: 's1', date: '2025-01-01', time: '12:00', total: 10, isCourtesy: false }
+  ];
+  const mockComandas: Comanda[] = [
+    { id: 'c1', number: 1, customerName: 'Cliente', items: [], total: 0, createdAt: '2025-01-01T12:00:00Z' }
+  ];
+
+  it('LoginScreen: navegação por teclado e labels', async () => {
+    const user = userEvent.setup();
+    render(<LoginScreen onLogin={jest.fn()} />);
+
+    const username = screen.getByLabelText(/usuário/i);
+    const password = screen.getByLabelText(/senha/i);
+    const entrar = screen.getByRole('button', { name: /entrar/i });
+
+    await user.tab();
+    expect(username).toHaveFocus();
+    await user.tab();
+    expect(password).toHaveFocus();
+    await user.tab();
+    expect(entrar).toHaveFocus();
+  });
+
+  it('HomeScreen: elementos focáveis e heading', async () => {
+    render(
+      <HomeScreen
+        currentView="pdv"
+        onViewChange={jest.fn()}
+        user={{ id: 'u', name: 'U', username: 'u', role: 'operator' }}
+      />
+    );
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toBeInTheDocument();
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThan(0);
+  });
+
+  it('Dashboard: abas são acessíveis', async () => {
+    const user = userEvent.setup();
+    render(
+      <Dashboard
+        activeView="bar"
+        transactions={mockTransactions}
+        salesRecords={mockSalesRecords}
+        comandas={mockComandas}
+        products={mockProducts}
+      />
+    );
+    const dashboardTab = screen.getByRole('tab', { name: /dashboard/i });
+    expect(dashboardTab).toBeInTheDocument();
+    await user.click(dashboardTab);
+    expect(dashboardTab).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('ProductCatalog: possui botões com nomes acessíveis', async () => {
+    render(<ProductCatalog onAddProduct={jest.fn()} />);
+    await waitFor(() => {
+      const buttons = screen.getAllByRole('button');
+      expect(buttons.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('NewComandaDialog: campos possuem labels', async () => {
+    render(<NewComandaDialog open={true} onOpenChange={jest.fn()} onCreateComanda={jest.fn()} />);
+    const numero = screen.getByLabelText(/número da comanda/i);
+    const nome = screen.getByLabelText(/nome do cliente/i);
+    expect(numero).toBeInTheDocument();
+    expect(nome).toBeInTheDocument();
+  });
+
+  it('NewTransactionDialog: campos possuem labels', async () => {
+    render(
+      <NewTransactionDialog
+        open={true}
+        onOpenChange={jest.fn()}
+        type="income"
+        onAddTransaction={jest.fn()}
+      />
+    );
+    const descricao = screen.getByLabelText(/descrição/i);
+    const valor = screen.getByLabelText(/valor/i);
+    expect(descricao).toBeInTheDocument();
+    expect(valor).toBeInTheDocument();
+  });
+});
+/**/**/**
+
+ * Testes de Acessibilidade Básicos
+
+ * Verificação fundamental de acessibilidade para componentes principais * Testes abrangentes para Acessibilidade * Testes abrangentes para Acessibilidade
+
+ */
+
+ * Cobertura completa do checklist de QA para acessibilidade * Cobertura completa do checklist de QA para acessibilidade
+
+import React from 'react';
+
+import { render, screen, waitFor } from '@testing-library/react'; *  * 
+
+import userEvent from '@testing-library/user-event';
+
+import { LoginScreen } from '@/components/LoginScreen'; * Cenários cobertos: * CenÃ¡rios cobertos:
+
+import { HomeScreen } from '@/components/HomeScreen';
+
+import { Dashboard } from '@/components/Dashboard'; * - Navegação por teclado (tab, shift+tab) em todas as telas * - NavegaÃ§Ã£o por teclado (tab, shift+tab) em todas as telas
+
+import ProductCatalog from '@/components/ProductCatalog';
+
+import { NewComandaDialog } from '@/components/NewComandaDialog'; * - Foco visível em botões e campos * - Foco visÃ­vel em botÃµes e campos
+
+import { NewTransactionDialog } from '@/components/NewTransactionDialog';
+
+import type { Product, Transaction, SaleRecord, Comanda } from '@/types'; * - Leitor de tela lê títulos, botões e feedbacks corretamente * - Leitor de tela lÃª tÃ­tulos, botÃµes e feedbacks corretamente
+
+
+
+// Mock do AuthProvider * - Mensagens de loading/erro são anunciadas (aria-live) * - Mensagens de loading/erro sÃ£o anunciadas (aria-live)
+
+const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
+
+  return ( * - Skip links e landmarks funcionam corretamente * - Skip link funciona no Financeiro
+
+    <div data-auth-provider="mock">
+
+      {children} * - Contraste adequado nos elementos */
+
+    </div>
+
+  ); * - Campos de formulário têm labels apropriados
+
+};
+
+ * - Estados de erro e sucesso são comunicadosimport React from 'react';
+
+// Mock do useAuth hook
+
+jest.mock('@/context/AuthContext', () => ({ */import userEvent from '@testing-library/user-event';
+
+  useAuth: () => ({
+
+    user: { id: 'test', name: 'Test User', username: 'test', role: 'operator' },import { render, screen, within } from '@testing-library/react';
+
+    login: jest.fn(),
+
+    logout: jest.fn(),import React from 'react';import { axe, toHaveNoViolations } from 'jest-axe';
+
+    isAuthenticated: true
+
+  })import { render, screen, waitFor } from '@testing-library/react';import { HomeScreen } from '@/components/HomeScreen';
+
+}));
+
+import userEvent from '@testing-library/user-event';import { Dashboard } from '@/components/Dashboard';
+
+describe('Testes de Acessibilidade', () => {
+
+  // Dados de teste básicosimport { axe, toHaveNoViolations } from 'jest-axe';import { LoginScreen } from '@/components/LoginScreen';
+
+  const mockProducts: Product[] = [
+
+    {import { LoginScreen } from '@/components/LoginScreen';import { NewComandaDialog } from '@/components/NewComandaDialog';
+
+      id: 'prod-1',
+
+      name: 'Cerveja',import { HomeScreen } from '@/components/HomeScreen';import { NewTransactionDialog } from '@/components/NewTransactionDialog';
+
+      price: 8.5,
+
+      stock: 50,import { Dashboard } from '@/components/Dashboard';import { AddItemDialog } from '@/components/AddItemDialog';
+
+      category: 'Bebidas',
+
+    }import ProductCatalog from '@/components/ProductCatalog';
+
+  ];
+
+import { NewComandaDialog } from '@/components/NewComandaDialog';
+
+  const mockTransactions: Transaction[] = [
+
+    {import { NewTransactionDialog } from '@/components/NewTransactionDialog';
+
+      id: 't-1',
+
+      type: 'income',import type { Product, Transaction, SaleRecord, Comanda } from '@/types';expect.extend(toHaveNoViolations);
+
+      description: 'Venda de cerveja',
+
+      amount: 8.5,
+
+      category: 'Bar',
+
+      date: '2025-01-01',// Estender matchers do jest-axe// Mocks simples de dados
+
+      time: '14:30'
+
+    }expect.extend(toHaveNoViolations);const mockProducts = [
+
+  ];
+
+  { id: '1', name: 'Cerveja', price: 5.0, stock: 10 },
+
+  const mockSalesRecords: SaleRecord[] = [
+
+    {// Mock do AuthProvider  { id: '2', name: 'Refrigerante', price: 3.0, stock: 20 },
+
+      id: 's-1',
+
+      date: '2025-01-01',const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {];
+
+      time: '14:30',
+
+      total: 8.5,  return (const mockTransactions = [
+
+      isCourtesy: false
+
+    }    <div data-auth-provider="mock">  { id: 't1', type: 'income', description: 'Venda teste', amount: 50, category: 'Bar', date: '2025-10-01', time: '12:00' },
+
+  ];
+
+      {children}];
+
+  const mockComandas: Comanda[] = [
+
+    {    </div>const mockSalesRecords = [
+
+      id: 'cmd-1',
+
+      number: 101,  );  { id: 's1', comandaNumber: 123, customerName: 'Cliente', items: [], total: 25, paymentMethod: 'cash', date: '2025-10-01', time: '12:00', isDirectSale: false, isCourtesy: false },
+
+      customerName: 'Cliente Teste',
+
+      items: [],};];
+
+      total: 0,
+
+      createdAt: '2025-01-01T14:30:00Z'const mockComandas = [
+
+    }
+
+  ];// Mock do useAuth hook  { id: 'c1', number: 1, items: [], createdAt: new Date(), status: 'open' },
+
+
+
+  describe('Navegação por Teclado', () => {jest.mock('@/context/AuthContext', () => ({];
+
+    it('LoginScreen deve permitir navegação por teclado', async () => {
+
+      const user = userEvent.setup();  useAuth: () => ({const mockOnOpenComanda = jest.fn();
+
+      const mockOnLogin = jest.fn();
+
+          user: { id: 'test', name: 'Test User', username: 'test', role: 'operator' },const mockOnDirectOrder = jest.fn();
+
+      render(<LoginScreen onLogin={mockOnLogin} />);
+
+          login: jest.fn(),const mockOnLogin = jest.fn();
+
+      const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);
+
+      const passwordInput = screen.getByPlaceholderText(/digite sua senha/i);    logout: jest.fn(),
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+          isAuthenticated: true// FunÃ§Ã£o helper para simular leitores de tela
+
+      // Navegar com Tab
+
+      await user.tab();  })const getAccessibleText = (element: HTMLElement): string => {
+
+      expect(usernameInput).toHaveFocus();
+
+      }));  return element.getAttribute('aria-label') || 
+
+      await user.tab();
+
+      expect(passwordInput).toHaveFocus();         element.getAttribute('title') || 
+
+      
+
+      await user.tab();describe('Testes Abrangentes de Acessibilidade', () => {         element.textContent || 
+
+      expect(submitButton).toHaveFocus();
+
+        // Dados de teste         '';
+
+      // Preencher e submeter
+
+      await user.click(usernameInput);  const mockProducts: Product[] = [};
+
+      await user.type(usernameInput, 'test');
+
+          {
+
+      await user.click(passwordInput);
+
+      await user.type(passwordInput, 'test');      id: 'prod-1',describe('Acessibilidade - Testes Abrangentes', () => {
+
+      
+
+      await user.keyboard('{Enter}');      name: 'Cerveja',  const mockProducts = [
+
+      
+
+      expect(mockOnLogin).toHaveBeenCalled();      price: 8.5,    { id: '1', name: 'Cerveja', price: 5.0, stock: 10 },
+
+    });
+
+      stock: 50,    { id: '2', name: 'Refrigerante', price: 3.0, stock: 20 },
+
+    it('HomeScreen deve ter elementos focáveis', async () => {
+
+      const user = userEvent.setup();      category: 'Bebidas',  ];
+
+      
+
+      render(    },
+
+        <HomeScreen 
+
+          currentView="pdv"    {  const mockTransactions = [
+
+          onViewChange={jest.fn()}
+
+          user={{ id: 'test', name: 'Test', username: 'test', role: 'operator' }}      id: 'prod-2',    { id: 't1', type: 'income' as const, description: 'Venda teste', amount: 50, category: 'Bar', date: '2025-10-01', time: '12:00' },
+
+        />
+
+      );      name: 'Refrigerante',  ];
+
+      
+
+      // Verificar se há elementos focáveis      price: 5.0,
+
+      const focusableElements = screen.getAllByRole('button');
+
+      expect(focusableElements.length).toBeGreaterThan(0);      stock: 30,  const mockSalesRecords = [
+
+      
+
+      // Navegar com Tab      category: 'Bebidas',    { id: 's1', comandaNumber: 123, customerName: 'Cliente', items: [], total: 25, paymentMethod: 'cash' as const, date: '2025-10-01', time: '12:00', isDirectSale: false, isCourtesy: false },
+
+      await user.tab();
+
+      expect(document.activeElement).toBeInTheDocument();    }  ];
+
+    });
+
+  ];
+
+    it('Dashboard deve permitir navegação entre abas', async () => {
+
+      const user = userEvent.setup();  const mockComandas = [
+
+      
+
+      render(  const mockTransactions: Transaction[] = [    { id: 'c1', number: 1, items: [], createdAt: new Date(), status: 'open' as const },
+
+        <Dashboard 
+
+          activeView="bar"    {  ];
+
+          transactions={mockTransactions}
+
+          salesRecords={mockSalesRecords}      id: 't-1',
+
+          comandas={mockComandas}
+
+          products={mockProducts}      type: 'income',  const mockOnOpenComanda = jest.fn();
+
+        />
+
+      );      description: 'Venda de cerveja',  const mockOnDirectOrder = jest.fn();
+
+      
+
+      const tabs = screen.getAllByRole('tab');      amount: 8.5,  const mockOnLogin = jest.fn();
+
+      expect(tabs.length).toBeGreaterThan(0);
+
+            category: 'Bar',
+
+      // Clicar na primeira aba
+
+      await user.click(tabs[0]);      date: '2025-01-01',  beforeEach(() => {
+
+      expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+
+    });      time: '14:30'    jest.clearAllMocks();
+
+
+
+    it('ProductCatalog deve ser navegável', async () => {    }    document.body.focus();
+
+      const user = userEvent.setup();
+
+        ];  });
+
+      render(
+
+        <MockAuthProvider>  });
+
+          <ProductCatalog onAddProduct={jest.fn()} />
+
+        </MockAuthProvider>  const mockSalesRecords: SaleRecord[] = [
+
+      );
+
+          {  describe('1. NavegaÃ§Ã£o por Teclado - Todas as Telas', () => {
+
+      await waitFor(() => {
+
+        const buttons = screen.queryAllByRole('button');      id: 's-1',    it('deve navegar por tab na tela Home', async () => {
+
+        expect(buttons.length).toBeGreaterThan(0);
+
+      });      date: '2025-01-01',      const user = userEvent.setup();
+
+      
+
+      // Navegar com Tab      time: '14:30',      
+
+      await user.tab();
+
+      expect(document.activeElement).toBeInTheDocument();      total: 8.5,      render(
+
+    });
+
+      isCourtesy: false        <HomeScreen 
+
+    it('Dialogs devem gerenciar foco', async () => {
+
+      render(    }          onOpenComanda={mockOnOpenComanda}
+
+        <NewComandaDialog 
+
+          open={true}  ];          onDirectOrder={mockOnDirectOrder}
+
+          onOpenChange={jest.fn()}
+
+          onCreateComanda={jest.fn()}        />
+
+        />
+
+      );  const mockComandas: Comanda[] = [      );
+
+      
+
+      // Verificar se o primeiro campo tem foco    {
+
+      const numeroInput = screen.getByLabelText(/número da comanda/i);
+
+      expect(numeroInput).toHaveFocus();      id: 'cmd-1',      // Pressionar Tab mÃºltiplas vezes
+
+    });
+
+  });      number: 101,      await user.tab();
+
+
+
+  describe('Labels e ARIA', () => {      customerName: 'Cliente Teste',      let focusedElement = document.activeElement;
+
+    it('LoginScreen deve ter labels apropriados', () => {
+
+      render(<LoginScreen onLogin={jest.fn()} />);      items: [],      expect(focusedElement).toBeInTheDocument();
+
+      
+
+      // Verificar labels      total: 0,
+
+      const usernameInput = screen.getByLabelText(/usuário/i);
+
+      expect(usernameInput).toBeInTheDocument();      createdAt: '2025-01-01T14:30:00Z'      await user.tab();
+
+      
+
+      const passwordInput = screen.getByLabelText(/senha/i);    }      const secondFocused = document.activeElement;
+
+      expect(passwordInput).toBeInTheDocument();
+
+        ];      expect(secondFocused).toBeInTheDocument();
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+      expect(submitButton).toBeInTheDocument();      expect(secondFocused).not.toBe(focusedElement);
+
+    });
+
+  describe('Validação Automática de Acessibilidade', () => {
+
+    it('Dashboard deve ter estrutura de headings', () => {
+
+      render(    it('LoginScreen deve ser acessível', async () => {      // Pressionar Shift+Tab para voltar
+
+        <Dashboard 
+
+          activeView="bar"      const { container } = render(<LoginScreen onLogin={jest.fn()} />);      await user.tab({ shift: true });
+
+          transactions={mockTransactions}
+
+          salesRecords={mockSalesRecords}      const results = await axe(container);      expect(document.activeElement).toBe(focusedElement);
+
+          comandas={mockComandas}
+
+          products={mockProducts}      expect(results).toHaveNoViolations();    });
+
+        />
+
+      );    });
+
+      
+
+      // Verificar se há headings    it('deve navegar por tab no Dashboard', async () => {
+
+      const headings = screen.getAllByRole('heading');
+
+      expect(headings.length).toBeGreaterThan(0);    it('HomeScreen deve ser acessível', async () => {      const user = userEvent.setup();
+
+    });
+
+      const { container } = render(      
+
+    it('ProductCatalog deve ter botões com labels', async () => {
+
+      render(        <HomeScreen       render(
+
+        <MockAuthProvider>
+
+          <ProductCatalog onAddProduct={jest.fn()} />          currentView="pdv"        <Dashboard 
+
+        </MockAuthProvider>
+
+      );          onViewChange={jest.fn()}          activeView="bar"
+
+      
+
+      await waitFor(() => {          user={{ id: 'test', name: 'Test', username: 'test', role: 'operator' }}          products={mockProducts}
+
+        const buttons = screen.getAllByRole('button');
+
+        expect(buttons.length).toBeGreaterThan(0);        />          transactions={mockTransactions}
+
+      });
+
+    });      );          salesRecords={mockSalesRecords}
+
+
+
+    it('Formulários devem ter campos com labels', () => {      const results = await axe(container);          comandas={mockComandas}
+
+      render(
+
+        <NewTransactionDialog       expect(results).toHaveNoViolations();        />
+
+          open={true}
+
+          onOpenChange={jest.fn()}    });      );
+
+          type="income"
+
+          onAddTransaction={jest.fn()}
+
+        />
+
+      );    it('Dashboard deve ser acessível', async () => {      // Contar elementos focÃ¡veis
+
+      
+
+      const descricaoInput = screen.getByLabelText(/descrição/i);      const { container } = render(      const focusableElements = screen.getAllByRole('button');
+
+      expect(descricaoInput).toBeInTheDocument();
+
+              <Dashboard       expect(focusableElements.length).toBeGreaterThan(0);
+
+      const valorInput = screen.getByLabelText(/valor/i);
+
+      expect(valorInput).toBeInTheDocument();          activeView="bar"
+
+    });
+
+          transactions={mockTransactions}      // Navegar por todos os botÃµes
+
+    it('NewComandaDialog deve ter campos acessíveis', () => {
+
+      render(          salesRecords={mockSalesRecords}      for (let i = 0; i < Math.min(focusableElements.length, 5); i++) {
+
+        <NewComandaDialog 
+
+          open={true}          comandas={mockComandas}        await user.tab();
+
+          onOpenChange={jest.fn()}
+
+          onCreateComanda={jest.fn()}          products={mockProducts}        const focused = document.activeElement;
+
+        />
+
+      );        />        expect(focused).toHaveAttribute('role', 'button');
+
+      
+
+      const numeroInput = screen.getByLabelText(/número da comanda/i);      );      }
+
+      expect(numeroInput).toBeInTheDocument();
+
+            const results = await axe(container);    });
+
+      const nomeInput = screen.getByLabelText(/nome do cliente/i);
+
+      expect(nomeInput).toBeInTheDocument();      expect(results).toHaveNoViolations();
+
+    });
+
+  });    });    it('deve navegar por tab no Login', async () => {
+
+
+
+  describe('Estados e Feedback', () => {      const user = userEvent.setup();
+
+    it('Botões devem estar habilitados quando apropriado', () => {
+
+      render(<LoginScreen onLogin={jest.fn()} />);    it('ProductCatalog deve ser acessível', async () => {      
+
+      
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });      const { container } = render(  render(<LoginScreen onLogin={mockOnLogin} />);
+
+      expect(submitButton).toBeEnabled();
+
+    });        <MockAuthProvider>
+
+
+
+    it('Campos de formulário devem aceitar entrada', async () => {          <ProductCatalog onAddProduct={jest.fn()} />      // Primeiro elemento focÃ¡vel deve ser o campo de usuÃ¡rio
+
+      const user = userEvent.setup();
+
+              </MockAuthProvider>      await user.tab();
+
+      render(<LoginScreen onLogin={jest.fn()} />);
+
+            );      const firstFocused = document.activeElement;
+
+      const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);
+
+            const results = await axe(container);      expect(firstFocused).toHaveAttribute('type', 'text');
+
+      await user.type(usernameInput, 'test');
+
+      expect(usernameInput).toHaveValue('test');      expect(results).toHaveNoViolations();
+
+    });
+
+    });      // Segundo deve ser o campo de senha
+
+    it('Dialogs devem ter botões de ação visíveis', () => {
+
+      render(      await user.tab();
+
+        <NewComandaDialog 
+
+          open={true}    it('NewComandaDialog deve ser acessível', async () => {      const secondFocused = document.activeElement;
+
+          onOpenChange={jest.fn()}
+
+          onCreateComanda={jest.fn()}      const { container } = render(      expect(secondFocused).toHaveAttribute('type', 'password');
+
+        />
+
+      );        <NewComandaDialog 
+
+      
+
+      const createButton = screen.getByRole('button', { name: /criar comanda/i });          open={true}      // Terceiro deve ser o botÃ£o de login
+
+      expect(createButton).toBeInTheDocument();
+
+                onOpenChange={jest.fn()}      await user.tab();
+
+      const cancelButton = screen.getByRole('button', { name: /cancelar/i });
+
+      expect(cancelButton).toBeInTheDocument();          onCreateComanda={jest.fn()}      const thirdFocused = document.activeElement;
+
+    });
+
+        />      expect(thirdFocused).toHaveAttribute('type', 'submit');
+
+    it('Formulários devem permitir submissão', async () => {
+
+      const user = userEvent.setup();      );    });
+
+      const mockOnCreate = jest.fn();
+
+            const results = await axe(container);
+
+      render(
+
+        <NewComandaDialog       expect(results).toHaveNoViolations();    it('deve navegar por tab em diÃ¡logos modais', async () => {
+
+          open={true}
+
+          onOpenChange={jest.fn()}    });      const user = userEvent.setup();
+
+          onCreateComanda={mockOnCreate}
+
+        />      const mockOnSubmit = jest.fn();
+
+      );
+
+          it('NewTransactionDialog deve ser acessível', async () => {      const mockOnClose = jest.fn();
+
+      const numeroInput = screen.getByLabelText(/número da comanda/i);
+
+      const nomeInput = screen.getByLabelText(/nome do cliente/i);      const { container } = render(
+
+      const createButton = screen.getByRole('button', { name: /criar comanda/i });
+
+              <NewTransactionDialog       render(
+
+      await user.type(numeroInput, '123');
+
+      await user.type(nomeInput, 'Cliente Teste');          open={true}        <NewComandaDialog 
+
+      await user.click(createButton);
+
+                onOpenChange={jest.fn()}          open={true}
+
+      expect(mockOnCreate).toHaveBeenCalledWith(
+
+        expect.objectContaining({          type="income"          onOpenChange={mockOnClose}
+
+          number: 123,
+
+          customerName: 'Cliente Teste'          onAddTransaction={jest.fn()}          onCreateComanda={mockOnSubmit}
+
+        })
+
+      );        />        />
+
+    });
+
+  });      );      );
+
+
+
+  describe('Responsividade', () => {      const results = await axe(container);
+
+    it('Componentes devem funcionar em telas pequenas', () => {
+
+      // Simular mobile      expect(results).toHaveNoViolations();      // Foco deve estar no primeiro campo do modal
+
+      Object.defineProperty(window, 'innerWidth', {
+
+        writable: true,    });      await user.tab();
+
+        configurable: true,
+
+        value: 375,  });      const firstField = document.activeElement;
+
+      });
+
+            expect(firstField).toBeInTheDocument();
+
+      render(<LoginScreen onLogin={jest.fn()} />);
+
+        describe('Navegação por Teclado', () => {
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+      expect(submitButton).toBeInTheDocument();    it('LoginScreen deve permitir navegação completa por teclado', async () => {      // Navegar pelos campos do modal
+
+      expect(submitButton).toBeVisible();
+
+    });      const user = userEvent.setup();      await user.tab();
+
+
+
+    it('Dashboard deve se adaptar a diferentes tamanhos', () => {      const mockOnLogin = jest.fn();      await user.tab();
+
+      Object.defineProperty(window, 'innerWidth', {
+
+        writable: true,            
+
+        configurable: true,
+
+        value: 768,      render(<LoginScreen onLogin={mockOnLogin} />);      // Deve conseguir chegar ao botÃ£o de salvar
+
+      });
+
+                  const saveButton = screen.getByRole('button', { name: /salvar|criar/i });
+
+      render(
+
+        <Dashboard       const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);      expect(saveButton).toBeInTheDocument();
+
+          activeView="bar"
+
+          transactions={mockTransactions}      const passwordInput = screen.getByPlaceholderText(/digite sua senha/i);    });
+
+          salesRecords={mockSalesRecords}
+
+          comandas={mockComandas}      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+          products={mockProducts}
+
+        />          it('deve navegar por shift+tab (ordem reversa)', async () => {
+
+      );
+
+            // Navegar com Tab      const user = userEvent.setup();
+
+      const tabs = screen.getAllByRole('tab');
+
+      expect(tabs.length).toBeGreaterThan(0);      await user.tab();      
+
+    });
+
+      expect(usernameInput).toHaveFocus();      render(
+
+    it('HomeScreen deve funcionar em orientação landscape', () => {
+
+      Object.defineProperty(window, 'innerWidth', {              <HomeScreen 
+
+        writable: true,
+
+        configurable: true,      await user.tab();          onOpenComanda={mockOnOpenComanda}
+
+        value: 1024,
+
+      });      expect(passwordInput).toHaveFocus();          onDirectOrder={mockOnDirectOrder}
+
+      Object.defineProperty(window, 'innerHeight', {
+
+        writable: true,              />
+
+        configurable: true,
+
+        value: 768,      await user.tab();      );
+
+      });
+
+            expect(submitButton).toHaveFocus();
+
+      render(
+
+        <HomeScreen             // Navegar para frente algumas vezes
+
+          currentView="pdv"
+
+          onViewChange={jest.fn()}      // Preencher formulário      await user.tab();
+
+          user={{ id: 'test', name: 'Test', username: 'test', role: 'operator' }}
+
+        />      await user.click(usernameInput);      await user.tab();
+
+      );
+
+            await user.type(usernameInput, 'usuario');      const forwardPosition = document.activeElement;
+
+      const heading = screen.getByRole('heading', { level: 1 });
+
+      expect(heading).toBeInTheDocument();      
+
+    });
+
+  });      await user.click(passwordInput);      // Navegar para trÃ¡s
+
+});
+      await user.type(passwordInput, 'senha');      await user.tab({ shift: true });
+
+            const backwardPosition = document.activeElement;
+
+      // Submeter com Enter
+
+      await user.keyboard('{Enter}');      expect(backwardPosition).not.toBe(forwardPosition);
+
+          });
+
+      expect(mockOnLogin).toHaveBeenCalledWith(  });
+
+        expect.objectContaining({
+
+          username: 'usuario',  describe('2. Foco VisÃ­vel em BotÃµes e Campos', () => {
+
+          password: 'senha'    it('deve mostrar foco visÃ­vel em botÃµes', async () => {
+
+        })      const user = userEvent.setup();
+
+      );      
+
+    });      render(
+
+        <HomeScreen 
+
+    it('HomeScreen deve ter foco visível em navegação por teclado', async () => {          onOpenComanda={mockOnOpenComanda}
+
+      const user = userEvent.setup();          onDirectOrder={mockOnDirectOrder}
+
+              />
+
+      render(      );
+
+        <HomeScreen 
+
+          currentView="pdv"      const buttons = screen.getAllByRole('button');
+
+          onViewChange={jest.fn()}      
+
+          user={{ id: 'test', name: 'Test', username: 'test', role: 'operator' }}      for (const button of buttons.slice(0, 3)) { // Testar primeiros 3 botÃµes
+
+        />        button.focus();
+
+      );        
+
+              // Verificar se tem estilos de foco
+
+      // Verificar se existe pelo menos um elemento focável        const computedStyle = window.getComputedStyle(button);
+
+      const focusableElements = screen.getAllByRole('button');        expect(
+
+      expect(focusableElements.length).toBeGreaterThan(0);          computedStyle.outline !== 'none' || 
+
+                computedStyle.boxShadow !== 'none' ||
+
+      // Navegar com Tab          button.matches(':focus-visible')
+
+      await user.tab();        ).toBe(true);
+
+      expect(document.activeElement).toBeInTheDocument();      }
+
+    });    });
+
+
+
+    it('Dashboard deve permitir navegação entre abas', async () => {    it('deve mostrar foco visÃ­vel em campos de input', async () => {
+
+      const user = userEvent.setup();      const user = userEvent.setup();
+
+            
+
+      render(      render(<LoginScreen onLogin={mockOnLogin} />);
+
+        <Dashboard 
+
+          activeView="bar"      const inputs = screen.getAllByRole('textbox');
+
+          transactions={mockTransactions}      
+
+          salesRecords={mockSalesRecords}      for (const input of inputs) {
+
+          comandas={mockComandas}        input.focus();
+
+          products={mockProducts}        
+
+        />        // Verificar indicaÃ§Ã£o visual de foco
+
+      );        const computedStyle = window.getComputedStyle(input);
+
+              expect(
+
+      const dashboardTab = screen.getByRole('tab', { name: /dashboard/i });          computedStyle.outline !== 'none' || 
+
+      const controladoria = screen.getByRole('tab', { name: /controladoria/i });          computedStyle.borderColor !== 'initial' ||
+
+                input.matches(':focus-visible')
+
+      // Navegar com setas        ).toBe(true);
+
+      await user.click(dashboardTab);      }
+
+      expect(dashboardTab).toHaveAttribute('aria-selected', 'true');    });
+
+      
+
+      await user.keyboard('{ArrowRight}');    it('deve manter foco visÃ­vel durante navegaÃ§Ã£o por tab', async () => {
+
+      expect(controladoria).toHaveFocus();      const user = userEvent.setup();
+
+            
+
+      await user.keyboard('{Enter}');      render(
+
+      expect(controladoria).toHaveAttribute('aria-selected', 'true');        <Dashboard 
+
+    });          products={mockProducts}
+
+          transactions={mockTransactions}
+
+    it('ProductCatalog deve ser navegável por teclado', async () => {          salesRecords={mockSalesRecords}
+
+      const user = userEvent.setup();        />
+
+            );
+
+      render(
+
+        <MockAuthProvider>      // Navegar e verificar foco em cada etapa
+
+          <ProductCatalog onAddProduct={jest.fn()} />      for (let i = 0; i < 5; i++) {
+
+        </MockAuthProvider>        await user.tab();
+
+      );        const focusedElement = document.activeElement;
+
+              
+
+      // Verificar se há elementos focáveis        if (focusedElement && focusedElement !== document.body) {
+
+      await waitFor(() => {          expect(focusedElement).toHaveAttribute('tabindex', expect.anything());
+
+        const focusableElements = screen.queryAllByRole('button');        }
+
+        expect(focusableElements.length).toBeGreaterThan(0);      }
+
+      });    });
+
+      
+
+      // Navegar com Tab    it('deve remover foco visual ao clicar', async () => {
+
+      await user.tab();      const user = userEvent.setup();
+
+      expect(document.activeElement).toBeInTheDocument();      
+
+    });      render(
+
+        <HomeScreen 
+
+    it('Dialogs devem gerenciar foco adequadamente', async () => {          onOpenComanda={mockOnOpenComanda}
+
+      const user = userEvent.setup();          onDirectOrder={mockOnDirectOrder}
+
+              />
+
+      render(      );
+
+        <NewComandaDialog 
+
+          open={true}      const button = screen.getAllByRole('button')[0];
+
+          onOpenChange={jest.fn()}      
+
+          onCreateComanda={jest.fn()}      // Focar via teclado
+
+        />      button.focus();
+
+      );      expect(document.activeElement).toBe(button);
+
+      
+
+      // O primeiro campo deve ter foco      // Clicar com mouse
+
+      const numeroInput = screen.getByLabelText(/número da comanda/i);      await user.click(button);
+
+      expect(numeroInput).toHaveFocus();      
+
+            // Foco pode permanecer, mas estado visual pode mudar
+
+      // Navegar com Tab      expect(button).toBeInTheDocument();
+
+      await user.tab();    });
+
+      const nomeInput = screen.getByLabelText(/nome do cliente/i);  });
+
+      expect(nomeInput).toHaveFocus();
+
+        describe('3. Leitor de Tela - TÃ­tulos, BotÃµes e Feedbacks', () => {
+
+      // Escapar fecha o dialog    it('deve ter tÃ­tulos acessÃ­veis em todas as seÃ§Ãµes', () => {
+
+      await user.keyboard('{Escape}');      render(
+
+      // O dialog deveria fechar, mas não vamos verificar isso aqui        <Dashboard 
+
+    });          products={mockProducts}
+
+  });          transactions={mockTransactions}
+
+          salesRecords={mockSalesRecords}
+
+  describe('Leitores de Tela e ARIA', () => {        />
+
+    it('LoginScreen deve ter labels e descrições apropriadas', () => {      );
+
+      render(<LoginScreen onLogin={jest.fn()} />);
+
+            // Verificar cabeÃ§alhos semÃ¢nticos
+
+      // Verificar labels dos campos      const headings = screen.getAllByRole('heading');
+
+      const usernameInput = screen.getByLabelText(/usuário/i);      expect(headings.length).toBeGreaterThan(0);
+
+      expect(usernameInput).toBeInTheDocument();
+
+            headings.forEach(heading => {
+
+      const passwordInput = screen.getByLabelText(/senha/i);        expect(heading).toHaveTextContent(/\w+/); // NÃ£o deve estar vazio
+
+      expect(passwordInput).toBeInTheDocument();        expect(heading.tagName).toMatch(/^H[1-6]$/); // Deve ser h1-h6
+
+            });
+
+      // Verificar botão principal    });
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+      expect(submitButton).toBeInTheDocument();    it('deve ter labels acessÃ­veis em botÃµes', () => {
+
+    });  render(<HomeScreen onOpenComanda={mockOnOpenComanda} onDirectOrder={mockOnDirectOrder} />);
+
+
+
+    it('Dashboard deve ter estrutura de headings apropriada', () => {      const buttons = screen.getAllByRole('button');
+
+      render(      
+
+        <Dashboard       buttons.forEach(button => {
+
+          activeView="bar"        const accessibleText = getAccessibleText(button);
+
+          transactions={mockTransactions}        expect(accessibleText.length).toBeGreaterThan(0);
+
+          salesRecords={mockSalesRecords}        expect(accessibleText).not.toBe('button'); // NÃ£o deve ser genÃ©rico
+
+          comandas={mockComandas}      });
+
+          products={mockProducts}    });
+
+        />
+
+      );    it('deve ter labels associados a campos de formulÃ¡rio', () => {
+
+        render(<LoginScreen onLogin={mockOnLogin} />);
+
+      // Verificar se há headings organizados
+
+      const headings = screen.getAllByRole('heading');      const inputs = screen.getAllByRole('textbox');
+
+      expect(headings.length).toBeGreaterThan(0);      
+
+    });      inputs.forEach(input => {
+
+        // Deve ter label associado ou aria-label
+
+    it('ProductCatalog deve ter aria-labels nos botões de ação', async () => {        const hasLabel = input.getAttribute('aria-label') ||
+
+      render(                         input.getAttribute('aria-labelledby') ||
+
+        <MockAuthProvider>                         screen.queryByLabelText(input.getAttribute('placeholder') || '');
+
+          <ProductCatalog onAddProduct={jest.fn()} />        
+
+        </MockAuthProvider>        expect(hasLabel).toBeTruthy();
+
+      );      });
+
+          });
+
+      await waitFor(() => {
+
+        // Verificar se há botões com aria-label    it('deve ter descriÃ§Ãµes acessÃ­veis para aÃ§Ãµes complexas', async () => {
+
+        const buttons = screen.getAllByRole('button');      const user = userEvent.setup();
+
+        expect(buttons.length).toBeGreaterThan(0);      const mockOnSubmit = jest.fn();
+
+      });      const mockOnClose = jest.fn();
+
+    });
+
+      render(
+
+    it('Formulários devem ter validação acessível', async () => {        <NewTransactionDialog 
+
+      const user = userEvent.setup();          open={true}
+
+                onOpenChange={mockOnClose}
+
+      render(          onAddTransaction={mockOnSubmit}
+
+        <NewTransactionDialog           type="income"
+
+          open={true}        />
+
+          onOpenChange={jest.fn()}      );
+
+          type="income"
+
+          onAddTransaction={jest.fn()}      // Verificar se campos tÃªm descriÃ§Ãµes adequadas
+
+        />      const amountField = screen.getByRole('textbox', { name: /valor|montante/i });
+
+      );      expect(amountField).toBeInTheDocument();
+
+      
+
+      // Tentar submeter formulário vazio      const descriptionField = screen.getByRole('textbox', { name: /descriÃ§Ã£o/i });
+
+      const submitButton = screen.getByRole('button', { name: /salvar/i });      expect(descriptionField).toBeInTheDocument();
+
+      await user.click(submitButton);    });
+
+      
+
+      // Verificar se há feedback de erro    it('deve anunciar estado de botÃµes (expandido, selecionado)', () => {
+
+      // (assumindo que o componente tem validação)      render(
+
+      const descricaoInput = screen.getByLabelText(/descrição/i);        <Dashboard 
+
+      expect(descricaoInput).toBeInTheDocument();          activeView="bar"
+
+    });          products={mockProducts}
+
+          transactions={mockTransactions}
+
+    it('Estados de loading devem ser anunciados', async () => {          salesRecords={mockSalesRecords}
+
+      render(<LoginScreen onLogin={jest.fn()} />);          comandas={mockComandas}
+
+              />
+
+      // Verificar se há região de status para anúncios      );
+
+      const statusRegions = screen.queryAllByRole('status');
+
+      // Se não há região de status explícita, pelo menos não deve quebrar      // Procurar por botÃµes com estado
+
+      expect(statusRegions).toBeDefined();      const buttons = screen.getAllByRole('button');
+
+    });      
+
+  });      buttons.forEach(button => {
+
+        // Se tem aria-expanded, deve ter valor vÃ¡lido
+
+  describe('Contraste e Visibilidade', () => {        const expanded = button.getAttribute('aria-expanded');
+
+    it('Elementos focados devem ter indicação visual', async () => {        if (expanded) {
+
+      const user = userEvent.setup();          expect(['true', 'false']).toContain(expanded);
+
+              }
+
+      render(<LoginScreen onLogin={jest.fn()} />);
+
+              // Se tem aria-pressed, deve ter valor vÃ¡lido
+
+      const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);        const pressed = button.getAttribute('aria-pressed');
+
+      await user.click(usernameInput);        if (pressed) {
+
+                expect(['true', 'false']).toContain(pressed);
+
+      // Verificar se o elemento tem foco        }
+
+      expect(usernameInput).toHaveFocus();      });
+
+          });
+
+      // O CSS deve fornecer indicação visual (não testável automaticamente)  });
+
+    });
+
+  describe('4. Mensagens de Loading/Erro (aria-live)', () => {
+
+    it('Botões devem ter área de toque adequada', () => {    it('deve ter regiÃµes live para mensagens de status', () => {
+
+      render(<LoginScreen onLogin={jest.fn()} />);      render(
+
+              <Dashboard 
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });          products={mockProducts}
+
+                transactions={mockTransactions}
+
+      // Verificar se o botão está presente (área de toque é definida por CSS)          salesRecords={mockSalesRecords}
+
+      expect(submitButton).toBeInTheDocument();        />
+
+      expect(submitButton).toBeEnabled();      );
+
+    });
+
+      // Procurar por regiÃµes aria-live
+
+    it('Texto deve ser legível em diferentes tamanhos', () => {      const liveRegions = document.querySelectorAll('[aria-live]');
+
+      render(      
+
+        <HomeScreen       if (liveRegions.length > 0) {
+
+          currentView="pdv"        liveRegions.forEach(region => {
+
+          onViewChange={jest.fn()}          const liveValue = region.getAttribute('aria-live');
+
+          user={{ id: 'test', name: 'Test', username: 'test', role: 'operator' }}          expect(['polite', 'assertive', 'off']).toContain(liveValue);
+
+        />        });
+
+      );      }
+
+          });
+
+      // Verificar se há texto presente
+
+      const heading = screen.getByRole('heading', { level: 1 });    it('deve anunciar mensagens de erro adequadamente', async () => {
+
+      expect(heading).toBeInTheDocument();      const user = userEvent.setup();
+
+    });      
+
+  });      render(<LoginScreen />);
+
+
+
+  describe('Responsividade e Adaptabilidade', () => {      // Tentar submit sem preencher campos
+
+    it('Interface deve funcionar em diferentes orientações', () => {      const submitButton = screen.getByRole('button', { name: /entrar|login/i });
+
+      // Simular mudança de orientação (landscape)      await user.click(submitButton);
+
+      Object.defineProperty(window, 'innerWidth', {
+
+        writable: true,      // Procurar por mensagens de erro
+
+        configurable: true,      const errorMessages = screen.queryAllByRole('alert');
+
+        value: 1024,      
+
+      });      errorMessages.forEach(error => {
+
+      Object.defineProperty(window, 'innerHeight', {        expect(error).toHaveTextContent(/\w+/); // NÃ£o deve estar vazio
+
+        writable: true,        expect(error).toHaveAttribute('role', 'alert');
+
+        configurable: true,      });
+
+        value: 768,    });
+
+      });
+
+          it('deve anunciar mensagens de sucesso', async () => {
+
+      render(<LoginScreen onLogin={jest.fn()} />);      const user = userEvent.setup();
+
+            const mockOnSubmit = jest.fn();
+
+      const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);      const mockOnClose = jest.fn();
+
+      expect(usernameInput).toBeInTheDocument();
+
+    });      render(
+
+        <AddItemDialog 
+
+    it('Interface deve funcionar com zoom aumentado', () => {          open={true}
+
+      // Simular zoom (viewport menor)          onOpenChange={mockOnClose}
+
+      Object.defineProperty(window, 'innerWidth', {          products={mockProducts}
+
+        writable: true,          onAddItem={mockOnSubmit}
+
+        configurable: true,          comandaId="someId"
+
+        value: 320,        />
+
+      });      );
+
+      Object.defineProperty(window, 'innerHeight', {
+
+        writable: true,      // Simular adiÃ§Ã£o bem-sucedida
+
+        configurable: true,      const productSelect = screen.getByRole('combobox', { name: /produto/i });
+
+        value: 568,      await user.selectOptions(productSelect, mockProducts[0].id);
+
+      });
+
+            const quantityInput = screen.getByRole('spinbutton', { name: /quantidade/i });
+
+      render(<LoginScreen onLogin={jest.fn()} />);      await user.clear(quantityInput);
+
+            await user.type(quantityInput, '2');
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+      expect(submitButton).toBeInTheDocument();      const addButton = screen.getByRole('button', { name: /adicionar/i });
+
+      expect(submitButton).toBeVisible();      await user.click(addButton);
+
+    });
+
+      // Verificar se mensagem de sucesso seria anunciada
+
+    it('Componentes devem se adaptar a diferentes tamanhos de tela', () => {      expect(mockOnSubmit).toHaveBeenCalled();
+
+      // Mobile    });
+
+      Object.defineProperty(window, 'innerWidth', {
+
+        writable: true,    it('deve ter loading states acessÃ­veis', () => {
+
+        configurable: true,      render(
+
+        value: 375,        <Dashboard 
+
+      });          products={mockProducts}
+
+                transactions={mockTransactions}
+
+      render(          salesRecords={mockSalesRecords}
+
+        <Dashboard         />
+
+          activeView="bar"      );
+
+          transactions={mockTransactions}
+
+          salesRecords={mockSalesRecords}      // Procurar por indicadores de loading
+
+          comandas={mockComandas}      const loadingIndicators = document.querySelectorAll('[aria-busy], [role="progressbar"]');
+
+          products={mockProducts}      
+
+        />      loadingIndicators.forEach(indicator => {
+
+      );        const ariaLabel = indicator.getAttribute('aria-label');
+
+              if (ariaLabel) {
+
+      const tabs = screen.getAllByRole('tab');          expect(ariaLabel).toMatch(/carregando|loading/i);
+
+      expect(tabs.length).toBeGreaterThan(0);        }
+
+    });      });
+
+  });    });
+
+  });
+
+  describe('Suporte a Tecnologias Assistivas', () => {
+
+    it('Regiões principais devem ter landmarks', () => {  describe('5. Skip Link no Financeiro', () => {
+
+      render(    it('deve ter skip link funcional', async () => {
+
+        <HomeScreen       const user = userEvent.setup();
+
+          currentView="pdv"      
+
+          onViewChange={jest.fn()}      render(
+
+          user={{ id: 'test', name: 'Test', username: 'test', role: 'operator' }}        <Dashboard 
+
+        />          products={mockProducts}
+
+      );          transactions={mockTransactions}
+
+                salesRecords={mockSalesRecords}
+
+      // Verificar se há elementos com roles de landmark        />
+
+      const main = screen.queryByRole('main');      );
+
+      const navigation = screen.queryByRole('navigation');
+
+            // Procurar por skip link
+
+      // Pelo menos um deve estar presente      const skipLink = document.querySelector('a[href*="#main"], a[href*="#content"]');
+
+      expect(main || navigation).toBeTruthy();      
+
+    });      if (skipLink) {
+
+        expect(skipLink).toBeInTheDocument();
+
+    it('Tabelas devem ter cabeçalhos apropriados', () => {        expect(skipLink).toHaveTextContent(/pular|skip|ir para/i);
+
+      render(        
+
+        <Dashboard         // Testar funcionalidade
+
+          activeView="bar"        await user.click(skipLink as HTMLElement);
+
+          transactions={mockTransactions}        
+
+          salesRecords={mockSalesRecords}        const targetId = (skipLink as HTMLAnchorElement).href.split('#')[1];
+
+          comandas={mockComandas}        const target = document.getElementById(targetId);
+
+          products={mockProducts}        
+
+        />        if (target) {
+
+      );          expect(target).toBeInTheDocument();
+
+              }
+
+      // Se há tabelas, devem ter cabeçalhos      }
+
+      const tables = screen.queryAllByRole('table');    });
+
+      tables.forEach(table => {
+
+        const headers = screen.queryAllByRole('columnheader');    it('deve permitir navegaÃ§Ã£o direta para conteÃºdo principal', async () => {
+
+        // Se a tabela existe, deve ter pelo menos um cabeçalho      const user = userEvent.setup();
+
+        if (table) {      
+
+          expect(headers.length).toBeGreaterThanOrEqual(0);      render(
+
+        }        <Dashboard 
+
+      });          products={mockProducts}
+
+    });          transactions={mockTransactions}
+
+          salesRecords={mockSalesRecords}
+
+    it('Listas devem ser estruturadas corretamente', async () => {        />
+
+      render(      );
+
+        <MockAuthProvider>
+
+          <ProductCatalog onAddProduct={jest.fn()} />      // Verificar se existe elemento main ou similar
+
+        </MockAuthProvider>      const mainContent = document.querySelector('main, [role="main"], #main, #content');
+
+      );      
+
+            if (mainContent) {
+
+      await waitFor(() => {        expect(mainContent).toBeInTheDocument();
+
+        // Se há listas, devem ter itens        
+
+        const lists = screen.queryAllByRole('list');        // Deve ser focÃ¡vel ou ter tabindex
+
+        lists.forEach(list => {        const isFocusable = mainContent.getAttribute('tabindex') === '0' ||
+
+          const items = screen.queryAllByRole('listitem');                           mainContent.getAttribute('tabindex') === '-1';
+
+          // Se a lista existe, pode ter itens (ou estar vazia)        
+
+          expect(items.length).toBeGreaterThanOrEqual(0);        if (!isFocusable) {
+
+        });          // Pelo menos deve existir como landmark
+
+      });          expect(mainContent.tagName.toLowerCase()).toBe('main');
+
+    });        }
+
+      }
+
+    it('Campos de formulário devem ter associações corretas', () => {    });
+
+      render(  });
+
+        <NewComandaDialog 
+
+          open={true}  describe('6. Compliance com WCAG 2.1', () => {
+
+          onOpenChange={jest.fn()}    it('deve passar em testes automÃ¡ticos de acessibilidade - Home', async () => {
+
+          onCreateComanda={jest.fn()}      const { container } = render(
+
+        />        <HomeScreen 
+
+      );          onOpenComanda={mockOnOpenComanda}
+
+                onDirectOrder={mockOnDirectOrder}
+
+      // Verificar associação label-input        />
+
+      const numeroInput = screen.getByLabelText(/número da comanda/i);      );
+
+      expect(numeroInput).toBeInTheDocument();      const results = await axe(container);
+
+            expect(results).toHaveNoViolations();
+
+      const nomeInput = screen.getByLabelText(/nome do cliente/i);    });
+
+      expect(nomeInput).toBeInTheDocument();
+
+    });    it('deve passar em testes automÃ¡ticos de acessibilidade - Dashboard', async () => {
+
+  });      const { container } = render(
+
+        <Dashboard 
+
+  describe('Estados e Feedback', () => {          products={mockProducts}
+
+    it('Estados de erro devem ser comunicados adequadamente', async () => {          transactions={mockTransactions}
+
+      const user = userEvent.setup();          salesRecords={mockSalesRecords}
+
+              />
+
+      render(<LoginScreen onLogin={jest.fn(() => { throw new Error('Login failed'); })} />);      );
+
+            const results = await axe(container);
+
+      const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);      expect(results).toHaveNoViolations();
+
+      const passwordInput = screen.getByPlaceholderText(/digite sua senha/i);    });
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });
+
+          it('deve passar em testes automÃ¡ticos de acessibilidade - Login', async () => {
+
+      await user.type(usernameInput, 'usuario');      const { container } = render(<LoginScreen onLogin={mockOnLogin} />);
+
+      await user.type(passwordInput, 'senha');      const results = await axe(container);
+
+      await user.click(submitButton);      expect(results).toHaveNoViolations();
+
+          });
+
+      // O erro deve ser comunicado de alguma forma
+
+      // (via toast, aria-live, etc.)    it('deve ter contraste adequado em textos', () => {
+
+      expect(submitButton).toBeInTheDocument();      render(
+
+    });        <HomeScreen 
+
+          onOpenComanda={mockOnOpenComanda}
+
+    it('Estados de sucesso devem ser anunciados', async () => {          onDirectOrder={mockOnDirectOrder}
+
+      const user = userEvent.setup();        />
+
+      const mockOnCreate = jest.fn();      );
+
+      
+
+      render(      // Verificar se elementos tÃªm cores contrastantes
+
+        <NewComandaDialog       const textElements = document.querySelectorAll('p, span, button, input, label');
+
+          open={true}      
+
+          onOpenChange={jest.fn()}      textElements.forEach(element => {
+
+          onCreateComanda={mockOnCreate}        const style = window.getComputedStyle(element);
+
+        />        const color = style.color;
+
+      );        const backgroundColor = style.backgroundColor;
+
+              
+
+      const numeroInput = screen.getByLabelText(/número da comanda/i);        // VerificaÃ§Ã£o bÃ¡sica - nÃ£o deve ter cor igual ao fundo
+
+      const nomeInput = screen.getByLabelText(/nome do cliente/i);        expect(color).not.toBe(backgroundColor);
+
+      const submitButton = screen.getByRole('button', { name: /criar comanda/i });      });
+
+          });
+
+      await user.type(numeroInput, '123');
+
+      await user.type(nomeInput, 'Cliente Teste');    it('deve ter landmarks semÃ¢nticos apropriados', () => {
+
+      await user.click(submitButton);      render(
+
+              <Dashboard 
+
+      expect(mockOnCreate).toHaveBeenCalledWith(          products={mockProducts}
+
+        expect.objectContaining({          transactions={mockTransactions}
+
+          number: 123,          salesRecords={mockSalesRecords}
+
+          customerName: 'Cliente Teste'        />
+
+        })      );
+
+      );
+
+    });      // Verificar landmarks bÃ¡sicos
+
+      const landmarks = document.querySelectorAll('main, nav, header, footer, aside, section[aria-label]');
+
+    it('Estados de loading devem ser comunicados', () => {      
+
+      render(<LoginScreen onLogin={jest.fn()} />);      // Deve ter pelo menos um landmark principal
+
+            expect(landmarks.length).toBeGreaterThan(0);
+
+      const submitButton = screen.getByRole('button', { name: /entrar/i });    });
+
+      
+
+      // O botão deve estar presente e funcional    it('deve ter hierarquia de cabeÃ§alhos lÃ³gica', () => {
+
+      expect(submitButton).toBeInTheDocument();      render(
+
+      expect(submitButton).toBeEnabled();        <Dashboard 
+
+    });          products={mockProducts}
+
+  });          transactions={mockTransactions}
+
+});          salesRecords={mockSalesRecords}
+        />
+      );
+
+      const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      
+      if (headings.length > 1) {
+        // Primeiro cabeÃ§alho deve ser h1 ou h2
+        const firstHeading = headings[0];
+        expect(firstHeading.tagName).toMatch(/^H[12]$/);
+      }
+    });
+  });
+
+  describe('7. Teclado e Atalhos', () => {
+    it('deve suportar Enter para ativar botÃµes', async () => {
+      const user = userEvent.setup();
+      const mockHandler = jest.fn();
+      
+      render(
+        <button onClick={mockHandler}>
+          Teste Button
+        </button>
+      );
+
+      const button = screen.getByRole('button', { name: /teste/i });
+      button.focus();
+
+      await user.keyboard('[Enter]');
+      expect(mockHandler).toHaveBeenCalled();
+    });
+
+    it('deve suportar Space para ativar botÃµes', async () => {
+      const user = userEvent.setup();
+      const mockHandler = jest.fn();
+      
+      render(
+        <button onClick={mockHandler}>
+          Teste Button Space
+        </button>
+      );
+
+      const button = screen.getByRole('button', { name: /teste/i });
+      button.focus();
+
+      await user.keyboard(' ');
+      expect(mockHandler).toHaveBeenCalled();
+    });
+
+    it('deve suportar Escape para fechar modais', async () => {
+      const user = userEvent.setup();
+      const mockOnClose = jest.fn();
+      
+      render(
+        <NewComandaDialog 
+          open={true}
+          onOpenChange={mockOnClose}
+          onCreateComanda={jest.fn()}
+        />
+      );
+
+      await user.keyboard('[Escape]');
+      expect(mockOnClose).toHaveBeenCalledWith(false);
+    });
+
+    it('deve navegar em listas com arrow keys quando apropriado', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <Dashboard 
+          products={mockProducts}
+          transactions={mockTransactions}
+          salesRecords={mockSalesRecords}
+        />
+      );
+
+      // Procurar por listas ou grids que suportam arrow navigation
+      const listboxes = document.querySelectorAll('[role="listbox"], [role="grid"]');
+      
+      if (listboxes.length > 0) {
+        const firstListbox = listboxes[0] as HTMLElement;
+        firstListbox.focus();
+        
+        await user.keyboard('[ArrowDown]');
+        // Verificar se foco mudou dentro da lista
+        expect(document.activeElement).toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('8. Estados de Foco e InteraÃ§Ã£o', () => {
+    it('deve manter foco em elemento apropriado apÃ³s aÃ§Ãµes', async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+      const mockOnClose = jest.fn();
+
+      render(
+        <NewTransactionDialog 
+          open={true}
+          onOpenChange={mockOnClose}
+          onAddTransaction={mockOnSubmit}
+          type="income"
+        />
+      );
+
+      const firstInput = screen.getAllByRole('textbox')[0];
+      firstInput.focus();
+      
+      await user.type(firstInput, 'Teste');
+      
+      // Foco deve permanecer no campo apÃ³s digitaÃ§Ã£o
+      expect(document.activeElement).toBe(firstInput);
+    });
+
+    it('deve gerenciar foco em elementos dinÃ¢micos', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <Dashboard 
+          products={mockProducts}
+          transactions={mockTransactions}
+          salesRecords={mockSalesRecords}
+        />
+      );
+
+      // Testar elementos que podem aparecer/desaparecer
+      const buttons = screen.getAllByRole('button');
+      
+      if (buttons.length > 0) {
+        const firstButton = buttons[0];
+        firstButton.focus();
+        
+        expect(document.activeElement).toBe(firstButton);
+        
+        // Simular interaÃ§Ã£o que pode alterar DOM
+        await user.click(firstButton);
+        
+        // Foco deve estar em algum elemento vÃ¡lido
+        expect(document.activeElement).toBeInTheDocument();
+      }
+    });
+
+    it('deve restaurar foco ao fechar modais', async () => {
+      const user = userEvent.setup();
+      const mockOnClose = jest.fn();
+
+      // Renderizar botÃ£o que abre modal
+      const TestComponent = () => {
+        const [isOpen, setIsOpen] = React.useState(false);
+        
+        return (
+          <>
+            <button onClick={() => setIsOpen(true)}>
+              Abrir Modal
+            </button>
+            <NewComandaDialog 
+              open={isOpen}
+              onOpenChange={(open) => {
+                setIsOpen(open);
+                mockOnClose(open);
+              }}
+              onCreateComanda={jest.fn()}
+            />
+          </>
+        );
+      };
+
+      render(<TestComponent />);
+
+      const openButton = screen.getByRole('button', { name: /abrir modal/i });
+      
+      // Focar e abrir modal
+      openButton.focus();
+      await user.click(openButton);
+
+      // Fechar modal com Escape
+      await user.keyboard('[Escape]');
+
+      // Foco deve retornar ao botÃ£o (ou prÃ³ximo elemento apropriado)
+      expect(document.activeElement).toBe(openButton);
+    });
+  });
+});

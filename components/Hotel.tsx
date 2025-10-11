@@ -4,7 +4,7 @@ import { useRoomsDB, Room } from '../hooks/useRoomsDB';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Bed, Users, Clock, DollarSign, Search, Bus, UserPlus } from 'lucide-react';
+import { Bed, Users, Clock, DollarSign, Search, Bus, UserPlus, Wrench } from 'lucide-react';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { usePilgrimagesDB } from '../hooks/usePilgrimagesDB';
@@ -160,7 +160,7 @@ export function Hotel() {
                   type="text"
                   placeholder="Buscar por quarto ou hóspede..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -302,7 +302,7 @@ export function Hotel() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {room.status === 'occupied' && (
                     <Button
                       size="sm"
@@ -330,6 +330,26 @@ export function Hotel() {
                     >
                       <UserPlus className="w-3 h-3" />
                       Check-in
+                    </Button>
+                  )}
+                  {room.status !== 'maintenance' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 gap-1"
+                      onClick={() => handleChangeStatus(room.id, 'maintenance')}
+                    >
+                      <Wrench className="w-3 h-3" />
+                      Manutenção
+                    </Button>
+                  )}
+                  {room.status === 'maintenance' && (
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-gray-600 hover:bg-gray-700"
+                      onClick={() => handleChangeStatus(room.id, 'available')}
+                    >
+                      Retornar
                     </Button>
                   )}
                 </div>

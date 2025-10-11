@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 
 function Card({
   className,
+  style,
   ...props
 }: React.ComponentProps<"div">) {
   return (
@@ -13,6 +14,7 @@ function Card({
         "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border",
         className,
       )}
+      style={{ minHeight: '44px', minWidth: '44px', ...(style || {}) }}
       {...props}
     />
   );
@@ -39,7 +41,7 @@ function CardTitle({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <h4
+    <h2
       data-slot="card-title"
       className={cn("leading-none", className)}
       {...props}

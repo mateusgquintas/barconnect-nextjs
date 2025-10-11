@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import React, { useState, useMemo, memo, useCallback } from 'react';
 import { Card } from './ui/card';
 import { DollarSign, TrendingUp, TrendingDown, Calendar, FileSpreadsheet } from 'lucide-react';
 import { Input } from './ui/input';
@@ -13,7 +13,49 @@ interface DashboardControladoria {
   salesRecords: SaleRecord[];
 }
 
-export function DashboardControladoria({ transactions, salesRecords }: DashboardControladoria) {
+// Utility functions moved outside component to prevent recreation
+const parseDate = (dateString: string): Date => {
+  const [day, month, year] = dateString.split('/');
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+};
+
+const isDateInRange = (dateString: string, startDate: string, endDate: string): boolean => {
+  const date = parseDate(dateString);
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+  return date >= start && date <= end;
+};
+
+const filterByDateRange = <T extends { date: string }>(
+  items: T[], 
+  startDate: string, 
+  endDate: string
+): T[] => {
+  return items.filter(item => isDateInRange(item.date, startDate, endDate));
+};
+
+const calculateTotals = (
+  transactions: Transaction[], 
+  salesRecords: SaleRecord[]
+) => {
+  const salesIncome = salesRecords.reduce((sum, sale) => sum + sale.total, 0);
+  const transactionIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalIncome = salesIncome + transactionIncome;
+  const totalExpense = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const profit = totalIncome - totalExpense;
+  const profitMargin = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : '0.0';
+
+  return { salesIncome, transactionIncome, totalIncome, totalExpense, profit, profitMargin };
+};
+
+export const DashboardControladoria = memo<DashboardControladoria>(({ transactions, salesRecords }) => {
   // Filtro de data - padrão: mês atual completo
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -22,122 +64,116 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
   const [startDate, setStartDate] = useState(firstDayOfMonth.toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(lastDayOfMonth.toISOString().split('T')[0]);
 
-  // Debug logs para verificar dados
-  console.log('📈 DashboardControladoria - Dados recebidos:', {
-    transactions: transactions.length,
-    salesRecords: salesRecords.length,
-    startDate,
-    endDate,
-    todayISO: today.toISOString(),
-    transactionDates: transactions.map(t => t.date).slice(0, 5),
-    salesDates: salesRecords.map(s => s.date).slice(0, 5)
-  });
-
-  // Filtrar transações por período
-  const filteredTransactions = transactions.filter(t => {
-    const [day, month, year] = t.date.split('/');
-    const transactionDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+  // Optimize date calculations with useMemo
+  const filteredData = useMemo(() => {
+    const filteredTransactions = filterByDateRange(transactions, startDate, endDate);
+    const filteredSales = filterByDateRange(salesRecords, startDate, endDate);
     
-    return transactionDate >= start && transactionDate <= end;
-  });
+    console.log('📈 DashboardControladoria - Dados recebidos:', {
+      transactions: transactions.length,
+      salesRecords: salesRecords.length,
+      filteredTransactions: filteredTransactions.length,
+      filteredSales: filteredSales.length,
+      startDate,
+      endDate,
+    });
 
-  // Filtrar vendas por período
-  const filteredSales = salesRecords.filter(sale => {
-    const [day, month, year] = sale.date.split('/');
-    const saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-    
-    return saleDate >= start && saleDate <= end;
-  });
+    return { filteredTransactions, filteredSales };
+  }, [transactions, salesRecords, startDate, endDate]);
 
-  // Calcular totais do período incluindo vendas
-  const salesIncome = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
-  const transactionIncome = filteredTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const totalIncome = salesIncome + transactionIncome;
-  
-  const totalExpense = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const profit = totalIncome - totalExpense;
-  const profitMargin = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : '0.0';
+  // Memoize heavy calculations
+  const totals = useMemo(() => {
+    return calculateTotals(filteredData.filteredTransactions, filteredData.filteredSales);
+  }, [filteredData]);
 
-  // Agrupar por mês para o gráfico (últimos 9 meses incluindo mês atual)
-  const currentMonth = today.getMonth(); // outubro = 9
-  const currentYear = today.getFullYear();
-  const monthlyData = Array.from({ length: 9 }, (_, i) => {
+  // Memoize monthly data calculation
+  const monthlyData = useMemo(() => {
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
     const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const monthIndex = (currentMonth - 8 + i + 12) % 12; // últimos 9 meses
-    const year = monthIndex > currentMonth ? currentYear - 1 : currentYear;
-    const month = monthIndex;
     
-    const monthTransactions = transactions.filter(t => {
-      const [day, m, y] = t.date.split('/');
-      return parseInt(y) === year && parseInt(m) - 1 === monthIndex;
-    });
+    return Array.from({ length: 9 }, (_, i) => {
+      const monthIndex = (currentMonth - 8 + i + 12) % 12;
+      const year = monthIndex > currentMonth ? currentYear - 1 : currentYear;
+      
+      const monthTransactions = transactions.filter(t => {
+        const [day, m, y] = t.date.split('/');
+        return parseInt(y) === year && parseInt(m) - 1 === monthIndex;
+      });
 
-    const monthSales = salesRecords.filter(sale => {
-      const [day, m, y] = sale.date.split('/');
-      return parseInt(y) === year && parseInt(m) - 1 === monthIndex;
+      const monthSales = salesRecords.filter(sale => {
+        const [day, m, y] = sale.date.split('/');
+        return parseInt(y) === year && parseInt(m) - 1 === monthIndex;
+      });
+      
+      const transactionIncome = monthTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const salesIncome = monthSales.reduce((sum, sale) => sum + sale.total, 0);
+      
+      const saidas = monthTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      return {
+        month: monthNames[monthIndex],
+        entradas: transactionIncome + salesIncome,
+        saidas,
+      };
     });
-    
-    const transactionIncome = monthTransactions
+  }, [transactions, salesRecords, today]);
+
+  // Memoize distribution calculations
+  const distributions = useMemo(() => {
+    const { filteredTransactions, filteredSales } = filteredData;
+    const { salesIncome, totalIncome, totalExpense } = totals;
+
+    // Distribuição de Entradas por categoria (incluindo vendas)
+    const incomeByCategory = filteredTransactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((acc, t) => {
+        acc[t.category] = (acc[t.category] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
 
-    const salesIncome = monthSales.reduce((sum, sale) => sum + sale.total, 0);
-    
-    const saidas = monthTransactions
+    // Adicionar vendas como categoria separada
+    if (salesIncome > 0) {
+      incomeByCategory['Vendas do Bar'] = salesIncome;
+    }
+
+    const incomeDistribution = Object.entries(incomeByCategory).map(([category, value]) => ({
+      category,
+      value,
+      percentage: totalIncome > 0 ? (value / totalIncome) * 100 : 0,
+    }));
+
+    // Distribuição de Saídas por categoria
+    const expenseByCategory = filteredTransactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    return {
-      month: monthNames[monthIndex],
-      entradas: transactionIncome + salesIncome,
-      saidas,
-    };
-  });
+      .reduce((acc, t) => {
+        acc[t.category] = (acc[t.category] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
 
-  // Distribuição de Entradas por categoria (incluindo vendas)
-  const incomeByCategory = filteredTransactions
-    .filter(t => t.type === 'income')
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    const expenseDistribution = Object.entries(expenseByCategory).map(([category, value]) => ({
+      category,
+      value,
+      percentage: totalExpense > 0 ? (value / totalExpense) * 100 : 0,
+    }));
 
-  // Adicionar vendas como categoria separada
-  if (salesIncome > 0) {
-    incomeByCategory['Vendas do Bar'] = salesIncome;
-  }
+    return { incomeDistribution, expenseDistribution };
+  }, [filteredData, totals]);
 
-  const incomeDistribution = Object.entries(incomeByCategory).map(([category, value]) => ({
-    category,
-    value,
-    percentage: totalIncome > 0 ? (value / totalIncome) * 100 : 0,
-  }));
-
-  // Distribuição de Saídas por categoria
-  const expenseByCategory = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
-
-  const expenseDistribution = Object.entries(expenseByCategory).map(([category, value]) => ({
-    category,
-    value,
-    percentage: totalExpense > 0 ? (value / totalExpense) * 100 : 0,
-  }));
+  // Memoized callbacks
+  const handleExport = useCallback(() => {
+    exportDashboardToExcel({
+      transactions: filteredData.filteredTransactions,
+      salesRecords: filteredData.filteredSales,
+      startDate,
+      endDate
+    });
+  }, [filteredData, startDate, endDate]);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -153,27 +189,32 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
               <Calendar className="w-4 h-4 text-slate-400" />
               <span className="text-sm text-slate-600">Período:</span>
             </div>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-36 h-9 text-sm"
-            />
+            <div className="flex flex-col">
+              <label htmlFor="start-date" className="sr-only">Data de início do período</label>
+              <Input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+                className="w-36 h-9 text-sm"
+                aria-label="Data de início do período"
+              />
+            </div>
             <span className="text-slate-400">até</span>
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-36 h-9 text-sm"
-            />
+            <div className="flex flex-col">
+              <label htmlFor="end-date" className="sr-only">Data de fim do período</label>
+              <Input
+                id="end-date"
+                type="date"
+                value={endDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+                className="w-36 h-9 text-sm"
+                aria-label="Data de fim do período"
+              />
+            </div>
             <button
               className="ml-4 flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow focus:ring-2 focus:ring-green-400"
-              onClick={() => exportDashboardToExcel({
-                transactions: filteredTransactions,
-                salesRecords: filteredSales,
-                startDate,
-                endDate
-              })}
+              onClick={handleExport}
               aria-label="Exportar para Excel"
               type="button"
             >
@@ -192,7 +233,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
               </div>
               <div>
                 <p className="text-sm text-slate-600">Faturamento Total</p>
-                <p className="text-2xl text-emerald-600">R$ {totalIncome.toLocaleString()}</p>
+                <p className="text-2xl text-emerald-600">R$ {totals.totalIncome.toLocaleString()}</p>
               </div>
             </div>
           </Card>
@@ -204,7 +245,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
               </div>
               <div>
                 <p className="text-sm text-slate-600">Despesas Total</p>
-                <p className="text-2xl text-rose-600">R$ {totalExpense.toLocaleString()}</p>
+                <p className="text-2xl text-rose-600">R$ {totals.totalExpense.toLocaleString()}</p>
               </div>
             </div>
           </Card>
@@ -216,7 +257,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
               </div>
               <div>
                 <p className="text-sm text-slate-600">Lucro Líquido</p>
-                <p className="text-2xl text-blue-600">R$ {profit.toLocaleString()}</p>
+                <p className="text-2xl text-blue-600">R$ {totals.profit.toLocaleString()}</p>
               </div>
             </div>
           </Card>
@@ -228,7 +269,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
               </div>
               <div>
                 <p className="text-sm text-slate-600">Margem de Lucro</p>
-                <p className="text-2xl text-purple-600">{profitMargin}%</p>
+                <p className="text-2xl text-purple-600">{totals.profitMargin}%</p>
               </div>
             </div>
           </Card>
@@ -260,7 +301,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
             
             {/* Chart */}
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={incomeDistribution} layout="vertical">
+              <BarChart data={distributions.incomeDistribution} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis type="number" stroke="#64748b" />
                 <YAxis dataKey="category" type="category" width={100} stroke="#64748b" />
@@ -274,7 +315,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
 
             {/* Percentages */}
             <div className="space-y-3 mt-6">
-              {incomeDistribution.map((item, index) => (
+              {distributions.incomeDistribution.map((item, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-slate-900 text-sm">{item.category}</p>
@@ -299,7 +340,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
             
             {/* Chart */}
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={expenseDistribution} layout="vertical">
+              <BarChart data={distributions.expenseDistribution} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis type="number" stroke="#64748b" />
                 <YAxis dataKey="category" type="category" width={100} stroke="#64748b" />
@@ -313,7 +354,7 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
 
             {/* Percentages */}
             <div className="space-y-3 mt-6">
-              {expenseDistribution.map((item, index) => (
+              {distributions.expenseDistribution.map((item, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-slate-900 text-sm">{item.category}</p>
@@ -335,4 +376,6 @@ export function DashboardControladoria({ transactions, salesRecords }: Dashboard
       </div>
     </div>
   );
-}
+});
+
+DashboardControladoria.displayName = 'DashboardControladoria';

@@ -23,7 +23,7 @@ export function ComandasList({ comandas, onBack, onNewComanda, onSelectComanda }
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 flex flex-col">
       <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+          <Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>

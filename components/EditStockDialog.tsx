@@ -1,10 +1,9 @@
-'use client'
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Product } from '@/types';
+import { Product } from '../types';
 import { toast } from 'sonner';
 
 interface EditStockDialogProps {
@@ -17,7 +16,7 @@ interface EditStockDialogProps {
 export function EditStockDialog({ open, onOpenChange, product, onUpdateStock }: EditStockDialogProps) {
   const [stock, setStock] = useState<string>('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!product) return;
@@ -73,7 +72,7 @@ export function EditStockDialog({ open, onOpenChange, product, onUpdateStock }: 
                   type="number"
                   min="0"
                   value={stock}
-                  onChange={(e) => setStock(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStock(e.target.value)}
                   placeholder="Digite a nova quantidade"
                   className="mt-2"
                   required

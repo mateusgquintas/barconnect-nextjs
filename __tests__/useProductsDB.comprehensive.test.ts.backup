@@ -1,0 +1,239 @@
+import { renderHook, act, waitFor } from '@testing-library/react';
+
+import { useProductsDB } from '../hooks/useProductsDB';// All mock function declarations must come before jest.mock calls
+
+import { toast } from 'sonner';
+
+// Chainable supabase mock with all methods
+
+// Mock supabase following the working pattern from useProductsDB.test.tsvar mockSelect = jest.fn().mockReturnThis();
+
+const mockFrom = jest.fn(() => ({var mockOrder = jest.fn().mockReturnThis();
+
+  select: jest.fn().mockReturnThis(),mockOrder.mockResolvedValue({
+
+  order: jest.fn().mockResolvedValue({  data: [
+
+    data: [    { id: '1', name: 'Coca', price: '5', stock: 10 },
+
+      { id: '1', name: 'Coca', price: '5', stock: 10 },    { id: '2', name: 'Fanta', price: 4, stock: 2, category: null }
+
+      { id: '2', name: 'Fanta', price: 4, stock: 2, category: null }  ],
+
+    ],  error: null
+
+    error: null});
+
+  }),var mockUpdate = jest.fn().mockReturnThis();
+
+  update: jest.fn().mockReturnThis(),var mockInsert = jest.fn().mockReturnThis();
+
+  insert: jest.fn().mockReturnThis(),var mockEq = jest.fn().mockResolvedValue({ error: null });
+
+  eq: jest.fn().mockResolvedValue({ error: null })var mockFrom = jest.fn(() => ({
+
+}));  select: mockSelect,
+
+  order: mockOrder,
+
+jest.mock('../lib/supabase', () => ({  update: mockUpdate,
+
+  supabase: {  insert: mockInsert,
+
+    from: mockFrom  eq: mockEq
+
+  }}));
+
+}));var mockInvalidateCache = jest.fn();
+
+
+
+jest.mock('sonner', () => ({
+
+  toast: {
+
+    success: jest.fn(),jest.mock('../lib/supabase', () => ({
+
+    error: jest.fn()  supabase: {
+
+  }    from: mockFrom
+
+}));  }
+
+}));
+
+const mockInvalidateCache = jest.fn();
+
+jest.mock('../lib/cache', () => ({jest.mock('sonner', () => ({
+
+  withCache: jest.fn((key, fn, opts) => fn()),  toast: {
+
+  invalidateCache: mockInvalidateCache    success: jest.fn(),
+
+}));    error: jest.fn()
+
+  }
+
+describe('useProductsDB comprehensive', () => {}));
+
+  beforeEach(() => {
+
+    jest.clearAllMocks();
+
+  });
+
+jest.mock('../lib/cache', () => ({
+
+  it('fetches products and parses price string', async () => {  withCache: jest.fn((key, fn, opts) => fn()),
+
+    const { result } = renderHook(() => useProductsDB());  invalidateCache: (...args) => mockInvalidateCache(...args)
+
+    await waitFor(() => expect(result.current.loading).toBe(false));}));
+
+    expect(result.current.products[0].price).toBe(5);
+
+    expect(result.current.products[1].category).toBeUndefined();import { renderHook, act, waitFor } from '@testing-library/react';
+
+  });import { useProductsDB } from '../hooks/useProductsDB';
+
+import { toast } from 'sonner';
+
+  it('handles fetch error', async () => {
+
+    const { withCache } = require('../lib/cache');describe('useProductsDB comprehensive', () => {
+
+    withCache.mockImplementationOnce(() => { throw new Error('fail'); });  beforeEach(() => {
+
+    const { result } = renderHook(() => useProductsDB());    jest.clearAllMocks();
+
+    await waitFor(() => expect(result.current.loading).toBe(false));  });
+
+    expect(toast.error).toHaveBeenCalledWith('Erro ao carregar produtos');
+
+  });  it('fetches products and parses price string', async () => {
+
+    const { result } = renderHook(() => useProductsDB());
+
+  it('updates stock, invalidates cache, triggers toast', async () => {    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const fromMock = mockFrom();    expect(result.current.products[0].price).toBe(5);
+
+    const { result } = renderHook(() => useProductsDB());    expect(result.current.products[1].category).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toBe(false));  });
+
+    await act(async () => {
+
+      await result.current.updateStock('1', 99);  it('handles fetch error', async () => {
+
+    });  const { withCache } = require('@/lib/cache');
+
+    expect(fromMock.update).toHaveBeenCalledWith({ stock: 99 });    withCache.mockImplementationOnce(() => { throw new Error('fail'); });
+
+    expect(fromMock.eq).toHaveBeenCalledWith('id', '1');    const { result } = renderHook(() => useProductsDB());
+
+    expect(mockInvalidateCache).toHaveBeenCalled();    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(toast.success).toHaveBeenCalledWith('Estoque atualizado');    expect(toast.error).toHaveBeenCalledWith('Erro ao carregar produtos');
+
+  });  });
+
+
+
+  it('handles updateStock error', async () => {  it('updates stock, invalidates cache, triggers toast', async () => {
+
+    const fromMock = mockFrom();    const { result } = renderHook(() => useProductsDB());
+
+    fromMock.eq.mockResolvedValueOnce({ error: { message: 'fail' } });    await waitFor(() => expect(result.current.loading).toBe(false));
+
+        await act(async () => {
+
+    const { result } = renderHook(() => useProductsDB());      await result.current.updateStock('1', 99);
+
+    await waitFor(() => expect(result.current.loading).toBe(false));    });
+
+    await act(async () => {    expect(mockUpdate).toHaveBeenCalledWith({ stock: 99 });
+
+      await result.current.updateStock('1', 99);    expect(mockEq).toHaveBeenCalledWith('id', '1');
+
+    });    expect(mockInvalidateCache).toHaveBeenCalled();
+
+    expect(toast.error).toHaveBeenCalledWith('Erro ao atualizar estoque');    expect(toast.success).toHaveBeenCalledWith('Estoque atualizado');
+
+  });  });
+
+
+
+  it('adds product, invalidates cache, triggers toast', async () => {  it('handles updateStock error', async () => {
+
+    const { result } = renderHook(() => useProductsDB());    // Configurar mock para retornar erro apenas para esta chamada
+
+    await waitFor(() => expect(result.current.loading).toBe(false));    mockEq.mockResolvedValueOnce({ error: { message: 'fail' } });
+
+    await act(async () => {    
+
+      await result.current.addProduct({ name: 'Sprite', price: 3, stock: 5 });    const { result } = renderHook(() => useProductsDB());
+
+    });    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockInvalidateCache).toHaveBeenCalled();    await act(async () => {
+
+    expect(toast.success).toHaveBeenCalledWith('Produto adicionado!');      await result.current.updateStock('1', 99);
+
+  });    });
+
+    expect(toast.error).toHaveBeenCalledWith('Erro ao atualizar estoque');
+
+  it('handles addProduct error', async () => {  });
+
+    const fromMock = mockFrom();
+
+    fromMock.eq.mockResolvedValueOnce({ error: { message: 'fail' } });  it('adds product, invalidates cache, triggers toast', async () => {
+
+        const { result } = renderHook(() => useProductsDB());
+
+    const { result } = renderHook(() => useProductsDB());    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));    await act(async () => {
+
+    await act(async () => {      await result.current.addProduct({ name: 'Sprite', price: 3, stock: 5 });
+
+      await result.current.addProduct({ name: 'Sprite', price: 3, stock: 5 });    });
+
+    });    expect(mockInvalidateCache).toHaveBeenCalled();
+
+    expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar produto');    expect(toast.success).toHaveBeenCalledWith('Produto adicionado!');
+
+  });  });
+
+
+
+  it('does not refetch if cache is valid', async () => {  it('handles addProduct error', async () => {
+
+    const { withCache } = require('../lib/cache');    // Configurar mock para retornar erro apenas para esta chamada
+
+    const spy = jest.fn().mockResolvedValue([]);    mockEq.mockResolvedValueOnce({ error: { message: 'fail' } });
+
+    withCache.mockImplementationOnce((key: any, fn: any, opts: any) => spy());    
+
+    const { result } = renderHook(() => useProductsDB());    const { result } = renderHook(() => useProductsDB());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(spy).toHaveBeenCalled();    await act(async () => {
+
+  });      await result.current.addProduct({ name: 'Sprite', price: 3, stock: 5 });
+
+});    });
+    expect(toast.error).toHaveBeenCalledWith('Erro ao adicionar produto');
+  });
+
+  it('does not refetch if cache is valid', async () => {
+  const { withCache } = require('@/lib/cache');
+    const spy = jest.fn().mockResolvedValue([]);
+    withCache.mockImplementationOnce((key: any, fn: any, opts: any) => spy());
+    const { result } = renderHook(() => useProductsDB());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalled();
+  });
+});

@@ -1,4 +1,84 @@
-# 🚀 Relatório de Otimização - BarConnect
+# Relatório de Otimização & Padronização
+
+Data: 2025-10-08
+
+## Objetivos Atendidos
+- Reposicionamento do export Excel no Financeiro (alinhado ao topo direito).
+- Inclusão de vendas em Entradas (conversão dinâmica para transações income).
+- Registro de vendas gera transação financeira com date/time consistentes.
+- Modal unificado de criação/edição de produto (`ProductFormDialog`).
+- Tela/Modal de informações avançadas de produto com gráfico (`ProductInfoDialog`).
+- Centralização de formatação monetária e parse (`utils/format.ts`).
+- Tipagem fortalecida (Products, Sales, Transactions) e remoção de `any` críticos.
+- Padronização de feedback (`utils/notify.ts`).
+- Memoizações em `Transactions` (filtros, agregações). 
+- Refatoração completa e correção estrutural do `Inventory` com acessibilidade.
+- Cache leve com TTL para Products (8s) e Transactions (7s) com invalidação.
+- Acessibilidade aprimorada (landmarks, captions, aria-live, roles, skip link, estados vazio/loading).
+- Documentação de contratos (`docs/CONTRACTS_*.md`).
+
+## Principais Mudanças Técnicas
+| Área | Antes | Depois |
+|------|-------|--------|
+| Formatação monetária | `toFixed` disperso | `formatCurrency` centralizado |
+| Vendas -> Financeiro | Não apareciam em Entradas | `salesToTransactions` gera income sintético |
+| Registro de venda | Lógica espalhada | `salesService.registerSale` unifica e cria transação |
+| Inventory | Estrutura quebrada após patches | Reescrito com subcomponente memo e tabela acessível |
+| Feedback | Toast direto em cada módulo | `notifySuccess/notifyError` (parcial; alguns pontos a migrar) |
+| Cache | Sem cache | `withCache` + invalidation regex |
+| Acessibilidade | Parcial | Landmarks, aria-live, roles, caption, skip link |
+
+## Detalhes de Implementação
+### Cache TTL
+`lib/cache.ts` implementa cache em memória simples com TTL e invalidation por regex. Hooks de produtos e transações aplicam `withCache(key)` e invalidam após mutações.
+
+### Inventory
+- Busca por nome ou categoria.
+- Subcomponente `InventoryRow` memoizado.
+- Alerta de estoque crítico (role="alert").
+- Mensagens de loading/empty com `aria-live`.
+
+### Transactions
+- Vendas agregadas com transações reais e re-ordenadas.
+- Landmarks (`<main>`), skip link, roles de lista, anúncios de contagem e estados vazios.
+
+### Contratos
+Arquivos markdown descrevem invariantes para auditoria futura e facilitam introdução de testes e refactors.
+
+## Qualidade & Riscos
+- Build: OK (sem erros de tipo nos arquivos alterados).
+- Risco: cache TTL simples não diferencia queries por filtro (estratégia atual só para listas completas). Se filtros server-side forem adicionados, a chave precisará ser parametrizada.
+- Ponto a migrar: alguns toasts diretos ainda em hooks legados (`toast.*`) → padronizar totalmente para `notify`.
+
+## Próximos Passos Sugeridos
+1. Testes unitários (utils/format, salesToTransactions, combineDateTimeBR) + smoke test de cache invalidation.
+2. Expandir `salesService` para lidar com sincronização offline (flag `synced`).
+3. Adicionar `source` em Transactions e `discount` em Sales.
+4. Migração restante de toasts para notify + logging estruturado (ex: console.groupCollapsed).
+5. Parametrizar chaves de cache por dependências (ex: filtros futuros) ou adotar SWR/React Query se complexidade crescer.
+6. Adicionar indicadores de foco visível customizados (outline util) para WCAG AA.
+
+## Checklist de Entrega
+- [x] Refatoração Inventory concluída
+- [x] Vendas em Entradas
+- [x] Export reposicionado
+- [x] Data/hora garantidos em transações de vendas
+- [x] Modal criar/editar produto unificado
+- [x] Info avançada produto com gráfico
+- [x] Formatação moeda central
+- [x] Tipagem principal consolidada
+- [x] Notificações padronizadas (parcialmente migradas)
+- [x] Memoizações chave
+- [x] Cache TTL leve
+- [x] Acessibilidade revisada (fase 1)
+- [x] Documentação de contratos
+- [ ] Testes utilitários (pendente)
+
+## Observações Finais
+Estrutura agora está mais modular e pronta para introduzir testes e futuras camadas (ex: autenticação, auditoria, offline sync robusto). Recomenda-se priorizar a inclusão de testes em utilidades e serviços antes de novas features críticas.
+
+---
+Relatório gerado automaticamente pelo processo de refatoração.# 🚀 Relatório de Otimização - BarConnect
 
 ## 📊 Resumo das Otimizações Realizadas
 

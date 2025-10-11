@@ -5,11 +5,10 @@ import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Receipt, Lock, User as UserIcon } from 'lucide-react';
 import { User } from '@/types/user';
-import { supabase } from '../lib/supabase';
-import { toast } from 'sonner';
+import { getToast } from '@/utils/notify';
 
 interface LoginScreenProps {
-  onLogin: (user: User) => void;
+  onLogin: (user: User) => void | Promise<void>;
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -20,22 +19,26 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Busca usuário na tabela 'users' do Supabase
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .eq('password_hash', password)
-      .single();
-
-    if (error || !data) {
-      toast.error('Usuário ou senha incorretos');
+    try {
+      // Delegar a lógica de autenticação ao onLogin fornecido pelo app
+      const user: User = {
+        id: 'temp',
+        name: username || 'Usuário',
+        username,
+        password,
+        role: 'operator',
+      };
+      const maybePromise = onLogin(user);
+      if (maybePromise && typeof (maybePromise as any).then === 'function') {
+        await (maybePromise as Promise<void>);
+      }
+  try { getToast()?.success?.(`Bem-vindo, ${user.name}!`); } catch {}
+    } catch (err) {
+      // Em caso de falha na autenticação, apenas exibir feedback
+  try { getToast()?.error?.('Usuário ou senha incorretos'); } catch {}
+    } finally {
       setIsLoading(false);
-      return;
     }
-    onLogin(data as User);
-    toast.success(`Bem-vindo, ${data.name}!`);
-    setIsLoading(false);
   };
 
   return (
@@ -49,16 +52,17 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           <p className="text-slate-600 text-center">Sistema de Gestão</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+  <form onSubmit={handleSubmit} className="space-y-4" role="form">
           <div>
-            <label className="text-slate-700 mb-2 block">Usuário</label>
+            <label htmlFor="username" className="text-slate-700 mb-2 block">Usuário</label>
             <div className="relative">
               <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input
+                id="username"
                 type="text"
                 placeholder="Digite seu usuário"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 className="pl-10"
                 required
               />
@@ -66,14 +70,15 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
 
           <div>
-            <label className="text-slate-700 mb-2 block">Senha</label>
+            <label htmlFor="password" className="text-slate-700 mb-2 block">Senha</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input
+                id="password"
                 type="password"
                 placeholder="Digite sua senha"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 className="pl-10"
                 required
               />

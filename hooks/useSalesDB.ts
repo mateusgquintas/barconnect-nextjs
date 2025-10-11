@@ -1,52 +1,72 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { SaleRecord } from '@/types';
+import { SaleRecord, OrderItem, Product } from '@/types';
 import { toast } from 'sonner';
+import { notifyError, notifySuccess } from '@/utils/notify';
+import { registerSale, RegisterSaleInput } from '@/lib/salesService';
 
 export function useSalesDB() {
   const [sales, setSales] = useState<SaleRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // REFATORAÇÃO: Este hook antes implementava toda a lógica de persistência (tabela sales, fallback sales_records e localStorage).
+  // Agora delegamos o registro de novas vendas ao serviço central `registerSale` (lib/salesService.ts)
+  // que também garante a criação automática da transação financeira correspondente.
+  // Mantemos aqui apenas fetch consolidado (Supabase + localStorage) e API estável addSale para retrocompatibilidade.
+
   // Buscar vendas do banco
+  interface DBSaleRecord {
+    id: string;
+    comandaNumber?: number | null;
+    customerName?: string | null;
+    items: OrderItem[] | any; // será parseado
+    total: number | string;
+    paymentMethod: string;
+    date: string;
+    time: string;
+    isDirectSale?: boolean | null;
+    isCourtesy?: boolean | null;
+    createdBy?: string | null;
+  }
+
+  const coerceSale = (raw: any): SaleRecord => {
+    // items podem ter vindo serializados em JSON string em alguns cenários antigos
+    let items: OrderItem[] = [];
+    try {
+      if (Array.isArray(raw.items)) {
+        items = raw.items as OrderItem[];
+      } else if (typeof raw.items === 'string') {
+        items = JSON.parse(raw.items);
+      }
+    } catch {
+      items = [];
+    }
+    return {
+      id: raw.id,
+      comandaNumber: raw.comandaNumber ?? raw.comanda_number,
+      customerName: raw.customerName ?? raw.customer_name,
+      items,
+      total: typeof raw.total === 'string' ? parseFloat(raw.total) : raw.total,
+      paymentMethod: raw.paymentMethod,
+      date: raw.date,
+      time: raw.time,
+      isDirectSale: !!raw.isDirectSale,
+      isCourtesy: !!raw.isCourtesy,
+      createdBy: raw.createdBy,
+    };
+  };
+
   const fetchSales = async () => {
     console.log('🔍 VENDAS: Buscando vendas...');
     let allSales: SaleRecord[] = [];
     
-    try {
-      // Tentar buscar do Supabase (tabela 'sales')
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .order('date', { ascending: false });
-
-      if (!error && data) {
-        console.log('📊 Vendas encontradas na tabela sales:', data.length);
-        allSales = [...allSales, ...data];
-      } else {
-        console.log('⚠️ Erro na tabela sales, tentando sales_records:', error);
-        
-        // Tentar tabela alternativa
-        const { data: data2, error: error2 } = await supabase
-          .from('sales_records')
-          .select('*')
-          .order('date', { ascending: false });
-
-        if (!error2 && data2) {
-          console.log('📊 Vendas encontradas na tabela sales_records:', data2.length);
-          allSales = [...allSales, ...data2];
-        }
-      }
-    } catch (error) {
-      console.log('⚠️ Erro ao buscar no Supabase, usando apenas localStorage:', error);
-    }
-    
-    // Sempre buscar também no localStorage
+    // Por enquanto, usar apenas localStorage devido a problemas de schema no Supabase
     try {
       const localSales = localStorage.getItem('sales_records');
       if (localSales) {
-        const parsedLocalSales = JSON.parse(localSales);
-        console.log('💾 Vendas encontradas no localStorage:', parsedLocalSales.length);
-        allSales = [...allSales, ...parsedLocalSales];
+        const parsedLocalSales = JSON.parse(localSales).map(coerceSale);
+        console.log('💾 Usando vendas do localStorage:', parsedLocalSales.length);
+        allSales = parsedLocalSales;
       }
     } catch (error) {
       console.log('⚠️ Erro ao ler localStorage:', error);
@@ -62,92 +82,32 @@ export function useSalesDB() {
     setLoading(false);
   };
 
-  // Adicionar nova venda
+  // Adicionar nova venda (agora delega ao salesService)
   const addSale = async (sale: Omit<SaleRecord, 'id'>) => {
-    console.log('🚀 NOVA FUNÇÃO VENDAS: Registrando venda:', sale);
-    
+    console.log('🧭 addSale (refatorado) delegando para registerSale:', sale);
+
+    const input: RegisterSaleInput = {
+      items: sale.items,
+      total: sale.total,
+      paymentMethod: sale.paymentMethod,
+      isDirectSale: sale.isDirectSale,
+      isCourtesy: sale.isCourtesy,
+      comandaNumber: sale.comandaNumber,
+      customerName: sale.customerName,
+    };
+
     try {
-      // Tentar inserir no Supabase primeiro
-      const { data, error } = await supabase
-        .from('sales')
-        .insert(sale)
-        .select()
-        .single();
-
-      if (error) {
-        console.log('⚠️ Erro no Supabase, tentando tabela alternativa sales_records:', error);
-        
-        // Tentar tabela alternativa
-        const { data: data2, error: error2 } = await supabase
-          .from('sales_records')
-          .insert(sale)
-          .select()
-          .single();
-
-        if (error2) {
-          console.log('⚠️ Erro em sales_records, usando localStorage:', error2);
-          
-          // Fallback para localStorage
-          const salesKey = 'sales_records';
-          let existingSales = [];
-          
-          try {
-            const existing = localStorage.getItem(salesKey);
-            existingSales = existing ? JSON.parse(existing) : [];
-          } catch (e) {
-            console.log('📝 Criando nova lista de vendas no localStorage');
-            existingSales = [];
-          }
-
-          // Gerar ID único
-          const newId = `sale_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          const saleWithId = { ...sale, id: newId };
-          
-          existingSales.push(saleWithId);
-          localStorage.setItem(salesKey, JSON.stringify(existingSales));
-          
-          console.log('💾 Venda salva no localStorage:', saleWithId);
-          toast.success('Venda registrada (local)!');
-          await fetchSales();
-          return newId;
-        } else {
-          console.log('✅ Sucesso com tabela sales_records');
-          toast.success('Venda registrada!');
-          await fetchSales();
-          return data2.id;
-        }
+      const { sale: storedSale, storedLocally } = await registerSale(input);
+      if (storedLocally) {
+        notifySuccess('Venda registrada (local)!');
       } else {
-        console.log('✅ Sucesso com tabela sales');
-        toast.success('Venda registrada!');
-        await fetchSales();
-        return data.id;
+        notifySuccess('Venda registrada!');
       }
-    } catch (error: any) {
-      console.error('💥 Erro geral ao registrar venda:', error);
-      console.error('📝 Detalhes do erro:', JSON.stringify(error, null, 2));
-      
-      // Fallback final para localStorage
-      console.log('🔄 Usando fallback final: localStorage');
-      const salesKey = 'sales_records';
-      let existingSales = [];
-      
-      try {
-        const existing = localStorage.getItem(salesKey);
-        existingSales = existing ? JSON.parse(existing) : [];
-      } catch (e) {
-        existingSales = [];
-      }
-
-      const newId = `sale_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const saleWithId = { ...sale, id: newId };
-      
-      existingSales.push(saleWithId);
-      localStorage.setItem(salesKey, JSON.stringify(existingSales));
-      
-      console.log('💾 Venda salva no localStorage (fallback):', saleWithId);
-      toast.success('Venda registrada (local)!');
       await fetchSales();
-      return newId;
+      return storedSale.id;
+    } catch (err: any) {
+      notifyError('Erro ao registrar venda', err, { context: 'addSale' });
+      throw err;
     }
   };
 

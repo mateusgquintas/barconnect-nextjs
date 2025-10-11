@@ -9,6 +9,50 @@ export default function TestDB() {
   const [comandaItems, setComandaItems] = useState<any[]>([]);
   const [tableInfo, setTableInfo] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  // Limpeza local
+  const handleClearLocal = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        // Importa função utilitária
+        // @ts-ignore
+        const { clearLocalSalesAndComandas } = require('@/lib/salesService');
+        clearLocalSalesAndComandas();
+        alert('Registros locais (vendas e comandas) limpos!');
+      } catch (e) {
+        alert('Erro ao limpar localStorage: ' + e);
+      }
+    }
+  };
+
+  // Limpeza completa para resolver problemas de duplicação
+  const handleClearAllLocal = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        // Limpar todos os dados relacionados ao sistema
+        const keysToRemove = [
+          'sales_records',
+          'transactions_pending',
+          // Comandas
+          ...Object.keys(localStorage).filter(k => k.startsWith('comanda_items_')),
+          // Outros dados cache
+          ...Object.keys(localStorage).filter(k => k.includes('cache'))
+        ];
+        
+        keysToRemove.forEach(key => {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            console.warn(`Erro ao remover ${key}:`, e);
+          }
+        });
+        
+        alert(`Limpeza completa realizada! Removidas ${keysToRemove.length} chaves do localStorage.`);
+        window.location.reload(); // Recarregar para garantir estado limpo
+      } catch (e) {
+        alert('Erro na limpeza completa: ' + e);
+      }
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -103,6 +147,20 @@ export default function TestDB() {
 
   return (
     <div className="p-8">
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={handleClearLocal}
+          className="px-4 py-2 rounded bg-red-100 text-red-700 border border-red-300 hover:bg-red-200"
+        >
+          Limpar registros locais (vendas e comandas)
+        </button>
+        <button
+          onClick={handleClearAllLocal}
+          className="px-4 py-2 rounded bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200 font-semibold"
+        >
+          🚨 LIMPEZA COMPLETA (resolver problemas)
+        </button>
+      </div>
       <h1 className="text-2xl font-bold mb-4">Teste de Conexão - Supabase</h1>
       
       {error && (

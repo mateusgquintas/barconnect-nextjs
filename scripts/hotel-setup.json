@@ -1,0 +1,20 @@
+{
+  "name": "barconnect-nextjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch --config jest.config.js",
+    "test:coverage": "jest --coverage --config jest.config.js",
+    "test:accessibility": "jest __tests__/accessibility.test.tsx --config jest.config.js",
+    "test:performance": "jest __tests__/performance.test.tsx --config jest.config.js",
+    "test:responsiveness": "jest __tests__/responsiveness.test.tsx --config jest.config.js",
+    "test:errors": "jest __tests__/errors.test.tsx --config jest.config.js",
+    "test:all": "npm run test:accessibility && npm run test:performance && npm run test:responsiveness && npm run test:errors",
+    "hotel:setup": "echo '🏨 Setting up for hotel testing...' && npm ci && npm run build && npm run test:all",
+    "hotel:dev": "echo '🏨 Starting hotel development mode...' && npm run dev",
+    "hotel:test": "echo '🏨 Running hotel-ready tests...' && npm run test:all && echo '✅ Ready for hotel deployment!'"
+  }
+}
