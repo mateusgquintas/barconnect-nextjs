@@ -29,20 +29,23 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy (Vercel)
 
-1) Configure as variáveis de ambiente no Vercel (Project Settings → Environment Variables):
+## Deploy (Vercel Git Integration)
+
+O deploy de produção é automático: todo push na branch `master` dispara build e publicação no Vercel.
+
+**Passos obrigatórios:**
+1. Configure as variáveis de ambiente no Vercel (Project Settings → Environment Variables):
 	- `NEXT_PUBLIC_SUPABASE_URL`
 	- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-2) Conecte este repositório ao Vercel e defina:
+2. Conecte este repositório ao Vercel e defina:
 	- Build Command: `npm run build`
 	- Output Directory: `.next`
-	- Node.js: 20+
+	- Node.js: 20
+3. O arquivo `.vercelignore` já garante que testes e rotas de debug não vão para produção.
+4. Após o build, teste as rotas principais e verifique se não há logs de erro no console do Vercel.
 
-3) Este repositório contém `.vercelignore` para evitar enviar testes/rotas de debug ao deploy.
-
-4) Após o build, teste as rotas principais e verifique se não há logs de erro no console do Vercel.
+**Não é necessário Deploy Hook nem workflow extra para deploy.**
 
 ## CI (GitHub Actions)
 
