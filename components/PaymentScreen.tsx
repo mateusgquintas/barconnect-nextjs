@@ -106,9 +106,10 @@ export function PaymentScreen({ title, items, onBack, onConfirmPayment, userRole
           <button
             onClick={() => selectedMethod && onConfirmPayment(selectedMethod)}
             disabled={!selectedMethod}
+            aria-label={selectedMethod ? 'Confirmar Pagamento' : 'Selecione uma forma de pagamento'}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed"
           >
-            {selectedMethod ? 'Confirmar Pagamento' : 'Selecione uma forma de pagamento'}
+            Confirmar Pagamento
           </button>
         </div>
       </div>

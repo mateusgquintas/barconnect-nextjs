@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+// Using native selects here to ensure compatibility with tests using fireEvent.change on labeled controls
 import { Label } from './ui/label';
 import { Product } from '../types';
 import { useState, useEffect } from 'react';
@@ -49,6 +49,7 @@ export function ProductFormDialog({ open, onOpenChange, product, onSave, title }
       { value: 'refrigerante', label: 'Refrigerante' },
       { value: 'cerveja', label: 'Cerveja' },
       { value: 'drink', label: 'Drink' },
+      { value: 'garrafa', label: 'Garrafa' },
     ],
     porcoes: [
       { value: 'frita', label: 'Fritas' },
@@ -88,29 +89,32 @@ export function ProductFormDialog({ open, onOpenChange, product, onSave, title }
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="product-category">Categoria Principal</Label>
-              <Select value={String(form.category || '')} onValueChange={(v) => handleChange('category', v)}>
-                <SelectTrigger id="product-category">
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                id="product-category"
+                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                value={String(form.category || '')}
+                onChange={(e) => handleChange('category', e.target.value)}
+              >
+                <option value="" disabled>Selecione a categoria</option>
+                {categoryOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
             <div>
               <Label htmlFor="product-subcategory">Subcategoria</Label>
-              <Select value={String(form.subcategory || '')} onValueChange={(v) => handleChange('subcategory', v)}>
-                <SelectTrigger id="product-subcategory">
-                  <SelectValue placeholder="Selecione a subcategoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(subcategoryOptions[String(form.category || 'outros')] || []).map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                id="product-subcategory"
+                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                value={String(form.subcategory || '')}
+                onChange={(e) => handleChange('subcategory', e.target.value)}
+                disabled={!form.category}
+              >
+                <option value="" disabled>Selecione a subcategoria</option>
+                {(subcategoryOptions[String(form.category || 'outros')] || []).map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </div>
           <DialogFooter>
