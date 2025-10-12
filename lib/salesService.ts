@@ -155,32 +155,35 @@ export async function registerSale(input: RegisterSaleInput): Promise<RegisterSa
   let transactionId: string | undefined;
   let storedLocally = false;
 
-  // Por enquanto, salvar apenas localmente devido a problemas de schema
-  console.log('⚠️ Salvando apenas no localStorage devido a problemas de schema no Supabase');
-  saleId = `sale_local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  storedLocally = true;
-
-  // Comentado temporariamente
-  // try {
-  //   saleId = await persistSaleToSupabase(baseSale);
-  // } catch (saleErr) {
-  //   console.warn('Erro ao persistir venda no Supabase, salvando localmente', saleErr);
-  //   saleId = `sale_local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  //   storedLocally = true;
-  // }
+  // Tentar salvar no Supabase primeiro
+  try {
+    console.log('💾 Tentando salvar venda no Supabase...');
+    saleId = await persistSaleToSupabase(baseSale);
+    console.log('✅ Venda salva no Supabase com ID:', saleId);
+  } catch (saleErr) {
+    console.warn('⚠️ Erro ao persistir venda no Supabase, salvando localmente:', saleErr);
+    saleId = `sale_local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    storedLocally = true;
+  }
 
   const sale: SaleRecord = { ...baseSale, id: saleId };
-  if (storedLocally) persistLocallySale(sale);
+  if (storedLocally) {
+    persistLocallySale(sale);
+  }
 
+  // Tentar registrar transação
   const txPayload = buildTransactionPayload(sale);
   try {
     if (!storedLocally) {
+      console.log('💰 Tentando salvar transação no Supabase...');
       transactionId = await persistTransactionToSupabase(txPayload);
+      console.log('✅ Transação salva no Supabase com ID:', transactionId);
     } else {
+      console.log('💾 Salvando transação localmente...');
       persistLocallyTransaction(txPayload);
     }
   } catch (txErr) {
-    console.warn('Erro ao registrar transação no Supabase, salvando localmente', txErr);
+    console.warn('⚠️ Erro ao registrar transação no Supabase, salvando localmente:', txErr);
     persistLocallyTransaction(txPayload);
     storedLocally = true;
   }

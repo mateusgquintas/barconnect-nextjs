@@ -204,22 +204,18 @@ describe('Testes de Erro e Limites', () => {
     it('Deve lidar com falha de conexão no login', async () => {
       const user = userEvent.setup();
       
-      // Mock que rejeita credenciais inválidas
-      const mockLoginWithValidation = jest.fn().mockImplementation((user) => {
-        if (user.username === 'usuario_falha') {
-          throw new Error('Credenciais inválidas');
-        }
-        return Promise.resolve();
-      });
+      // Mock que simula validação - o LoginScreen usa validateCredentials internamente
+      const mockOnLogin = jest.fn();
       
-      render(<LoginScreen onLogin={mockLoginWithValidation} />);
+      render(<LoginScreen onLogin={mockOnLogin} />);
       
       const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);
       const passwordInput = screen.getByPlaceholderText(/digite sua senha/i);
       const submitButton = screen.getByRole('button', { name: /entrar/i });
       
-      await user.type(usernameInput, 'usuario_falha');
-      await user.type(passwordInput, 'senha_falha');
+      // Usar credenciais que sabemos que são inválidas
+      await user.type(usernameInput, 'usuario_invalido');
+      await user.type(passwordInput, 'senha_errada');
       await user.click(submitButton);
       
       // Aguardar processamento e verificar que interface continua responsiva
@@ -228,13 +224,8 @@ describe('Testes de Erro e Limites', () => {
         expect(submitButton).not.toBeDisabled();
       });
       
-      // onLogin deve ter sido chamado mas deve ter falhado
-      expect(mockLoginWithValidation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          username: 'usuario_falha',
-          password: 'senha_falha'
-        })
-      );
+      // onLogin NÃO deve ter sido chamado com credenciais inválidas
+      expect(mockOnLogin).not.toHaveBeenCalled();
     });
 
     it('Deve lidar com timeouts em operações', async () => {

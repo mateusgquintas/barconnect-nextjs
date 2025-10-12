@@ -3,6 +3,42 @@ import { supabase } from '@/lib/supabase';
 import { Pilgrimage } from '@/types';
 import { toast } from 'sonner';
 
+// Helpers: DB <-> App mappers
+type DbPilgrimage = {
+  id: string;
+  name: string;
+  arrival_date: string; // date
+  departure_date: string; // date
+  number_of_people: number;
+  bus_group: string;
+  contact_phone?: string | null;
+  status?: 'active' | 'completed' | 'cancelled' | null;
+  notes?: string | null;
+};
+
+const fromDb = (row: DbPilgrimage): Pilgrimage => ({
+  id: row.id,
+  name: row.name,
+  arrivalDate: row.arrival_date,
+  departureDate: row.departure_date,
+  numberOfPeople: row.number_of_people ?? 0,
+  busGroup: row.bus_group,
+  contactPhone: row.contact_phone ?? undefined,
+  status: (row.status as any) ?? 'active',
+  notes: row.notes ?? undefined,
+});
+
+const toDb = (p: Omit<Pilgrimage, 'id'> | Partial<Pilgrimage>): Partial<DbPilgrimage> => ({
+  name: p.name!,
+  arrival_date: p.arrivalDate!,
+  departure_date: p.departureDate!,
+  number_of_people: p.numberOfPeople as any,
+  bus_group: p.busGroup!,
+  contact_phone: p.contactPhone ?? null,
+  status: (p.status as any) ?? 'active',
+  notes: p.notes ?? null,
+});
+
 export function usePilgrimagesDB() {
   const [pilgrimages, setPilgrimages] = useState<Pilgrimage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,16 +54,18 @@ export function usePilgrimagesDB() {
       toast.error('Erro ao buscar romarias');
       setPilgrimages([]);
     } else {
-      setPilgrimages(data || []);
+      const list = (data as DbPilgrimage[] | null)?.map(fromDb) ?? [];
+      setPilgrimages(list);
     }
     setLoading(false);
   };
 
   // Criar nova romaria
   const createPilgrimage = async (pilgrimage: Omit<Pilgrimage, 'id'>) => {
+    const payload = toDb(pilgrimage);
     const { data, error } = await supabase
       .from('pilgrimages')
-      .insert(pilgrimage)
+      .insert(payload)
       .select()
       .single();
     if (error) {
@@ -36,14 +74,15 @@ export function usePilgrimagesDB() {
     }
     toast.success('Romaria criada!');
     await fetchPilgrimages();
-    return data.id;
+    return (data as DbPilgrimage).id;
   };
 
   // Editar romaria
   const updatePilgrimage = async (id: string, updates: Partial<Pilgrimage>) => {
+    const payload = toDb(updates);
     const { error } = await supabase
       .from('pilgrimages')
-      .update(updates)
+      .update(payload)
       .eq('id', id);
     if (error) {
       toast.error('Erro ao atualizar romaria');

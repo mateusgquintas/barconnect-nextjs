@@ -11,6 +11,24 @@ export const createMockSupabaseClient = () => {
       { id: '6', name: 'Cerveja Lata', price: 5.00, stock: 985, category: 'bebidas' },
       { id: '7', name: 'Cerveja Premium', price: 8.00, stock: 987, category: 'bebidas' },
     ],
+    users: [
+      { 
+        id: 'user-1', 
+        username: 'admin', 
+        password: 'admin123', 
+        name: 'Administrador', 
+        role: 'admin',
+        created_at: new Date('2025-10-01T10:00:00').toISOString() 
+      },
+      { 
+        id: 'user-2', 
+        username: 'operador', 
+        password: 'operador123', 
+        name: 'Operador', 
+        role: 'operator',
+        created_at: new Date('2025-10-01T10:00:00').toISOString() 
+      },
+    ],
     transactions: [
       { 
         id: 't1', 
@@ -32,6 +50,17 @@ export const createMockSupabaseClient = () => {
         time: '10:15',
         created_at: new Date('2025-10-09T10:15:00').toISOString() 
       },
+    ],
+    sales: [
+      {
+        id: 's1',
+        total: 25.50,
+        paymentMethod: 'cash',
+        items: JSON.stringify([
+          { product: { id: '1', name: 'Coca-Cola 350ml', price: 5.50 }, quantity: 2 }
+        ]),
+        created_at: new Date('2025-10-11T15:30:00').toISOString()
+      }
     ],
     comandas: [
       { 
@@ -55,25 +84,56 @@ export const createMockSupabaseClient = () => {
 
   const createChain = (tableName: string) => {
     const chain: any = {
-      select: () => chain,
-        order: (column: string, options?: { ascending?: boolean }) => {
-          let data = [...(mockData as any)[tableName] || []];
+      _filters: [],
+      _selectColumns: '*',
+      
+      select: (columns?: string) => {
+        chain._selectColumns = columns || '*';
+        return chain;
+      },
+      
+      eq: (field: string, value: any) => {
+        chain._filters.push({ field, value, operator: 'eq' });
+        return chain;
+      },
+      
+      order: (column: string, options?: { ascending?: boolean }) => {
+        let data = [...(mockData as any)[tableName] || []];
         
-          if (column === 'created_at') {
-            data.sort((a, b) => {
-              const dateA = new Date(a.created_at).getTime();
-              const dateB = new Date(b.created_at).getTime();
-              return options?.ascending ? dateA - dateB : dateB - dateA;
-            });
+        // Aplicar filtros
+        chain._filters.forEach((filter: any) => {
+          if (filter.operator === 'eq') {
+            data = data.filter((item: any) => item[filter.field] === filter.value);
           }
+        });
+
+        if (column === 'created_at') {
+          data.sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+            return options?.ascending ? dateA - dateB : dateB - dateA;
+          });
+        }
+      
+        return Promise.resolve({ data, error: null });
+      },
+      
+      single: () => {
+        let data = [...(mockData as any)[tableName] || []];
         
-          // Certificar que retorna uma Promise
-          const result = Promise.resolve({ data, error: null });
-          // Adicionar métodos de chain caso necessário
-          (result as any).select = () => result;
-          (result as any).order = chain.order;
-          return result;
-        },
+        // Aplicar filtros
+        chain._filters.forEach((filter: any) => {
+          if (filter.operator === 'eq') {
+            data = data.filter((item: any) => item[filter.field] === filter.value);
+          }
+        });
+
+        const singleItem = data.length > 0 ? data[0] : null;
+        const error = singleItem ? null : { message: 'No rows returned' };
+        
+        return Promise.resolve({ data: singleItem, error });
+      },
+      
       insert: (payload: any) => {
         const newItem = Array.isArray(payload) ? payload[0] : payload;
         const id = `${tableName.slice(0, 3)}_${Date.now()}`;
@@ -91,6 +151,7 @@ export const createMockSupabaseClient = () => {
           })
         };
       },
+      
       update: (payload: any) => ({
         eq: (field: string, value: any) => {
           const items = (mockData as any)[tableName];
@@ -101,6 +162,7 @@ export const createMockSupabaseClient = () => {
           return Promise.resolve({ error: null });
         }
       }),
+      
       delete: () => ({
         eq: (field: string, value: any) => {
           const items = (mockData as any)[tableName];
@@ -110,19 +172,9 @@ export const createMockSupabaseClient = () => {
           }
           return Promise.resolve({ error: null });
         }
-      }),
-      eq: (field: string, value: any) => {
-        const items = (mockData as any)[tableName];
-        const data = items.filter((item: any) => item[field] === value);
-        return Promise.resolve({ data, error: null });
-      },
-      single: () => {
-        const items = (mockData as any)[tableName];
-        const data = items[0] || null;
-        return Promise.resolve({ data, error: null });
-      }
+      })
     };
-    
+
     return chain;
   };
 

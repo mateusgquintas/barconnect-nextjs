@@ -22,8 +22,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setIsLoading(true);
     
     try {
-      // Validar credenciais usando o serviço de autenticação
-      const validatedUser = validateCredentials(username, password);
+      // Validar credenciais usando o serviço de autenticação (busca do banco primeiro)
+      const validatedUser = await validateCredentials(username, password);
       
       if (!validatedUser) {
         try { getToast()?.error?.('Usuário ou senha incorretos'); } catch {}

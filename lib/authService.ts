@@ -1,8 +1,9 @@
-// Serviço de autenticação simplificado para desenvolvimento
+// Serviço de autenticação com integração Supabase
 import { User, UserRole } from '@/types/user';
+import { supabase } from './supabase';
 
-// Base de usuários para desenvolvimento (em produção seria uma API)
-const USERS_DB: Array<{ username: string; password: string; role: UserRole; name: string }> = [
+// Base de usuários para fallback (caso Supabase não esteja disponível)
+const FALLBACK_USERS_DB: Array<{ username: string; password: string; role: UserRole; name: string }> = [
   {
     username: 'admin',
     password: 'admin123',
@@ -11,14 +12,36 @@ const USERS_DB: Array<{ username: string; password: string; role: UserRole; name
   },
   {
     username: 'operador',
-    password: 'op123',
+    password: 'operador123',
     role: 'operator',
     name: 'Operador'
   }
 ];
 
-export const validateCredentials = (username: string, password: string): User | null => {
-  const user = USERS_DB.find(u => u.username === username && u.password === password);
+export const validateCredentials = async (username: string, password: string): Promise<User | null> => {
+  try {
+    // Primeiro, tentar buscar do Supabase
+    const { data, error } = await (supabase.from('users') as any)
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .single();
+
+    if (!error && data) {
+      return {
+        id: data.id || `user_${Date.now()}`,
+        name: data.name || data.username,
+        username: data.username,
+        password: data.password,
+        role: data.role as UserRole
+      };
+    }
+  } catch (dbError) {
+    console.log('📝 Banco indisponível, usando credenciais locais');
+  }
+
+  // Fallback para credenciais locais
+  const user = FALLBACK_USERS_DB.find(u => u.username === username && u.password === password);
   
   if (user) {
     return {
@@ -33,4 +56,4 @@ export const validateCredentials = (username: string, password: string): User | 
   return null;
 };
 
-export const getDefaultUsers = () => USERS_DB.map(({ password, ...user }) => user);
+export const getDefaultUsers = () => FALLBACK_USERS_DB.map(({ password, ...user }) => user);

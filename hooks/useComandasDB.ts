@@ -92,23 +92,41 @@ export function useComandasDB() {
   const createComanda = async (number: number | string, customerName?: string) => {
     try {
       const num = typeof number === 'string' ? parseInt(number) : number;
-      const { data, error } = await ((supabase.from('comandas') as any)
-        .insert({ number: num, customer_name: customerName ?? null, status: 'open' })
+      
+      console.log('🔄 Criando comanda:', { number: num, customerName });
+      
+      const { data, error } = await (supabase.from('comandas') as any)
+        .insert({ 
+          number: num, 
+          customer_name: customerName || null, 
+          status: 'open' 
+        })
         .select()
-        .single());
+        .single();
 
       if (error) {
-        console.error('Erro ao criar comanda:', error);
-        try { toast.error('Erro ao criar comanda'); } catch {}
+        console.error('❌ Erro detalhado ao criar comanda:', {
+          error,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        try { toast.error(`Erro ao criar comanda: ${error.message || 'Erro desconhecido'}`); } catch {}
         return null;
       }
 
-      try { toast.success(`Comanda #${num} criada`); } catch {}
+      console.log('✅ Comanda criada com sucesso:', data);
+      try { toast.success(`Comanda #${num} criada com sucesso`); } catch {}
       await fetchComandas();
-      return (data as any)?.id ?? null;
+      return data?.id ?? null;
     } catch (error: any) {
-      console.error('Erro ao criar comanda:', error);
-      try { toast.error('Erro ao criar comanda'); } catch {}
+      console.error('❌ Erro fatal ao criar comanda:', {
+        error,
+        message: error?.message,
+        stack: error?.stack
+      });
+      try { toast.error(`Erro fatal: ${error?.message || 'Erro desconhecido'}`); } catch {}
       return null;
     }
   };
@@ -177,12 +195,27 @@ export function useComandasDB() {
     }
   };
 
-  // Fechar comanda
-  const closeComanda = async (comandaId: string) => {
+  // Fechar comanda (usar novo processador)
+  const closeComanda = async (comandaId: string, paymentMethod?: string) => {
     try {
+      console.log('⚠️ ATENÇÃO: closeComanda chamado com método antigo');
+      console.log('💡 Use useSalesProcessor.closeComanda() para o fluxo completo');
+      
+      // Fallback: apenas atualizar status (para compatibilidade)
+      const { error } = await (supabase.from('comandas') as any)
+        .update({ status: 'closed' })
+        .eq('id', comandaId);
+      
+      if (error) {
+        console.error('Erro ao fechar comanda no Supabase:', error);
+        toast.error('Erro ao fechar comanda no servidor');
+        return;
+      }
+      
+      // Atualizar localStorage (fallback/offline)
       updateLocalComanda(comandaId, { status: 'closed' });
       await fetchComandas();
-      toast.success('Comanda fechada');
+      toast.success('Comanda fechada (método antigo)');
     } catch (error: any) {
       console.error('Erro ao fechar comanda:', error);
       toast.error('Erro ao fechar comanda');

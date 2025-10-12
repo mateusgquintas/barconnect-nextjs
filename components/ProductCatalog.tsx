@@ -123,6 +123,8 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
 
   const getProductBorderColor = (product: Product) => {
     switch (product.subcategory) {
+      case 'agua':
+        return 'border-l-4 border-l-blue-500';
       case 'drink':
         return 'border-l-4 border-l-purple-500';
       case 'cerveja':
@@ -144,6 +146,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
 
   const getSubcategoryLabel = (subcategory?: string) => {
     const labels: Record<string, string> = {
+      agua: 'Águas',
       drink: 'Drinks',
       cerveja: 'Cervejas',
       refrigerante: 'Bebidas',
@@ -157,6 +160,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
 
   const getSubcategoryColor = (subcategory?: string) => {
     const colors: Record<string, string> = {
+      agua: 'text-blue-600 bg-blue-50',
       drink: 'text-purple-600 bg-purple-50',
       cerveja: 'text-amber-600 bg-amber-50',
       refrigerante: 'text-blue-600 bg-blue-50',
@@ -170,7 +174,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
 
   // Ordem de subcategorias por categoria para layout consistente
   const subcategoryOrder: Record<string, string[]> = {
-    bebidas: ['cerveja', 'refrigerante', 'drink'],
+    bebidas: ['agua', 'cerveja', 'refrigerante', 'drink'],
     porcoes: ['frita', 'carne', 'mista'],
     almoco: ['executivo'],
     outros: [],
@@ -198,15 +202,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, productsByCategory.bebidas.length, productsByCategory.porcoes.length, productsByCategory.almoco.length]);
 
-  const Legend = () => (
-    <div className="flex flex-wrap gap-2 text-xs mb-4">
-      {['cerveja','refrigerante','drink','frita','carne','mista','executivo'].map(key => (
-        <span key={key} className={`px-2 py-1 rounded-full border border-slate-200 flex items-center gap-1 ${getSubcategoryColor(key)}`}>
-          <span className="font-medium">{getSubcategoryLabel(key)}</span>
-        </span>
-      ))}
-    </div>
-  );
+  // Legend removida para deixar apenas os destaques nos cards
 
   const handleAddCustomItem = () => {
     const price = parseFloat(customItemPrice);
@@ -246,10 +242,10 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           
           {/* Botões PDV melhorados */}
           {currentView === 'pdv' && (
-              <div className="flex flex-col sm:flex-row gap-3 ml-auto w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 ml-auto w-full sm:w-auto">
               <Button
                 size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow-md min-w-[160px] font-medium text-base"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow-md min-w-[160px] font-medium text-base"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('pdv:directSale', { detail: { source: 'button' } }));
@@ -261,7 +257,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
               </Button>
               <Button
                 size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow-md min-w-[160px] font-medium text-base"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow-md min-w-[160px] font-medium text-base"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('pdv:newComanda', { detail: { source: 'button' } }));
@@ -275,7 +271,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           )}
           
           {user?.role === 'admin' && currentView === 'inventory' && (
-            <Button className="gap-2 bg-purple-600 hover:bg-purple-700" onClick={openAddProductDialog}>
+            <Button variant="default" className="gap-2" onClick={openAddProductDialog}>
               <Plus className="w-4 h-4" /> Novo Produto
             </Button>
           )}
@@ -315,8 +311,9 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                       <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        className="flex-1 gap-2 bg-slate-900 hover:bg-slate-800"
+                      <Button
+                        className="flex-1 gap-2"
+                        variant="default"
                         onClick={() => onAddProduct(product)}
                         disabled={product.stock === 0}
                       >
@@ -354,7 +351,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
-            <Legend />
+            {/* Legend removida: subgrupos ficarão apenas como badges nos cards */}
             {(Object.keys(categoryLabels) as Category[]).map((cat) => (
               <TabsContent key={cat} value={cat} className="mt-0">
                 {cat === 'outros' ? (
@@ -365,7 +362,8 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                         Adicione um item com valor e observação customizados
                       </p>
                       <Button 
-                        className="w-full gap-2 bg-slate-900 hover:bg-slate-800"
+                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg gap-2"
+                        variant="default"
                         onClick={() => setShowCustomItemDialog(true)}
                       >
                         <Plus className="w-4 h-4" />
@@ -381,17 +379,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                         const filtered = filterProducts(group.products);
                         return (
                           <div key={group.subcategory}>
-                            {group.subcategory !== 'outros' && (
-                              <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getSubcategoryColor(group.subcategory)}`}>
-                                    {getSubcategoryLabel(group.subcategory)}
-                                  </span>
-                                  <span className="text-slate-400 text-xs">({filtered.length})</span>
-                                </h3>
-                                <div className="h-px bg-slate-200 flex-1 ml-4" />
-                              </div>
-                            )}
+                            {/* Cabeçalho de subgrupo removido; manter apenas badges nos cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                               {filtered.map((product: Product) => (
                                 <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
@@ -417,7 +405,8 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                                   </div>
                                   <div className="flex gap-2">
                                     <Button 
-                                      className="flex-1 gap-2 bg-slate-900 hover:bg-slate-800"
+                                      className="flex-1 gap-2"
+                                      variant="default"
                                       onClick={() => onAddProduct(product)}
                                       disabled={product.stock === 0}
                                     >

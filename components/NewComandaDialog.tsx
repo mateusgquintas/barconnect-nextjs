@@ -26,7 +26,9 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
     }
 
     onCreateComanda(number, customerName.trim() || undefined);
-  try { getToast()?.success?.('Comanda criada com sucesso'); } catch {}    // Reset form
+    try { getToast()?.success?.('Comanda criada com sucesso'); } catch {}
+    
+    // Reset form
     setComandaNumber('');
     setCustomerName('');
     setError('');

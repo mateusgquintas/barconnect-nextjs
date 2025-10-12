@@ -102,14 +102,14 @@ export function PaymentScreen({ title, items, onBack, onConfirmPayment, userRole
         </div>
         </div>
 
-        <div className="p-6 border-t border-slate-200">
-          <Button
+        <div className="p-6 border-t border-slate-200 bg-slate-50">
+          <button
             onClick={() => selectedMethod && onConfirmPayment(selectedMethod)}
             disabled={!selectedMethod}
-            className="w-full h-14 bg-slate-900 hover:bg-slate-800"
+            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed"
           >
-            Confirmar Pagamento
-          </Button>
+            {selectedMethod ? 'Confirmar Pagamento' : 'Selecione uma forma de pagamento'}
+          </button>
         </div>
       </div>
     </div>

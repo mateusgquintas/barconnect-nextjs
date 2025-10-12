@@ -87,13 +87,13 @@ export function ComandaDetail({ comanda, onRemoveItem, onCheckout }: ComandaDeta
       </ScrollArea>
 
       {comanda.items.length > 0 && (
-        <div className="p-6 border-t border-slate-200">
-          <Button 
+        <div className="p-6 border-t border-slate-200 bg-slate-50">
+          <button
             onClick={onCheckout}
-            className="w-full h-12 bg-slate-900 hover:bg-slate-800"
+            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"
           >
             Fechar Comanda - R$ {total.toFixed(2)}
-          </Button>
+          </button>
         </div>
       )}
     </div>

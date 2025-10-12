@@ -27,6 +27,7 @@ import { useComandasDB } from "@/hooks/useComandasDB";
 import { useTransactionsDB } from "@/hooks/useTransactionsDB";
 import { useSalesDB } from "@/hooks/useSalesDB";
 import { useStockManager } from "@/hooks/useStockManager";
+import { useSalesProcessor } from "@/hooks/useSalesProcessor";
 import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
 import { formatDate, formatTime } from "@/utils/calculations";
 import { registerSale } from '@/lib/salesService';
@@ -37,13 +38,16 @@ export default function Home() {
   const [dashboardView, setDashboardView] = useState<"bar" | "controladoria">("bar");
   
   // Hooks do Supabase
-  const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda } = useComandasDB();
+  const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda, refetch: refetchComandas } = useComandasDB();
   const { products } = useProductsDB();
   const { transactions, addTransaction, refetch: refetchTransactions } = useTransactionsDB();
   const { decreaseStock } = useStockManager();
   
   // Vendas agora usam Supabase
-  const { sales: salesRecords, addSale, loading: loadingSales } = useSalesDB();
+  const { sales: salesRecords, addSale, loading: loadingSales, fetchSales } = useSalesDB();
+  
+  // Novo processador de vendas unificado
+  const { processSale, closeComanda: closeComandaNew, processDirectSale, loading: processingSale } = useSalesProcessor();
   
   // Estados temporários
   const [selectedComandaId, setSelectedComandaId] = useState<string | null>(null);
@@ -185,7 +189,7 @@ export default function Home() {
 
   const handleConfirmPayment = async (method: PaymentMethod) => {
     // Evitar múltiplas execuções simultâneas
-    if (isProcessingPayment) {
+    if (isProcessingPayment || processingSale) {
       console.log('⚠️ Pagamento já está sendo processado, ignorando...');
       return;
     }
@@ -193,70 +197,48 @@ export default function Home() {
     setIsProcessingPayment(true);
     
     try {
-      const now = new Date();
-      const isCourtesy = method === "courtesy";
+      console.log('💳 Processando pagamento:', { method, isDirectSale, selectedComanda: !!selectedComanda });
 
-      if (isDirectSale) {
-        const total = directSaleItems.reduce(
-          (sum, item) => sum + item.product.price * item.quantity,
-          0,
+      if (isDirectSale && directSaleItems.length > 0) {
+        console.log('� Processando venda direta...');
+        const success = await processDirectSale(
+          directSaleItems,
+          method,
+          undefined // sem nome de cliente para venda direta
         );
-
-        // Reduzir estoque dos produtos vendidos
-        console.log('🔄 Atualizando estoque para venda direta...');
-        await decreaseStock(directSaleItems);
-
-        const saleRecordInput = {
-          items: [...directSaleItems],
-          total,
-          paymentMethod: method,
-          isDirectSale: true,
-          isCourtesy,
-        } as const;
-        
-        console.log('💾 Registrando venda direta...');
-        await registerSale(saleRecordInput);
-        
-        // Refrescar dados após venda
-        console.log('🔄 Atualizando transações...');
-        await refetchTransactions();
-
-        setDirectSaleItems([]);
-        setIsDirectSale(false);
-        toast.success(`Venda direta finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
-      } else if (selectedComandaId && selectedComanda) {
-        const total = selectedComanda.items.reduce(
-          (sum, item) => sum + item.product.price * item.quantity,
-          0,
-        );
-
-        // Reduzir estoque dos produtos vendidos
-        console.log('🔄 Atualizando estoque para comanda...');
-        await decreaseStock(selectedComanda.items);
-
-        const saleRecordInput2 = {
-          comandaNumber: selectedComanda.number,
-          customerName: selectedComanda.customerName,
-          items: [...selectedComanda.items],
-          total,
-          paymentMethod: method,
-          isDirectSale: false,
-          isCourtesy,
-        } as const;
-        
-        console.log('💾 Registrando venda da comanda...');
-        await registerSale(saleRecordInput2);
-        
-        // Refrescar dados após venda
-        console.log('🔄 Atualizando transações...');
-        await refetchTransactions();
-
-        console.log('🗂️ Fechando comanda...');
-        await closeComanda(selectedComandaId);
-        setSelectedComandaId(null);
-        toast.success(`Comanda #${selectedComanda.number} finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+        if (success) {
+          setDirectSaleItems([]);
+          setIsDirectSale(false);
+          setShowPayment(false);
+          // Atualizar dados
+          await Promise.all([
+            refetchTransactions(),
+            refetchComandas(),
+            fetchSales()
+          ]);
+          toast.success(`Venda direta finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+        } else {
+          toast.error('Erro ao processar venda direta');
+        }
+      } else if (selectedComanda && selectedComanda.items.length > 0) {
+        console.log('� Processando fechamento de comanda...');
+        const success = await closeComandaNew(selectedComanda, method);
+        if (success) {
+          setSelectedComandaId(null);
+          setShowPayment(false);
+          // Atualizar dados
+          await Promise.all([
+            refetchTransactions(),
+            refetchComandas(),
+            fetchSales()
+          ]);
+          toast.success(`Comanda #${selectedComanda.number} finalizada - ${PAYMENT_METHOD_NAMES[method]}`);
+        } else {
+          toast.error('Erro ao processar comanda');
+        }
+      } else {
+        toast.error('Nenhum item para processar');
       }
-      setShowPayment(false);
     } catch (error) {
       console.error('❌ Erro ao processar pagamento:', error);
       toast.error('Erro ao processar pagamento. Tente novamente.');

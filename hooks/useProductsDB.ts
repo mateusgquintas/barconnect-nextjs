@@ -67,15 +67,23 @@ export function useProductsDB() {
   // Adicionar produto
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
+      // Only send columns that exist in DB
+      const payload: Partial<DBProduct> = {
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        category: product.category ?? null,
+        subcategory: product.subcategory ?? null,
+      };
       const { error } = await supabase
         .from('products')
-        .insert([product]);
+        .insert([payload]);
       if (error) throw error;
       toast.success('Produto adicionado!');
       invalidateCache(/products:list/);
       await fetchProducts({ force: true });
     } catch (error: any) {
-      console.error('Erro ao adicionar produto:', error);
+      console.error('Erro ao adicionar produto:', error?.message || error);
       toast.error('Erro ao adicionar produto');
       // Não chama fetchProducts em caso de erro no insert
     }
@@ -84,16 +92,23 @@ export function useProductsDB() {
   // Editar produto
   const updateProduct = async (id: string, updates: Partial<Product>) => {
     try {
+      const payload: Partial<DBProduct> = {
+        name: updates.name,
+        price: updates.price,
+        stock: updates.stock,
+        category: updates.category ?? null,
+        subcategory: updates.subcategory ?? null,
+      };
       const { error } = await supabase
         .from('products')
-        .update(updates)
+        .update(payload)
         .eq('id', id);
       if (error) throw error;
   toast.success('Produto atualizado!');
   invalidateCache(/products:list/);
   await fetchProducts({ force: true });
     } catch (error: any) {
-      console.error('Erro ao atualizar produto:', error);
+      console.error('Erro ao atualizar produto:', error?.message || error);
       toast.error('Erro ao atualizar produto');
     }
   };

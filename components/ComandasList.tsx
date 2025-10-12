@@ -33,8 +33,10 @@ export function ComandasList({ comandas, onBack, onNewComanda, onSelectComanda }
         </div>
 
         <div className="mb-6">
-          <Button 
+          <Button
             onClick={onNewComanda}
+            size="lg"
+            variant="default"
             className="w-full h-14 gap-2"
           >
             <Plus className="w-5 h-5" />
