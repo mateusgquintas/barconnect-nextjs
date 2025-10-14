@@ -3,83 +3,49 @@
 import { useState, useEffect } from 'react';
 import { Comanda, OrderItem } from '@/types';
 import { toast } from 'sonner';
-import { getLocalComandas, saveLocalComandas, updateLocalComanda, deleteLocalComanda } from '@/lib/localComandas';
+// localComandas removido: agora tudo é Supabase
 import { supabase } from '@/lib/supabase';
 
 export function useComandasDB() {
   const [comandas, setComandas] = useState<Comanda[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Buscar comandas (Supabase + fallback para itens no localStorage)
+  // Buscar comandas e seus itens do Supabase
   const fetchComandas = async () => {
+    setLoading(true);
     try {
-      // garantir que o primeiro render mantenha loading=true
-      setLoading(true);
-
-      const { data, error } = await (supabase.from('comandas') as any)
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const { data: comandasData, error } = await supabase.from('comandas').select('*').order('created_at', { ascending: false });
       if (error) {
         console.error('Erro ao buscar comandas:', error);
-        try { toast.error('Erro ao carregar comandas'); } catch {}
+        toast.error('Erro ao carregar comandas');
         setComandas([]);
         return;
       }
-
-      const mapped: Comanda[] = (data || [])
-        .filter((row: any) => row.status === 'open')
-        .map((row: any) => {
-          const key = `comanda_items_${row.id}`;
-          let items: OrderItem[] = [];
-          try {
-            const raw = localStorage.getItem(key);
-            if (raw) {
-              const arr = JSON.parse(raw) as Array<{
-                product_id: string;
-                product_name: string;
-                product_price: number | string;
-                quantity: number;
-              }>;
-              items = arr.map((it) => ({
-                product: {
-                  id: it.product_id,
-                  name: it.product_name,
-                  price: Number(it.product_price),
-                  stock: 0,
-                  category: 'bar',
-                },
-                quantity: it.quantity,
-              }));
-            } else if (Array.isArray(row.comanda_items) && row.comanda_items.length) {
-              items = row.comanda_items.map((it: any) => ({
-                product: {
-                  id: it.product_id,
-                  name: it.product_name,
-                  price: Number(it.product_price),
-                  stock: 0,
-                  category: 'bar',
-                },
-                quantity: it.quantity,
-              }));
-            }
-          } catch (e) {
-            console.log('⚠️ Erro ao buscar itens do localStorage:', e as any);
-            items = [];
-          }
-
-          const comanda: Comanda = {
-            id: row.id,
-            number: Number(row.number),
-            customerName: row.customer_name ?? undefined,
-            items,
-            createdAt: new Date(row.created_at ?? Date.now()),
-            status: row.status,
-          };
-          return comanda;
-        });
-
-      setComandas(mapped);
+      const comandas = await Promise.all((comandasData || []).filter((row: any) => row.status === 'open').map(async (row: any) => {
+        const { data: itemsData, error: itemsError } = await supabase.from('comanda_items').select('*').eq('comanda_id', row.id);
+        if (itemsError) {
+          console.error('Erro ao buscar itens da comanda:', itemsError);
+        }
+        const items = (itemsData || []).map((it: any) => ({
+          product: {
+            id: it.product_id,
+            name: it.product_name,
+            price: Number(it.product_price),
+            stock: 0,
+            category: 'bar',
+          },
+          quantity: it.quantity,
+        }));
+        return {
+          id: row.id,
+          number: Number(row.number),
+          customerName: row.customer_name ?? undefined,
+          items,
+          createdAt: new Date(row.created_at ?? Date.now()),
+          status: row.status,
+        };
+      }));
+      setComandas(comandas);
     } catch (error: any) {
       console.error('Erro ao buscar comandas:', error);
       setComandas([]);
@@ -131,6 +97,7 @@ export function useComandasDB() {
   };
 
   // Adicionar item à comanda
+  // Adicionar item à comanda (Supabase)
   const addItemToComanda = async (
     comandaId: string,
     productId: string,
@@ -138,83 +105,100 @@ export function useComandasDB() {
     productPrice: number
   ) => {
     try {
-      console.log('➕ Adicionando item à comanda:', { comandaId, productId, productName });
-
-      const key = `comanda_items_${comandaId}`;
-      let itemsRaw: Array<{ product_id: string; product_name: string; product_price: number; quantity: number }>[] | any = [];
-      try {
-        const current = localStorage.getItem(key);
-        itemsRaw = current ? JSON.parse(current) : [];
-      } catch (e) {
-        console.log('📝 Criando nova lista de itens no localStorage');
-        itemsRaw = [];
+      console.log('🔄 Adicionando item à comanda:', { comandaId, productId, productName, productPrice });
+      
+      // Verifica se já existe, se sim, faz update na quantidade
+      const { data: existing, error: selectError } = await supabase
+        .from('comanda_items')
+        .select('*')
+        .eq('comanda_id', comandaId)
+        .eq('product_id', productId)
+        .maybeSingle();
+      
+      if (selectError) {
+        console.error('Erro ao verificar item existente:', selectError);
+        throw selectError;
       }
-
-      const idx = itemsRaw.findIndex((it: any) => it.product_id === productId);
-      if (idx >= 0) {
-        itemsRaw[idx].quantity += 1;
+      
+      if (existing) {
+        console.log('📝 Atualizando quantidade do item existente');
+        const { error: updateError } = await supabase
+          .from('comanda_items')
+          .update({ quantity: existing.quantity + 1 })
+          .eq('id', existing.id);
+        
+        if (updateError) {
+          console.error('Erro ao atualizar item:', updateError);
+          throw updateError;
+        }
       } else {
-        itemsRaw.push({
-          product_id: productId,
-          product_name: productName,
-          product_price: productPrice,
-          quantity: 1,
-        });
+        console.log('➕ Inserindo novo item');
+        const { error: insertError } = await supabase
+          .from('comanda_items')
+          .insert({
+            comanda_id: comandaId,
+            product_id: productId,
+            product_name: productName,
+            product_price: productPrice,
+            quantity: 1
+          });
+        
+        if (insertError) {
+          console.error('Erro ao inserir item:', insertError);
+          throw insertError;
+        }
       }
-
-      localStorage.setItem(key, JSON.stringify(itemsRaw));
-      try { toast.success(`${productName} adicionado`); } catch {}
+      
+      toast.success(`${productName} adicionado`);
       await fetchComandas();
       console.log('✅ Item adicionado com sucesso');
     } catch (error: any) {
-      console.error('Erro ao adicionar item:', error);
-      try { toast.error('Erro ao adicionar item à comanda'); } catch {}
+      console.error('❌ Erro ao adicionar item:', error);
+      toast.error(`Erro ao adicionar item: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
   // Remover item da comanda
+  // Remover item da comanda (Supabase)
   const removeItem = async (comandaId: string, productId: string) => {
     try {
-      const comandas = getLocalComandas();
-      const comandaIndex = comandas.findIndex(c => c.id === comandaId);
+      console.log('🗑️ Removendo item da comanda:', { comandaId, productId });
       
-      if (comandaIndex === -1) return;
-
-      const comanda = comandas[comandaIndex];
-      comanda.items = comanda.items.filter(item => item.product.id !== productId);
+      const { error } = await supabase
+        .from('comanda_items')
+        .delete()
+        .eq('comanda_id', comandaId)
+        .eq('product_id', productId);
       
-      comandas[comandaIndex] = comanda;
-      saveLocalComandas(comandas);
+      if (error) {
+        console.error('Erro ao remover item do Supabase:', error);
+        throw error;
+      }
       
-      await fetchComandas();
       toast.success('Item removido');
+      await fetchComandas();
+      console.log('✅ Item removido com sucesso');
     } catch (error: any) {
-      console.error('Erro ao remover item:', error);
-      toast.error('Erro ao remover item');
+      console.error('❌ Erro ao remover item:', error);
+      toast.error(`Erro ao remover item: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
   // Fechar comanda (usar novo processador)
   const closeComanda = async (comandaId: string, paymentMethod?: string) => {
     try {
-      console.log('⚠️ ATENÇÃO: closeComanda chamado com método antigo');
-      console.log('💡 Use useSalesProcessor.closeComanda() para o fluxo completo');
-      
-      // Fallback: apenas atualizar status (para compatibilidade)
+      console.log('⚠️ ATENÇÃO: closeComanda chamado');
+      // Atualizar status da comanda no Supabase
       const { error } = await (supabase.from('comandas') as any)
         .update({ status: 'closed' })
         .eq('id', comandaId);
-      
       if (error) {
         console.error('Erro ao fechar comanda no Supabase:', error);
         toast.error('Erro ao fechar comanda no servidor');
         return;
       }
-      
-      // Atualizar localStorage (fallback/offline)
-      updateLocalComanda(comandaId, { status: 'closed' });
       await fetchComandas();
-      toast.success('Comanda fechada (método antigo)');
+      toast.success('Comanda fechada');
     } catch (error: any) {
       console.error('Erro ao fechar comanda:', error);
       toast.error('Erro ao fechar comanda');
@@ -224,7 +208,15 @@ export function useComandasDB() {
   // Deletar comanda
   const deleteComanda = async (comandaId: string) => {
     try {
-      deleteLocalComanda(comandaId);
+      // Remove a comanda do Supabase (e itens via cascade)
+      const { error } = await (supabase.from('comandas') as any)
+        .delete()
+        .eq('id', comandaId);
+      if (error) {
+        console.error('Erro ao deletar comanda no Supabase:', error);
+        toast.error('Erro ao deletar comanda no servidor');
+        return;
+      }
       await fetchComandas();
       toast.success('Comanda removida');
     } catch (error: any) {

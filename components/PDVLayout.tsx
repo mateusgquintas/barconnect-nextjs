@@ -8,6 +8,7 @@ import { MobileTrigger } from '@/components/MobileTrigger';
 import { PanelIndicator } from '@/components/PanelIndicator';
 import { ComandaSidebar } from '@/components/ComandaSidebar';
 import { ComandaDetail } from '@/components/ComandaDetail';
+import { Button } from '@/components/ui/button';
 import ProductCatalog from '@/components/ProductCatalog';
 import { Comanda, OrderItem } from '@/types';
 import { UserRole } from '@/types/user';
@@ -119,7 +120,7 @@ export function PDVLayout({
 
       {/* Painel direito: Fixo quando há conteúdo */}
       {isRightPanelFixed && hasRightPanelContent ? (
-        <div className="w-80 bg-white border-l border-slate-200 shadow-lg flex-shrink-0 flex flex-col relative">
+  <div className="w-80 bg-white border-l border-slate-200 shadow-lg flex-shrink-0 flex flex-col relative">
           {/* Botão para esconder painel */}
           <div className="absolute top-2 left-2 z-10">
             <button
@@ -211,74 +212,78 @@ function DirectSalePanel({
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header com total */}
-      <div className="px-6 py-4 border-b border-slate-200 flex-shrink-0">
-        <div className="flex items-baseline justify-between">
+    <div className="flex flex-col h-full w-full px-2">
+      <div className="w-full flex flex-col h-full">
+        {/* Header simples */}
+        <div className="px-2 py-4 border-b border-slate-200 flex-shrink-0">
           <div>
             <h2 className="text-slate-900">Venda Direta</h2>
-            <p className="text-sm text-slate-500 mt-1">Sem comanda</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-slate-500">Total</p>
-            <p className="text-2xl text-slate-900">R$ {total.toFixed(2)}</p>
+            <p className="text-sm text-slate-500 mt-1">{items.length} item(ns)</p>
           </div>
         </div>
-      </div>
 
-      {/* Lista de itens */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
-        {items.length === 0 ? (
-          <div className="py-12 text-center text-slate-400">
-            <p>Nenhum item adicionado</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <div key={item.product.id} className="p-4 border border-slate-200 rounded-lg">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="text-slate-600 text-sm mb-1">
-                      {item.quantity}x {item.product.name}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-slate-900">R$ {(item.product.price * item.quantity).toFixed(2)}</p>
-                    <button
-                      onClick={() => onRemoveItem(item.product.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
+        {/* Lista de itens */}
+        <div className="flex-1 overflow-y-auto px-2 py-4 min-h-0">
+          {items.length === 0 ? (
+            <div className="py-12 text-center text-slate-400">
+              <p>Nenhum item adicionado</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {items.map((item) => (
+                <div key={item.product.id} className="p-4 border border-slate-200 rounded-lg">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-slate-600 text-sm mb-1">
+                        {item.quantity}x {item.product.name}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <p className="text-slate-900">R$ {(item.product.price * item.quantity).toFixed(2)}</p>
+                      <button
+                        onClick={() => onRemoveItem(item.product.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Actions - igual ao botão da comanda */}
+        {items.length > 0 && (
+          <div className="border-t bg-white/80 backdrop-blur pt-4 space-y-4 pb-4">
+            <div className="flex items-center justify-between px-2">
+              <h3>Total</h3>
+              <p className="text-3xl">R$ {total.toFixed(2)}</p>
+            </div>
+            <button
+              onClick={onFinalize}
+              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"
+            >
+              Finalizar Venda - R$ {total.toFixed(2)}
+            </button>
           </div>
         )}
-      </div>
-
-      {/* Actions */}
-      <div className="px-6 py-4 border-t border-slate-200 space-y-3 flex-shrink-0">
-        <button
-          onClick={onFinalize}
-          disabled={items.length === 0}
-          className="w-full h-12 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:text-slate-400 text-white rounded-lg font-medium transition-colors"
-        >
-          Finalizar Venda
-        </button>
-        <button
-          onClick={onCancel}
-          className="w-full h-10 text-slate-600 hover:text-slate-800 transition-colors"
-        >
-          Cancelar
-        </button>
+        {/* Botão cancelar sempre visível */}
+        <div className="px-2 pb-4">
+          <button
+            onClick={onCancel}
+            className="w-full h-10 text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   );
