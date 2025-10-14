@@ -7,7 +7,6 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Comanda } from '@/types';
-import { ScrollArea } from './ui/scroll-area';
 import { UserRole } from '@/types/user';
 
 interface ComandaSidebarProps {
@@ -41,8 +40,8 @@ export function ComandaSidebar({
   };
 
   return (
-    <div className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col">
-      <div className="p-4 border-b border-slate-200">
+    <div className="flex flex-col h-full bg-slate-50">
+      <div className="p-4 border-b border-slate-200 flex-shrink-0">
         <h2 className="text-slate-900">Comandas Abertas</h2>
         <p className="text-sm text-slate-500">{openComandas.length} ativa(s)</p>
         <Input
@@ -55,7 +54,7 @@ export function ComandaSidebar({
         />
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="p-3 space-y-2">
           {openComandas.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-sm">
@@ -119,7 +118,7 @@ export function ComandaSidebar({
             })
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

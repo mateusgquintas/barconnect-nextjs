@@ -363,16 +363,28 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
               <TabsContent key={cat} value={cat} className="mt-0">
                 {cat === 'outros' ? (
                   <div className="space-y-6">
-                    {/* Botão de item personalizado no topo */}
+                    {/* Card de item personalizado no topo */}
                     <div className="mb-6">
-                      <Button 
-                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg gap-3 font-medium text-base shadow-sm transition-all duration-200 hover:shadow-md"
-                        variant="default"
-                        onClick={() => setShowCustomItemDialog(true)}
-                      >
-                        <Plus className="w-5 h-5" />
-                        Adicionar Item Personalizado
-                      </Button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <Card
+                          className="p-4 flex flex-col cursor-pointer border border-slate-300 bg-white rounded-lg shadow-sm hover:border-blue-500 hover:shadow-md transition-all duration-150 min-h-[120px]"
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Adicionar Item Personalizado"
+                          onClick={() => setShowCustomItemDialog(true)}
+                          onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setShowCustomItemDialog(true)}
+                        >
+                          <div className="flex-1 mb-3 flex items-start justify-between">
+                            <div>
+                              <h4 className="text-slate-900 flex items-center gap-2">
+                                <Plus className="w-5 h-5 text-blue-600" />
+                                Adicionar Item Personalizado
+                              </h4>
+                              <span className="text-xs text-blue-500 mt-1 block">Defina nome e preço na hora</span>
+                            </div>
+                          </div>
+                        </Card>
+                      </div>
                     </div>
 
                     {/* Produtos cadastrados na categoria "outros" */}

@@ -3,7 +3,6 @@
 import { Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { ScrollArea } from './ui/scroll-area';
 import { Comanda } from '@/types';
 
 interface ComandaDetailProps {
@@ -32,7 +31,7 @@ export function ComandaDetail({ comanda, onRemoveItem, onCheckout }: ComandaDeta
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="px-6 py-4 border-b border-slate-200">
+      <div className="px-6 py-4 border-b border-slate-200 flex-shrink-0">
         <div className="flex items-baseline justify-between">
           <div>
             <h2 className="text-slate-900">Comanda #{comanda.number}</h2>
@@ -47,11 +46,11 @@ export function ComandaDetail({ comanda, onRemoveItem, onCheckout }: ComandaDeta
         </div>
       </div>
 
-      <div className="px-6 py-4 border-b border-slate-200">
+      <div className="px-6 py-4 border-b border-slate-200 flex-shrink-0">
         <h3 className="text-slate-700 mb-3">Itens da Comanda</h3>
       </div>
 
-      <ScrollArea className="flex-1 px-6">
+      <div className="flex-1 overflow-y-auto px-6 min-h-0">
         {comanda.items.length === 0 ? (
           <div className="py-12 text-center text-slate-400">
             <p>Nenhum item adicionado</p>
@@ -84,10 +83,10 @@ export function ComandaDetail({ comanda, onRemoveItem, onCheckout }: ComandaDeta
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {comanda.items.length > 0 && (
-        <div className="p-6 border-t border-slate-200 bg-slate-50">
+        <div className="p-6 border-t border-slate-200 bg-slate-50 flex-shrink-0">
           <button
             onClick={onCheckout}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"

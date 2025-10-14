@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
+import { SidePanelsProvider, useSidePanels } from "@/contexts/SidePanelsContext";
 import { Header, PageView } from "@/components/Header";
 import { ComandaSidebar } from "@/components/ComandaSidebar";
 import { ComandaDetail } from "@/components/ComandaDetail";
@@ -15,6 +16,10 @@ import { HotelPilgrimages } from "@/components/HotelPilgrimages";
 import { Inventory } from "@/components/Inventory";
 import { Transactions } from "@/components/Transactions";
 import { LoginScreen } from "@/components/LoginScreen";
+import { ResponsiveDrawer } from "@/components/ResponsiveDrawer";
+import { HoverZone, SidePanelHoverHandler } from "@/components/HoverZone";
+import { MobileTrigger } from "@/components/MobileTrigger";
+import { PDVLayout } from "@/components/PDVLayout";
 import {
   OrderItem,
   PaymentMethod,
@@ -328,138 +333,32 @@ export default function Home() {
       default:
         return (
           <ProtectedRoute allowedRoles={["admin", "operator"]}>
-            {/* ...existing code for PDV... */}
-            <div className="flex-1 flex overflow-hidden min-h-0">
-              <ComandaSidebar
-                comandas={comandas}
-                selectedComandaId={selectedComandaId}
-                onSelectComanda={handleSelectComanda}
-                onCloseComanda={handleCloseComanda}
-                userRole={currentUser.role}
-              />
-
-              <div className="flex-1 flex overflow-hidden min-h-0">
-                <div className="flex-1 bg-white overflow-hidden min-h-0">
-                  <ProductCatalog onAddProduct={handleAddProduct} currentView={currentView} />
-                </div>
-
-                <div className="w-96 border-l border-slate-200 overflow-hidden min-h-0">
-                  {isDirectSale ? (
-                    <div className="flex flex-col h-full bg-white">
-                      <div className="px-6 py-4 border-b border-slate-200">
-                        <div className="flex items-baseline justify-between">
-                          <div>
-                            <h2 className="text-slate-900">Venda Direta</h2>
-                            <p className="text-sm text-slate-500 mt-1">Sem comanda</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-slate-500">Total</p>
-                            <p className="text-2xl text-slate-900">
-                              R${" "}
-                              {directSaleItems
-                                .reduce(
-                                  (sum, item) =>
-                                    sum + item.product.price * item.quantity,
-                                  0,
-                                )
-                                .toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="px-6 py-4 border-b border-slate-200">
-                        <h3 className="text-slate-700 mb-3">Itens</h3>
-                      </div>
-
-                      <div className="flex-1 overflow-y-auto px-6">
-                        {directSaleItems.length === 0 ? (
-                          <div className="py-12 text-center text-slate-400">
-                            <p>Nenhum item adicionado</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2 py-4">
-                            {directSaleItems.map((item) => (
-                              <div
-                                key={item.product.id}
-                                className="p-4 border border-slate-200 rounded-lg"
-                              >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1">
-                                    <p className="text-slate-600 text-sm mb-1">
-                                      {item.quantity}x {item.product.name}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <p className="text-slate-900">
-                                      R${" "}
-                                      {(item.product.price * item.quantity).toFixed(
-                                        2,
-                                      )}
-                                    </p>
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveItem(item.product.id)
-                                      }
-                                      className="text-slate-400 hover:text-red-600"
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {directSaleItems.length > 0 && (
-                        <div className="p-6 border-t border-slate-200">
-                          <button
-                            onClick={handleCheckout}
-                            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors"
-                          >
-                            Finalizar Venda - R${" "}
-                            {directSaleItems
-                              .reduce(
-                                (sum, item) =>
-                                  sum + item.product.price * item.quantity,
-                                0,
-                              )
-                              .toFixed(2)}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <ComandaDetail
-                      comanda={selectedComanda}
-                      onRemoveItem={handleRemoveItem}
-                      onCheckout={handleCheckout}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
+            <PDVLayout
+              comandas={comandas}
+              selectedComandaId={selectedComandaId}
+              onSelectComanda={handleSelectComanda}
+              onCloseComanda={handleCloseComanda}
+              onAddProduct={handleAddProduct}
+              isDirectSale={isDirectSale}
+              directSaleItems={directSaleItems}
+              onRemoveDirectSaleItem={handleRemoveItem}
+              onUpdateDirectSaleQuantity={() => {}} // TODO: implementar
+              onFinalizeSale={handleCheckout}
+              onCancelDirectSale={() => {}} // TODO: implementar
+              selectedComanda={selectedComanda}
+              onRemoveItemFromComanda={handleRemoveItem}
+              onCheckout={handleCheckout}
+              currentView={currentView}
+              userRole={currentUser.role}
+            />
           </ProtectedRoute>
         );
     }
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-100">
+    <SidePanelsProvider>
+      <div className="h-screen flex flex-col bg-slate-100">
       <Header
         onNewComanda={handleNewComanda}
         onDirectSale={handleDirectSale}
@@ -491,5 +390,6 @@ export default function Home() {
         onCreateComanda={handleCreateComanda}
       />
       </div>
+    </SidePanelsProvider>
   );
 }
