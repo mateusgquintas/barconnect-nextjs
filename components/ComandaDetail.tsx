@@ -5,13 +5,16 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Comanda } from '@/types';
 
+import { UserRole } from '@/types/user';
+
 interface ComandaDetailProps {
   comanda: Comanda | null;
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
+  userRole: UserRole;
 }
 
-export function ComandaDetail({ comanda, onRemoveItem, onCheckout }: ComandaDetailProps) {
+export function ComandaDetail({ comanda, onRemoveItem, onCheckout, userRole }: ComandaDetailProps) {
   if (!comanda) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -73,7 +76,9 @@ export function ComandaDetail({ comanda, onRemoveItem, onCheckout }: ComandaDeta
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-slate-400 hover:text-red-600"
-                      onClick={() => onRemoveItem(item.product.id)}
+                      onClick={() => userRole === 'admin' && onRemoveItem(item.product.id)}
+                      disabled={userRole !== 'admin'}
+                      title={userRole !== 'admin' ? 'Apenas administradores podem remover itens' : 'Remover item'}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

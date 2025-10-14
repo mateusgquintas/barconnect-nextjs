@@ -1,6 +1,6 @@
 'use client'
 
-import { Receipt, ShoppingCart, Plus, LayoutDashboard, Package, TrendingUpDown, ShoppingBag, LogOut, User as UserIcon, Hotel as HotelIcon, ChevronDown } from 'lucide-react';
+import { Receipt, ShoppingCart, Plus, LayoutDashboard, Package, TrendingUpDown, ShoppingBag, LogOut, User as UserIcon, Hotel as HotelIcon, ChevronDown, Zap } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { UserRole } from '@/types/user';
@@ -11,6 +11,7 @@ export type PageView = 'pdv' | 'dashboard' | 'hotel' | 'hotel-pilgrimages' | 'in
 interface HeaderProps {
   onNewComanda: () => void;
   onDirectSale: () => void;
+  onQuickComanda?: () => void;
   currentView: PageView;
   onViewChange: (view: PageView) => void;
   dashboardView: 'bar' | 'controladoria';
@@ -20,7 +21,7 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
-export function Header({ onNewComanda, onDirectSale, currentView, onViewChange, dashboardView, onDashboardViewChange, userRole, userName, onLogout }: HeaderProps) {
+export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView, onViewChange, dashboardView, onDashboardViewChange, userRole, userName, onLogout }: HeaderProps) {
   const permissions = usePermissions();
   
   const allNavItems = [

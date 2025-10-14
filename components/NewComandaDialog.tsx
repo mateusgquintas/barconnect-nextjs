@@ -26,7 +26,6 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
     }
 
     onCreateComanda(number, customerName.trim() || undefined);
-    try { getToast()?.success?.('Comanda criada com sucesso'); } catch {}
     
     // Reset form
     setComandaNumber('');
@@ -48,7 +47,7 @@ export function NewComandaDialog({ open, onOpenChange, onCreateComanda }: NewCom
         <DialogHeader>
           <DialogTitle>Nova Comanda</DialogTitle>
           <DialogDescription>
-            Preencha os dados da comanda
+            Preencha os dados da comanda. Se o número já existir, ela será selecionada automaticamente.
           </DialogDescription>
         </DialogHeader>
         

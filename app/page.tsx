@@ -72,17 +72,33 @@ export default function Home() {
     comandaNumber: number,
     customerName?: string,
   ) => {
-    const exists = comandas.some((c) => c.number === comandaNumber);
-    if (exists) {
-      toast.error(`Comanda #${comandaNumber} já existe`);
+    // Verificar se já existe uma comanda com esse número
+    const existingComanda = comandas.find((c) => c.number === comandaNumber && c.status === 'open');
+    
+    if (existingComanda) {
+      // Auto-selecionar a comanda existente ao invés de dar erro
+      setSelectedComandaId(existingComanda.id);
+      setIsDirectSale(false);
+      toast.info(`Comanda #${comandaNumber} já existe. Selecionada automaticamente para adicionar itens.`);
       return;
     }
 
-  const comandaId = await createComanda(String(comandaNumber), customerName || "");
+    // Criar nova comanda
+    const comandaId = await createComanda(String(comandaNumber), customerName || "");
     if (comandaId) {
+      // Auto-selecionar a comanda recém-criada
       setSelectedComandaId(comandaId);
       setIsDirectSale(false);
+      toast.success(`Comanda #${comandaNumber} criada e selecionada automaticamente.`);
     }
+  };
+
+  const handleQuickComanda = async () => {
+    // Gerar próximo número disponível
+    const maxNumber = comandas.reduce((max, comanda) => Math.max(max, comanda.number), 0);
+    const nextNumber = maxNumber + 1;
+    
+    await handleCreateComanda(nextNumber);
   };
 
   const handleDirectSale = () => {
@@ -98,13 +114,11 @@ export default function Home() {
   };
 
   const handleCloseComanda = async (comandaId: string) => {
-    const comanda = comandas.find((c) => c.id === comandaId);
-    if (comanda && comanda.items.length > 0) {
-      toast.error("Finalize o pagamento antes de fechar a comanda");
+    if (!currentUser || currentUser.role !== 'admin') {
+      toast.error('Apenas administradores podem fechar comandas.');
       return;
     }
-
-    await deleteComanda(comandaId);
+    await closeComanda(comandaId);
     if (selectedComandaId === comandaId) {
       setSelectedComandaId(null);
     }
@@ -362,6 +376,7 @@ export default function Home() {
       <Header
         onNewComanda={handleNewComanda}
         onDirectSale={handleDirectSale}
+        onQuickComanda={handleQuickComanda}
         currentView={currentView}
         onViewChange={setCurrentView}
         dashboardView={dashboardView}

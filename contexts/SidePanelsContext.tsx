@@ -6,6 +6,7 @@ interface SidePanelsContextType {
   // Estados dos painéis
   isLeftPanelOpen: boolean;
   isRightPanelOpen: boolean;
+  isRightPanelFixed: boolean; // Novo: painel direito fixo
   
   // Controles dos painéis
   openLeftPanel: () => void;
@@ -15,6 +16,7 @@ interface SidePanelsContextType {
   openRightPanel: () => void;
   closeRightPanel: () => void;
   toggleRightPanel: () => void;
+  setRightPanelFixed: (fixed: boolean) => void; // Novo: controle do painel fixo
   
   // Estado para decidir se o painel direito pode abrir
   canOpenRightPanel: boolean;
@@ -32,6 +34,7 @@ const SidePanelsContext = createContext<SidePanelsContextType | null>(null);
 export function SidePanelsProvider({ children }: { children: ReactNode }) {
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [isRightPanelFixed, setIsRightPanelFixed] = useState(false); // Novo estado
   const [canOpenRightPanel, setCanOpenRightPanel] = useState(false);
   const [leftPanelHover, setLeftPanelHover] = useState(false);
   const [rightPanelHover, setRightPanelHover] = useState(false);
@@ -57,12 +60,14 @@ export function SidePanelsProvider({ children }: { children: ReactNode }) {
       value={{
         isLeftPanelOpen,
         isRightPanelOpen,
+        isRightPanelFixed,
         openLeftPanel,
         closeLeftPanel,
         toggleLeftPanel,
         openRightPanel,
         closeRightPanel,
         toggleRightPanel,
+        setRightPanelFixed: setIsRightPanelFixed,
         canOpenRightPanel,
         setCanOpenRightPanel,
         leftPanelHover,

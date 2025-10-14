@@ -10,6 +10,7 @@ import { Product } from '@/types';
 import { formatCurrency } from '@/utils/format';
 import { ProductFormDialog } from './ProductFormDialog';
 import { ProductInfoDialog } from './ProductInfoDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 
 // Mapeamento legível de categorias (fallback para o valor original se não mapeado)
 const CATEGORY_LABELS: Record<string, string> = {
@@ -251,6 +252,19 @@ interface InventoryRowProps {
 
 const InventoryRow = memo(function InventoryRow({ product, categoryLabel, onInfo, onEdit, getStockStatus }: InventoryRowProps) {
   const status = getStockStatus(product.stock);
+  const [showAddStock, setShowAddStock] = useState(false);
+  const [addQty, setAddQty] = useState('1');
+  const { updateProduct } = useProductsDB();
+
+  const handleAddStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const qty = parseInt(addQty);
+    if (isNaN(qty) || qty <= 0) return;
+    await updateProduct(product.id, { stock: product.stock + qty });
+    setShowAddStock(false);
+    setAddQty('1');
+  };
+
   return (
     <tr className="hover:bg-slate-50 focus-within:outline-none">
       <td className="px-6 py-4 text-slate-900">{product.name}</td>
@@ -282,6 +296,43 @@ const InventoryRow = memo(function InventoryRow({ product, categoryLabel, onInfo
             <Edit className="w-4 h-4" aria-hidden="true" />
             Editar
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAddStock(true)}
+            className="gap-2"
+            aria-label={`Adicionar estoque ao produto ${product.name}`}
+          >
+            <Plus className="w-4 h-4" aria-hidden="true" />
+            Estoque
+          </Button>
+          <Dialog open={showAddStock} onOpenChange={setShowAddStock}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Adicionar ao Estoque</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddStock} className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1">Quantidade a adicionar</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={addQty}
+                    onChange={e => setAddQty(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setShowAddStock(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    Adicionar
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </td>
     </tr>

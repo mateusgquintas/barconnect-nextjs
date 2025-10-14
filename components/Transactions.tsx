@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react';
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/utils/constants';
 import { toast } from 'sonner';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -25,11 +26,11 @@ export function Transactions({ transactions, salesRecords, onAddTransaction, sta
   
   // Filtros de busca e data
   const [search, setSearch] = useState('');
+  // Sempre iniciar com o primeiro dia do mês atual ao abrir a página
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  
-  const [startDate, setStartDate] = useState(initialStartDate || firstDayOfMonth.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(initialEndDate || today.toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(() => firstDayOfMonth.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => today.toISOString().split('T')[0]);
 
   const handleAddTransactionLocal = (transaction: Omit<Transaction, 'id' | 'date' | 'time'>) => {
     try {
@@ -89,11 +90,28 @@ export function Transactions({ transactions, salesRecords, onAddTransaction, sta
     );
   }), [salesAsTransactions, startDate, endDate, search]);
 
-  const incomeTransactions = useMemo(() => sortTransactionsDesc([
-    ...filteredTransactions.filter(t => t.type === 'income'),
-    ...filteredSalesTransactions,
-  ]), [filteredTransactions, filteredSalesTransactions]);
-  const expenseTransactions = useMemo(() => filteredTransactions.filter(t => t.type === 'expense'), [filteredTransactions]);
+  // Filtros de categoria
+  const [incomeCategory, setIncomeCategory] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState('');
+
+  const incomeTransactions = useMemo(() => {
+    let list = sortTransactionsDesc([
+      ...filteredTransactions.filter(t => t.type === 'income'),
+      ...filteredSalesTransactions,
+    ]);
+    if (incomeCategory) {
+      list = list.filter(t => t.category === incomeCategory);
+    }
+    return list;
+  }, [filteredTransactions, filteredSalesTransactions, incomeCategory]);
+
+  const expenseTransactions = useMemo(() => {
+    let list = filteredTransactions.filter(t => t.type === 'expense');
+    if (expenseCategory) {
+      list = list.filter(t => t.category === expenseCategory);
+    }
+    return list;
+  }, [filteredTransactions, expenseCategory]);
 
   const { totalIncome, totalExpense, balance } = useMemo(() => {
     const ti = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
@@ -216,8 +234,22 @@ export function Transactions({ transactions, salesRecords, onAddTransaction, sta
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" role="region" aria-label="Listas de entradas e saídas">
           {/* Income */}
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-slate-900 text-lg" id="heading-entradas">Entradas</h2>
+            <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <h2 className="text-slate-900 text-lg" id="heading-entradas">Entradas</h2>
+                <label htmlFor="income-category" className="text-sm text-slate-600 ml-2">Categoria:</label>
+                <select
+                  id="income-category"
+                  value={incomeCategory}
+                  onChange={e => setIncomeCategory(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Todas</option>
+                  {INCOME_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
               <span className="text-sm text-slate-500" aria-live="polite">{incomeTransactions.length} registros</span>
             </div>
             <div className="space-y-3 max-h-[600px] overflow-y-auto" role="list" aria-labelledby="heading-entradas">
@@ -251,8 +283,22 @@ export function Transactions({ transactions, salesRecords, onAddTransaction, sta
 
           {/* Expenses */}
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-slate-900 text-lg" id="heading-saidas">Saídas</h2>
+            <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <h2 className="text-slate-900 text-lg" id="heading-saidas">Saídas</h2>
+                <label htmlFor="expense-category" className="text-sm text-slate-600 ml-2">Categoria:</label>
+                <select
+                  id="expense-category"
+                  value={expenseCategory}
+                  onChange={e => setExpenseCategory(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Todas</option>
+                  {EXPENSE_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
               <span className="text-sm text-slate-500" aria-live="polite">{expenseTransactions.length} registros</span>
             </div>
             <div className="space-y-3 max-h-[600px] overflow-y-auto" role="list" aria-labelledby="heading-saidas">

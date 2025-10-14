@@ -5,6 +5,7 @@ import { useSidePanels } from '@/contexts/SidePanelsContext';
 import { ResponsiveDrawer } from '@/components/ResponsiveDrawer';
 import { HoverZone, SidePanelHoverHandler } from '@/components/HoverZone';
 import { MobileTrigger } from '@/components/MobileTrigger';
+import { PanelIndicator } from '@/components/PanelIndicator';
 import { ComandaSidebar } from '@/components/ComandaSidebar';
 import { ComandaDetail } from '@/components/ComandaDetail';
 import ProductCatalog from '@/components/ProductCatalog';
@@ -55,23 +56,48 @@ export function PDVLayout({
   onRemoveItemFromComanda,
   onCheckout,
 }: PDVLayoutProps) {
-  const { setCanOpenRightPanel } = useSidePanels();
+  const { 
+    setCanOpenRightPanel, 
+    isRightPanelFixed, 
+    setRightPanelFixed,
+    isLeftPanelOpen,
+    isRightPanelOpen 
+  } = useSidePanels();
 
   // Atualizar se o painel direito pode abrir baseado no estado atual
   useEffect(() => {
     const canOpen = isDirectSale || selectedComandaId !== null;
     setCanOpenRightPanel(canOpen);
-  }, [isDirectSale, selectedComandaId, setCanOpenRightPanel]);
+    
+    // Abrir painel fixo automaticamente quando há comanda/venda
+    if (canOpen) {
+      setRightPanelFixed(true);
+    }
+  }, [isDirectSale, selectedComandaId, setCanOpenRightPanel, setRightPanelFixed]);
+
+  const hasRightPanelContent = isDirectSale || selectedComandaId !== null;
 
   return (
     <div className="flex-1 flex overflow-hidden min-h-0 relative">
-      {/* Hot zones para desktop */}
+      {/* Indicadores visuais dos painéis */}
+      <PanelIndicator 
+        side="left" 
+        isActive={isLeftPanelOpen} 
+        isVisible={!isLeftPanelOpen && comandas.length > 0} 
+      />
+      <PanelIndicator 
+        side="right" 
+        isActive={isRightPanelOpen || isRightPanelFixed} 
+        isVisible={!isRightPanelFixed && hasRightPanelContent && !isRightPanelOpen} 
+      />
+
+      {/* Hot zones para desktop - só esquerda se painel direito estiver fixo */}
       <HoverZone side="left" />
-      <HoverZone side="right" />
+      {!isRightPanelFixed && <HoverZone side="right" />}
 
       {/* Triggers para mobile */}
       <MobileTrigger side="left" />
-      <MobileTrigger side="right" />
+      {!isRightPanelFixed && <MobileTrigger side="right" />}
 
       {/* Painel esquerdo: Comandas */}
       <ResponsiveDrawer side="left" title="Comandas Abertas">
@@ -91,31 +117,79 @@ export function PDVLayout({
         <ProductCatalog onAddProduct={onAddProduct} currentView={currentView} />
       </div>
 
-      {/* Painel direito: Detalhes da comanda/venda direta */}
-      <ResponsiveDrawer 
-        side="right" 
-        title={isDirectSale ? "Venda Direta" : selectedComanda ? `Comanda #${selectedComanda.number}` : "Itens"}
-      >
-        <SidePanelHoverHandler side="right">
-          {isDirectSale ? (
-            <DirectSalePanel 
-              items={directSaleItems}
-              onRemoveItem={onRemoveDirectSaleItem}
-              onUpdateQuantity={onUpdateDirectSaleQuantity}
-              onFinalize={onFinalizeSale}
-              onCancel={onCancelDirectSale}
-            />
-          ) : selectedComanda ? (
-            <ComandaDetail
-              comanda={selectedComanda}
-              onRemoveItem={onRemoveItemFromComanda}
-              onCheckout={onCheckout}
-            />
-          ) : (
-            <EmptyPanel />
-          )}
-        </SidePanelHoverHandler>
-      </ResponsiveDrawer>
+      {/* Painel direito: Fixo quando há conteúdo */}
+      {isRightPanelFixed && hasRightPanelContent ? (
+        <div className="w-80 bg-white border-l border-slate-200 shadow-lg flex-shrink-0 flex flex-col relative">
+          {/* Botão para esconder painel */}
+          <div className="absolute top-2 left-2 z-10">
+            <button
+              onClick={() => setRightPanelFixed(false)}
+              className="p-1 bg-white border border-slate-200 rounded-md shadow-sm hover:bg-slate-50"
+              title="Esconder painel"
+            >
+              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+            <h3 className="font-medium text-slate-900 pl-8">
+              {isDirectSale ? "Venda Direta" : selectedComanda ? `Comanda #${selectedComanda.number}` : "Itens"}
+            </h3>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 overflow-hidden min-h-0">
+            {isDirectSale ? (
+              <DirectSalePanel 
+                items={directSaleItems}
+                onRemoveItem={onRemoveDirectSaleItem}
+                onUpdateQuantity={onUpdateDirectSaleQuantity}
+                onFinalize={onFinalizeSale}
+                onCancel={onCancelDirectSale}
+              />
+            ) : selectedComanda ? (
+              <ComandaDetail
+                comanda={selectedComanda}
+                onRemoveItem={onRemoveItemFromComanda}
+                onCheckout={onCheckout}
+                userRole={userRole}
+              />
+            ) : (
+              <EmptyPanel />
+            )}
+          </div>
+        </div>
+      ) : (
+        // Painel direito responsivo (quando não fixo)
+        <ResponsiveDrawer 
+          side="right" 
+          title={isDirectSale ? "Venda Direta" : selectedComanda ? `Comanda #${selectedComanda.number}` : "Itens"}
+        >
+          <SidePanelHoverHandler side="right">
+            {isDirectSale ? (
+              <DirectSalePanel 
+                items={directSaleItems}
+                onRemoveItem={onRemoveDirectSaleItem}
+                onUpdateQuantity={onUpdateDirectSaleQuantity}
+                onFinalize={onFinalizeSale}
+                onCancel={onCancelDirectSale}
+              />
+            ) : selectedComanda ? (
+              <ComandaDetail
+                comanda={selectedComanda}
+                onRemoveItem={onRemoveItemFromComanda}
+                onCheckout={onCheckout}
+                userRole={userRole}
+              />
+            ) : (
+              <EmptyPanel />
+            )}
+          </SidePanelHoverHandler>
+        </ResponsiveDrawer>
+      )}
     </div>
   );
 }
@@ -137,7 +211,7 @@ function DirectSalePanel({
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full">
       {/* Header com total */}
       <div className="px-6 py-4 border-b border-slate-200 flex-shrink-0">
         <div className="flex items-baseline justify-between">
