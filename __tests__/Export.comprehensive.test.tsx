@@ -53,6 +53,7 @@ const mockExportDashboardToExcel = exportDashboardToExcel as jest.MockedFunction
 describe('Exportação - Testes Abrangentes', () => {
   const mockTransactions = [
     TestDataFactory.createTransaction({
+      id: 'trans-1',
       type: 'income',
       description: 'Venda PDV',
       amount: 100.0,
@@ -60,6 +61,7 @@ describe('Exportação - Testes Abrangentes', () => {
       date: '2025-10-09',
     }),
     TestDataFactory.createTransaction({
+      id: 'trans-2',
       type: 'expense',
       description: 'Compra Material',
       amount: 50.0,
@@ -70,6 +72,7 @@ describe('Exportação - Testes Abrangentes', () => {
 
   const mockSalesRecords = [
     TestDataFactory.createSaleRecord({
+      id: 'sale-1',
       comandaNumber: 123,
       customerName: 'Cliente Teste',
       total: 85.0,
@@ -77,6 +80,7 @@ describe('Exportação - Testes Abrangentes', () => {
       paymentMethod: 'cash',
     }),
     TestDataFactory.createSaleRecord({
+      id: 'sale-2',
       comandaNumber: 124,
       customerName: 'Cliente VIP',
       total: 150.0,
@@ -128,13 +132,19 @@ describe('Exportação - Testes Abrangentes', () => {
     it('deve chamar função de exportação quando botão for clicado - Transactions', async () => {
       const user = userEvent.setup();
 
+      // Datas dinâmicas
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+      const todayStr = today.toISOString().split('T')[0];
+
       render(
         <Transactions
           transactions={mockTransactions}
           salesRecords={mockSalesRecords}
           onAddTransaction={mockAddTransaction}
-          startDate="2025-10-01"
-          endDate="2025-10-31"
+          startDate={firstDayStr}
+          endDate={todayStr}
         />
       );
 
@@ -144,8 +154,8 @@ describe('Exportação - Testes Abrangentes', () => {
       expect(mockExportDashboardToExcel).toHaveBeenCalledWith({
         transactions: expect.any(Array),
         salesRecords: mockSalesRecords,
-        startDate: "2025-10-01",
-        endDate: "2025-10-31"
+        startDate: firstDayStr,
+        endDate: todayStr
       });
     });
 
@@ -173,25 +183,30 @@ describe('Exportação - Testes Abrangentes', () => {
     it('deve exportar dados com filtro de período aplicado', async () => {
       const user = userEvent.setup();
 
+      // Datas dinâmicas para filtro
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const startDateStr = firstDayOfMonth.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split('T')[0];
+
       render(
         <Transactions
           transactions={mockTransactions}
           salesRecords={mockSalesRecords}
           onAddTransaction={mockAddTransaction}
-          startDate="2025-10-08"
-          endDate="2025-10-09"
+          startDate={startDateStr}
+          endDate={todayStr}
         />
       );
 
       const exportButton = screen.getByRole('button', { name: /exportar/i });
       await user.click(exportButton);
-
-      expect(mockExportDashboardToExcel).toHaveBeenCalledWith(
-        expect.objectContaining({
-          startDate: "2025-10-08",
-          endDate: "2025-10-09"
-        })
-      );
+      // Valida apenas que as datas do filtro foram passadas corretamente
+      const call = mockExportDashboardToExcel.mock.calls[0]?.[0];
+      expect(call).toMatchObject({
+        startDate: startDateStr,
+        endDate: todayStr
+      });
     });
   });
 
@@ -372,10 +387,10 @@ describe('Exportação - Testes Abrangentes', () => {
 
     it('deve incluir vendas de diferentes métodos de pagamento', () => {
       const diverseSales = [
-        TestDataFactory.createSaleRecord({ paymentMethod: 'cash', total: 50 }),
-        TestDataFactory.createSaleRecord({ paymentMethod: 'credit', total: 75 }),
-        TestDataFactory.createSaleRecord({ paymentMethod: 'pix', total: 100 }),
-        TestDataFactory.createSaleRecord({ paymentMethod: 'courtesy', total: 25 }),
+  TestDataFactory.createSaleRecord({ id: 'sale-3', paymentMethod: 'cash', total: 50 }),
+  TestDataFactory.createSaleRecord({ id: 'sale-4', paymentMethod: 'credit', total: 75 }),
+  TestDataFactory.createSaleRecord({ id: 'sale-5', paymentMethod: 'pix', total: 100 }),
+  TestDataFactory.createSaleRecord({ id: 'sale-6', paymentMethod: 'courtesy', total: 25 }),
       ];
 
       mockExportDashboardToExcel.mockImplementation((data) => {
@@ -429,9 +444,9 @@ describe('Exportação - Testes Abrangentes', () => {
 
     it('deve incluir apenas dados do período filtrado', () => {
       const transactionsWithDifferentDates = [
-        TestDataFactory.createTransaction({ date: '2025-10-05', amount: 100 }),
-        TestDataFactory.createTransaction({ date: '2025-09-15', amount: 50 }), // Fora do período
-        TestDataFactory.createTransaction({ date: '2025-10-20', amount: 75 }),
+  TestDataFactory.createTransaction({ id: 'trans-3', date: '2025-10-05', amount: 100 }),
+  TestDataFactory.createTransaction({ id: 'trans-4', date: '2025-09-15', amount: 50 }), // Fora do período
+  TestDataFactory.createTransaction({ id: 'trans-5', date: '2025-10-20', amount: 75 }),
       ];
 
       mockExportDashboardToExcel.mockImplementation((data) => {
@@ -470,10 +485,10 @@ describe('Exportação - Testes Abrangentes', () => {
 
     it('deve funcionar com valores monetários extremos', () => {
       const extremeData = [
-        TestDataFactory.createTransaction({ amount: 0.01 }), // Valor mínimo
-        TestDataFactory.createTransaction({ amount: 999999.99 }), // Valor alto
-        TestDataFactory.createSaleRecord({ total: 0.50 }),
-        TestDataFactory.createSaleRecord({ total: 10000.00 }),
+  TestDataFactory.createTransaction({ id: 'trans-6', amount: 0.01 }), // Valor mínimo
+  TestDataFactory.createTransaction({ id: 'trans-7', amount: 999999.99 }), // Valor alto
+  TestDataFactory.createSaleRecord({ id: 'sale-7', total: 0.50 }),
+  TestDataFactory.createSaleRecord({ id: 'sale-8', total: 10000.00 }),
       ];
 
       mockExportDashboardToExcel.mockImplementation((data) => {
@@ -494,9 +509,11 @@ describe('Exportação - Testes Abrangentes', () => {
     it('deve tratar caracteres especiais em nomes e descrições', () => {
       const specialCharData = [
         TestDataFactory.createTransaction({ 
+          id: 'trans-8',
           description: 'Compra com ç, ã, é, ü' 
         }),
         TestDataFactory.createSaleRecord({ 
+          id: 'sale-9',
           customerName: 'José & Maria Ltda.' 
         }),
       ];
