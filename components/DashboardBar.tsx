@@ -158,24 +158,18 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
     };
   });
 
-  const allComandas = [...comandasAbertas, ...salesList].sort((a, b) => {
-    // Ordenar por status (abertas primeiro), depois por data/hora decrescente
-    if (a.status === 'Aberta' && b.status !== 'Aberta') return -1;
-    if (a.status !== 'Aberta' && b.status === 'Aberta') return 1;
-    // Se ambos fechados, ordenar por data/hora decrescente (mais recente primeiro)
-    if (a.status === 'Fechada' && b.status === 'Fechada') {
-      // Tenta ordenar por data/hora se disponível
-      if (a.saleRecord && b.saleRecord) {
-        const aDate = new Date(`${a.saleRecord.date.split('/').reverse().join('-')}T${a.saleRecord.time}`);
-        const bDate = new Date(`${b.saleRecord.date.split('/').reverse().join('-')}T${b.saleRecord.time}`);
-        return bDate.getTime() - aDate.getTime();
-      }
+  // Exibir apenas vendas já consolidadas (status 'Fechada') na lista de últimas vendas
+  const closedSales = salesList.sort((a, b) => {
+    // Ordenar por data/hora decrescente (mais recente primeiro)
+    if (a.saleRecord && b.saleRecord) {
+      const aDate = new Date(`${a.saleRecord.date.split('/').reverse().join('-')}T${a.saleRecord.time}`);
+      const bDate = new Date(`${b.saleRecord.date.split('/').reverse().join('-')}T${b.saleRecord.time}`);
+      return bDate.getTime() - aDate.getTime();
     }
-    // Para abertas, ordenar por horário decrescente
-    return b.time.localeCompare(a.time);
+    return 0;
   });
 
-  const filteredComandas = allComandas.filter(c => 
+  const filteredComandas = closedSales.filter(c => 
     searchComanda === '' || 
     c.number.toString().includes(searchComanda) ||
     (c.customer && c.customer.toLowerCase().includes(searchComanda.toLowerCase()))
@@ -279,11 +273,7 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
               {filteredComandas.map((comanda) => (
                 <div
                   key={comanda.id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    comanda.status === 'Aberta'
-                      ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
-                      : 'bg-white border-slate-200 hover:bg-slate-50'
-                  }`}
+                  className="p-3 rounded-lg border bg-white border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
                   onClick={() => comanda.saleRecord && setSelectedSale(comanda.saleRecord)}
                 >
                   <div className="flex items-center justify-between">
@@ -305,12 +295,8 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
                             ? `${comanda.saleRecord.date} ${comanda.time}`
                             : comanda.time}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          comanda.status === 'Aberta'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {comanda.status}
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                          Fechada
                         </span>
                       </div>
                     </div>
