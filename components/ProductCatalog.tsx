@@ -35,7 +35,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
   const [activeCategory, setActiveCategory] = useState<Category>('bebidas');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCustomItemDialog, setShowCustomItemDialog] = useState(false);
-  const [customItemName, setCustomItemName] = useState('Outros');
+  const [customItemName, setCustomItemName] = useState('');
   const [customItemPrice, setCustomItemPrice] = useState('');
   const [customItemNote, setCustomItemNote] = useState('');
 
@@ -99,7 +99,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
     bebidas: products.filter(p => p.category === 'bebidas'),
     porcoes: products.filter(p => p.category === 'porcoes'),
     almoco: products.filter(p => p.category === 'almoco'),
-    outros: [], // Categoria especial para itens customizados
+    outros: products.filter(p => p.category === 'outros'), // Produtos cadastrados como "outros"
   };
 
   const filterProducts = (categoryProducts: Product[]) => {
@@ -211,16 +211,23 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
       return;
     }
 
+    if (!customItemName.trim()) {
+      alert('Por favor, insira o nome do item');
+      return;
+    }
+
+    // Criar produto customizado com ID especial para identificar como custom
     const customProduct: Product = {
       id: `custom-${Date.now()}`,
-      name: customItemNote ? `${customItemName} - ${customItemNote}` : customItemName,
+      name: customItemNote ? `${customItemName.trim()} - ${customItemNote.trim()}` : customItemName.trim(),
       price: price,
-      stock: 999,
+      stock: 999, // Estoque virtual para custom items
       category: 'outros',
     };
 
     onAddProduct(customProduct);
     setShowCustomItemDialog(false);
+    setCustomItemName('');
     setCustomItemPrice('');
     setCustomItemNote('');
   };
@@ -355,21 +362,89 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
             {(Object.keys(categoryLabels) as Category[]).map((cat) => (
               <TabsContent key={cat} value={cat} className="mt-0">
                 {cat === 'outros' ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Card className="p-8 max-w-md w-full text-center">
-                      <h3 className="text-slate-900 mb-2">Item Personalizado</h3>
-                      <p className="text-slate-600 text-sm mb-6">
-                        Adicione um item com valor e observação customizados
-                      </p>
+                  <div className="space-y-6">
+                    {/* Botão de item personalizado no topo */}
+                    <div className="mb-6">
                       <Button 
-                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-lg gap-2"
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg gap-3 font-medium text-base shadow-sm transition-all duration-200 hover:shadow-md"
                         variant="default"
                         onClick={() => setShowCustomItemDialog(true)}
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-5 h-5" />
                         Adicionar Item Personalizado
                       </Button>
-                    </Card>
+                    </div>
+
+                    {/* Produtos cadastrados na categoria "outros" */}
+                    {groupedProducts[cat]
+                      .filter(group => filterProducts(group.products).length > 0)
+                      .map(group => {
+                        const filtered = filterProducts(group.products);
+                        return (
+                          <div key={group.subcategory}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                              {filtered.map((product: Product) => (
+                                <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
+                                  <div className="flex-1 mb-3">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div>
+                                        <h4 className="text-slate-900">{product.name}</h4>
+                                        {getSubcategoryLabel(product.subcategory) && (
+                                          <span className={`text-xs px-2 py-1 rounded-full ${getSubcategoryColor(product.subcategory)} mt-1 inline-block`}>
+                                            {getSubcategoryLabel(product.subcategory)}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        product.stock <= 20 ? 'bg-red-100 text-red-600' :
+                                        product.stock <= 50 ? 'bg-orange-100 text-orange-600' :
+                                        'bg-green-100 text-green-600'
+                                      }`}>
+                                        {product.stock} un.
+                                      </span>
+                                    </div>
+                                    <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      className="flex-1 gap-2"
+                                      variant="default"
+                                      onClick={() => onAddProduct(product)}
+                                      disabled={product.stock === 0}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
+                                    </Button>
+                                    {user?.role === 'admin' && currentView === 'inventory' && (
+                                      <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="border-slate-300"
+                                        onClick={() => openEditProductDialog(product)}
+                                        aria-label="Editar produto"
+                                      >
+                                        <Pencil className="w-4 h-4 text-slate-500" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    
+                    {/* Se não houver produtos cadastrados como "outros", mostrar aviso */}
+                    {productsByCategory[cat].length === 0 && (
+                      <div className="text-center py-8">
+                        <p className="text-slate-500 mb-4">
+                          Nenhum produto cadastrado na categoria "Outros".
+                        </p>
+                        <p className="text-slate-400 text-sm">
+                          Use o botão acima para adicionar itens com preço personalizado.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-8">
@@ -546,7 +621,19 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
           
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="customPrice">Valor (R$)</Label>
+              <Label htmlFor="customName">Nome do item *</Label>
+              <Input
+                id="customName"
+                type="text"
+                placeholder="Ex: Taxa de serviço, Açaí especial..."
+                value={customItemName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomItemName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="customPrice">Valor (R$) *</Label>
               <Input
                 id="customPrice"
                 type="number"
@@ -563,7 +650,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
               <Label htmlFor="customNote">Observação (opcional)</Label>
               <Textarea
                 id="customNote"
-                placeholder="Ex: Taxa de serviço, item especial..."
+                placeholder="Ex: Ingredientes especiais, forma de preparo..."
                 value={customItemNote}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCustomItemNote(e.target.value)}
                 className="mt-1"
@@ -577,6 +664,7 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
               variant="outline"
               onClick={() => {
                 setShowCustomItemDialog(false);
+                setCustomItemName('');
                 setCustomItemPrice('');
                 setCustomItemNote('');
               }}
