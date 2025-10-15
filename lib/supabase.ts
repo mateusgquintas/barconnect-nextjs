@@ -20,6 +20,15 @@ if (process.env.NODE_ENV === 'production' && shouldUseMock) {
   console.error('❌ Supabase env vars ausentes em produção!');
 }
 
+// Log detalhado para diagnóstico
+console.log('📊 Supabase Status:', {
+  isUsingMock: shouldUseMock,
+  hasUrl: Boolean(supabaseUrl),
+  hasKey: Boolean(supabaseAnonKey),
+  forceMock: forceMock,
+  env: process.env.NODE_ENV
+});
+
 export const supabase = shouldUseMock 
   ? (createMockSupabaseClient() as any)
   : createClient(supabaseUrl!, supabaseAnonKey!);
