@@ -46,9 +46,7 @@ const mockHooks = {
   useSalesDB: MockHookFactory.createUseSalesDB(),
 };
 
-jest.mock('@/hooks/useComandasDB', () => ({
-  useComandasDB: () => mockHooks.useComandasDB,
-}));
+
 
 jest.mock('@/hooks/useProductsDB', () => ({
   useProductsDB: () => mockHooks.useProductsDB,
@@ -215,19 +213,22 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     it('deve mostrar toast de sucesso ao criar comanda', async () => {
       const user = userEvent.setup();
       const mockOnClose = jest.fn();
-      const createComandaMock = jest.fn().mockResolvedValue({ 
-        success: true, 
-        message: 'Comanda criada com sucesso' 
-      });
-      mockHooks.useComandasDB.createComanda = createComandaMock;
+      const { NewComandaDialog } = require('@/components/NewComandaDialog');
+      const { useComandasDB } = require('@/hooks/useComandasDB');
+      
+      // Wrapper para injetar o hook real
+      function Wrapper() {
+        const { createComanda } = useComandasDB();
+        return (
+          <NewComandaDialog 
+            open={true}
+            onOpenChange={mockOnClose}
+            onCreateComanda={createComanda}
+          />
+        );
+      }
 
-      render(
-        <NewComandaDialog 
-          open={true}
-          onOpenChange={mockOnClose}
-          onCreateComanda={createComandaMock}
-        />
-      );
+      render(<Wrapper />);
 
       // Preencher formulário
       const customerInput = screen.getByRole('textbox', { name: /cliente/i });
@@ -236,11 +237,13 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
       await user.type(customerInput, 'João Silva');
       await user.click(submitButton);
 
+      // Espera o toast disparar
       await waitFor(() => {
-        expect(createComandaMock).toHaveBeenCalled();
+        expect(mockToast.success).toHaveBeenCalled();
       });
-
       ToastTester.expectSuccessToast('criada');
+    });
+  
     });
 
     it('deve mostrar toast de sucesso ao fechar comanda', async () => {
@@ -487,6 +490,9 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve manter toasts de erro até interação do usuário', async () => {
+      // Limpar mocks anteriores
+      mockToast.dismiss.mockClear();
+      
       // Renderizar Dashboard
       render(<Dashboard />);
       
@@ -787,4 +793,3 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
       expect(mockToast.dismiss).toHaveBeenCalled();
     });
   });
-});

@@ -118,9 +118,10 @@ export function useComandasDB() {
         return null;
       }
 
-      console.log('✅ Comanda criada com sucesso:', data);
-      await fetchComandas();
-      return data?.id ?? null;
+  console.log('✅ Comanda criada com sucesso:', data);
+  try { toast.success('Comanda criada'); } catch {}
+  await fetchComandas();
+  return data?.id ?? null;
     } catch (error: any) {
       console.error('❌ Erro fatal ao criar comanda:', {
         error,

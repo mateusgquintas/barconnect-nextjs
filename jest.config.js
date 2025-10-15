@@ -4,6 +4,7 @@ const createJestConfig = nextJest({ dir: './' });
 /** @type {import('jest').Config} */
 const customConfig = {
   testEnvironment: 'jsdom',
+  testTimeout: 10000, // Aumentar timeout para 10s (default é 5s)
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1'
   },

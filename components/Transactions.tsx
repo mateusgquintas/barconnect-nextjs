@@ -29,8 +29,8 @@ export function Transactions({ transactions, salesRecords, onAddTransaction, sta
   // Sempre iniciar com o primeiro dia do mês atual ao abrir a página
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const [startDate, setStartDate] = useState(() => firstDayOfMonth.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(() => today.toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(() => initialStartDate || firstDayOfMonth.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => initialEndDate || today.toISOString().split('T')[0]);
 
   const handleAddTransactionLocal = (transaction: Omit<Transaction, 'id' | 'date' | 'time'>) => {
     try {
