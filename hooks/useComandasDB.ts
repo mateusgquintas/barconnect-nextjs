@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Comanda, OrderItem } from '@/types';
 import { toast } from 'sonner';
 // localComandas removido: agora tudo é Supabase
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseMock } from '@/lib/supabase';
 
 export function useComandasDB() {
   const [comandas, setComandas] = useState<Comanda[]>([]);
@@ -227,6 +227,59 @@ export function useComandasDB() {
 
   useEffect(() => {
     fetchComandas();
+  }, []);
+
+  // Realtime e refetch on-focus/online (apenas quando não for mock)
+  useEffect(() => {
+    if (isSupabaseMock) return; // não assina em mock
+
+    const refetchTimerRef = { current: null as number | null };
+    
+    const scheduleRefetch = (delay = 150) => {
+      if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
+      refetchTimerRef.current = setTimeout(() => {
+        fetchComandas();
+      }, delay) as any;
+    };
+
+    // Canal Realtime
+    const channel = (supabase as any).channel?.('comandas-sync');
+    if (!channel) return;
+
+    const onChange = () => {
+      scheduleRefetch(150);
+    };
+
+    channel
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comandas' }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comanda_items' }, onChange)
+      .subscribe();
+
+    // Listeners de visibilidade e conexão
+    const onVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        scheduleRefetch(0);
+      }
+    };
+    const onOnline = () => scheduleRefetch(0);
+
+    if (typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('online', onOnline);
+    }
+
+    return () => {
+      try { 
+        (supabase as any).removeChannel?.(channel); 
+      } catch (e) {
+        console.warn('Erro ao remover canal Realtime:', e);
+      }
+      if (typeof window !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibility);
+        window.removeEventListener('online', onOnline);
+      }
+      if (refetchTimerRef.current) clearTimeout(refetchTimerRef.current);
+    };
   }, []);
 
   return {
