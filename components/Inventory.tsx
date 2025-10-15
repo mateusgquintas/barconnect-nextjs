@@ -253,16 +253,21 @@ interface InventoryRowProps {
 const InventoryRow = memo(function InventoryRow({ product, categoryLabel, onInfo, onEdit, getStockStatus }: InventoryRowProps) {
   const status = getStockStatus(product.stock);
   const [showAddStock, setShowAddStock] = useState(false);
-  const [addQty, setAddQty] = useState('1');
+  const [addQty, setAddQty] = useState('');
   const { updateProduct } = useProductsDB();
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
     const qty = parseInt(addQty);
     if (isNaN(qty) || qty <= 0) return;
-    await updateProduct(product.id, { stock: product.stock + qty });
+    // Manter categoria e subcategoria ao atualizar estoque
+    await updateProduct(product.id, {
+      stock: product.stock + qty,
+      category: product.category,
+      subcategory: product.subcategory,
+    });
     setShowAddStock(false);
-    setAddQty('1');
+    setAddQty('');
   };
 
   return (
@@ -299,7 +304,10 @@ const InventoryRow = memo(function InventoryRow({ product, categoryLabel, onInfo
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowAddStock(true)}
+            onClick={() => {
+              setAddQty('');
+              setShowAddStock(true);
+            }}
             className="gap-2"
             aria-label={`Adicionar estoque ao produto ${product.name}`}
           >
@@ -320,6 +328,7 @@ const InventoryRow = memo(function InventoryRow({ product, categoryLabel, onInfo
                     value={addQty}
                     onChange={e => setAddQty(e.target.value)}
                     autoFocus
+                    placeholder="Digite a quantidade"
                   />
                 </div>
                 <DialogFooter>

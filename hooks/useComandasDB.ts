@@ -9,19 +9,53 @@ import { supabase, isSupabaseMock } from '@/lib/supabase';
 export function useComandasDB() {
   const [comandas, setComandas] = useState<Comanda[]>([]);
   const [loading, setLoading] = useState(true);
+  // Controle de toasts para evitar repetição no mobile
+  const hasShownSourceToastRef = useRef(false);
+  const lastOpenCountRef = useRef<number | null>(null);
 
   // Buscar comandas e seus itens do Supabase
   const fetchComandas = async () => {
     setLoading(true);
     try {
+      console.log('🔍 Buscando comandas do Supabase...');
       const { data: comandasData, error } = await supabase.from('comandas').select('*').order('created_at', { ascending: false });
       if (error) {
-        console.error('Erro ao buscar comandas:', error);
+        console.error('❌ Erro ao buscar comandas:', error);
         toast.error('Erro ao carregar comandas');
         setComandas([]);
         return;
       }
-      const comandas = await Promise.all((comandasData || []).filter((row: any) => row.status === 'open').map(async (row: any) => {
+      console.log('📦 Comandas recebidas do Supabase:', comandasData?.length || 0);
+      console.log('📊 Status das comandas:', comandasData?.map((c: any) => ({ id: c.id, number: c.number, status: c.status })));
+      
+      const openComandas = (comandasData || []).filter((row: any) => row.status === 'open');
+      console.log('✅ Comandas abertas encontradas:', openComandas.length);
+      
+      // Mostrar uma vez a origem dos dados (Supabase real vs Mock)
+      if (!hasShownSourceToastRef.current) {
+        try {
+          toast.info(isSupabaseMock ? 'Usando dados locais (mock)' : 'Conectado ao Supabase', { duration: 2500 });
+        } catch {}
+        hasShownSourceToastRef.current = true;
+      }
+      
+      // Se não houver comandas abertas, avisar no mobile uma única vez por mudança
+      const totalComandas = comandasData?.length ?? 0;
+      if (openComandas.length === 0) {
+        if (lastOpenCountRef.current !== 0) {
+          try {
+            toast.warning(totalComandas === 0 
+              ? 'Nenhuma comanda encontrada no banco'
+              : 'Não há comandas abertas no momento', { duration: 2500 });
+          } catch {}
+          lastOpenCountRef.current = 0;
+        }
+      } else {
+        // Atualiza o contador para evitar toasts repetidos
+        lastOpenCountRef.current = openComandas.length;
+      }
+      
+      const comandas = await Promise.all(openComandas.map(async (row: any) => {
         const { data: itemsData, error: itemsError } = await supabase.from('comanda_items').select('*').eq('comanda_id', row.id);
         if (itemsError) {
           console.error('Erro ao buscar itens da comanda:', itemsError);
@@ -45,6 +79,8 @@ export function useComandasDB() {
           status: row.status,
         };
       }));
+      console.log('💾 Total de comandas processadas:', comandas.length);
+      console.log('📋 Comandas finais:', comandas.map((c: any) => ({ number: c.number, items: c.items.length, customer: c.customerName })));
       setComandas(comandas);
     } catch (error: any) {
       console.error('Erro ao buscar comandas:', error);
@@ -226,11 +262,13 @@ export function useComandasDB() {
   };
 
   useEffect(() => {
+      console.log('🚀 useComandasDB montado - iniciando busca de comandas...');
     fetchComandas();
   }, []);
 
   // Realtime e refetch on-focus/online (apenas quando não for mock)
   useEffect(() => {
+      console.log('🔌 Configurando Realtime - isSupabaseMock:', isSupabaseMock);
     if (isSupabaseMock) return; // não assina em mock
 
     const refetchTimerRef = { current: null as number | null };

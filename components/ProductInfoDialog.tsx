@@ -2,6 +2,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from './ui/button';
 import { Product } from '../types';
 import { useEffect, useMemo } from 'react';
+import { startOfWeek, format, parseISO, addWeeks, isAfter, isValid } from 'date-fns';
+// Função para converter dd/MM/yyyy para Date
+function parseDateBR(dateStr: string): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
+  const [day, month, year] = parts.map(Number);
+  if (!day || !month || !year) return null;
+  const d = new Date(year, month - 1, day);
+  return isNaN(d.getTime()) ? null : d;
+}
 import { useSalesDB } from '@/hooks/useSalesDB';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
@@ -18,23 +29,52 @@ export function ProductInfoDialog({ open, onOpenChange, product }: ProductInfoDi
 
   const productSales = useMemo(() => {
     if (!product) return [];
-    // Retorna [{ quantity, saleDate }]
+    // Ignora cortesias e usa campo de data igual ao dashboard
     return sales
+      .filter(sale => !sale.isCourtesy)
       .map(sale => sale.items.filter(item => item.product.id === product.id).map(item => ({
         quantity: item.quantity,
+        // Dashboard usa sale.date (formato dd/MM/yyyy)
         date: sale.date
       })))
       .flat();
   }, [sales, product]);
 
-  // Agrupar vendas por data
-  const salesByDate = useMemo(() => {
-    const map: Record<string, number> = {};
+  // Agrupar vendas por semana (últimas 8 semanas)
+  const salesByWeek = useMemo(() => {
+    if (!product) return [];
+    // Agrupa vendas por semana
+    const weekMap: Record<string, number> = {};
     productSales.forEach(({ date, quantity }) => {
-      map[date] = (map[date] || 0) + quantity;
+      if (!date) return;
+      const parsed = parseDateBR(date);
+      if (!parsed || !isValid(parsed)) return;
+      const week = format(startOfWeek(parsed, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      weekMap[week] = (weekMap[week] || 0) + quantity;
     });
-    return Object.entries(map).map(([date, qty]) => ({ date, qty }));
-  }, [productSales]);
+    // Lista de semanas ordenadas (com vendas)
+    const weeksWithSales = Object.keys(weekMap).sort();
+    // Se houver vendas, pega as 8 semanas mais recentes com vendas
+    let weeks: string[] = [];
+    if (weeksWithSales.length > 0) {
+      const last = weeksWithSales[weeksWithSales.length - 1];
+      let cursor = startOfWeek(parseISO(last), { weekStartsOn: 1 });
+      for (let i = 0; i < 8; i++) {
+        weeks.push(format(addWeeks(cursor, -7 + i), 'yyyy-MM-dd'));
+      }
+    } else {
+      // Se não houver vendas, mostra as últimas 8 semanas a partir de hoje
+      let cursor = startOfWeek(new Date(), { weekStartsOn: 1 });
+      for (let i = 0; i < 8; i++) {
+        weeks.push(format(addWeeks(cursor, -7 + i), 'yyyy-MM-dd'));
+      }
+    }
+    return weeks.map(week => ({
+      week,
+      qty: weekMap[week] || 0,
+      label: format(parseISO(week), "dd/MM")
+    }));
+  }, [productSales, product]);
 
   if (!product) return null;
 
@@ -73,13 +113,17 @@ export function ProductInfoDialog({ open, onOpenChange, product }: ProductInfoDi
             </div>
           </div>
           <div className="pt-2 border-t">
-            <p className="text-xs text-slate-500 mb-2">Histórico de vendas (últimos 30 dias)</p>
+            <p className="text-xs text-slate-500 mb-2">Histórico semanal de vendas (8 semanas)</p>
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={salesByDate} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+              <BarChart data={salesByWeek} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" fontSize={10} />
-                <YAxis fontSize={10} />
-                <Tooltip />
+                <XAxis dataKey="label" fontSize={10} />
+                <YAxis fontSize={10} allowDecimals={false} />
+                <Tooltip labelFormatter={(_, payload) => {
+                  if (!payload?.length) return '';
+                  const week = payload[0].payload.week;
+                  return `Semana de ${format(parseISO(week), 'dd/MM/yyyy')}`;
+                }} />
                 <Bar dataKey="qty" fill="#2563eb" />
               </BarChart>
             </ResponsiveContainer>
