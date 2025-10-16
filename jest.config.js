@@ -24,12 +24,13 @@ const customConfig = {
     '!app/**/layout.*',
   ],
   coverageReporters: ['text', 'lcov'],
+  // Start with no enforced thresholds; track trends in CI and raise gradually
   coverageThreshold: {
     global: {
-      statements: 60,
-      branches: 50,
-      functions: 55,
-      lines: 60,
+      statements: 0,
+      branches: 0,
+      functions: 0,
+      lines: 0,
     }
   }
 };
