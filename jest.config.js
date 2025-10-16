@@ -11,12 +11,25 @@ const customConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   // Opcional: limitar a pasta de testes
   testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx)'],
+  testPathIgnorePatterns: ['<rootDir>/__tests__/archive/'],
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'components/**/*.{ts,tsx}',
+    'hooks/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}',
+    'utils/**/*.{ts,tsx}',
+    'app/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+    '!app/**/page.*',
+    '!app/**/layout.*',
+  ],
+  coverageReporters: ['text', 'lcov'],
   coverageThreshold: {
     global: {
-      statements: 50,
-      branches: 40,
-      functions: 45,
-      lines: 50,
+      statements: 60,
+      branches: 50,
+      functions: 55,
+      lines: 60,
     }
   }
 };

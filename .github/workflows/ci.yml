@@ -36,11 +36,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Tests
+      - name: Tests with coverage
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        run: npm test -- --runInBand
+        run: npm run test:coverage -- --runInBand
 
       - name: Build
         env:

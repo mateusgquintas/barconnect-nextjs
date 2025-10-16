@@ -239,3 +239,17 @@ Element.prototype.getBoundingClientRect = function (): DOMRect {
     return originalGetBoundingClientRect.call(this);
   }
 };
+
+// Reduce noisy logs during test runs. Opt-out by setting VERBOSE_TEST_LOGS=true
+const shouldSilence = !process.env.VERBOSE_TEST_LOGS;
+if (shouldSilence) {
+  const noop = () => {};
+  // Keep warnings and errors, silence info/log by default
+  // You can temporarily re-enable in a specific test by spying and restoring
+  // e.g., const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+  // and later spy.mockRestore()
+  // eslint-disable-next-line no-console
+  console.log = noop as any;
+  // eslint-disable-next-line no-console
+  console.info = noop as any;
+}
