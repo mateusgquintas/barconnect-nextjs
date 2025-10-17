@@ -1,10 +1,20 @@
 // Calcula ocupação diária (% de quartos reservados por dia)
 export async function getOccupancyByDay(month: number, year: number) {
-  // Busca todas as reservas do mês
+  // Intervalo alvo do mês
+  const monthStart = new Date(year, month - 1, 1);
+  const monthEnd = new Date(year, month, 0);
+  const startISO = monthStart.toISOString().slice(0, 10);
+  const endISO = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), monthEnd.getDate(), 23, 59, 59, 999)
+    .toISOString()
+    .slice(0, 10);
+
+  // Busca apenas reservas que sobrepõem o mês (check_in < end && check_out > start)
   type Reservation = { room_id: string; check_in_date: string; check_out_date: string };
   const { data: reservations, error: resError } = await (supabase as any)
     .from('room_reservations')
-    .select('room_id, check_in_date, check_out_date');
+    .select('room_id, check_in_date, check_out_date')
+    .lt('check_in_date', endISO)
+    .gt('check_out_date', startISO);
   if (resError) throw resError;
 
   // Busca todos os quartos

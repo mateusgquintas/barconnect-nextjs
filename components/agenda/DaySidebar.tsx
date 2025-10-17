@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Users, Hotel, Bus } from 'lucide-react';
+import { X, Calendar, Users, Hotel, Bus, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RoomReservation {
@@ -33,9 +33,11 @@ interface DaySidebarProps {
   rooms: Room[];
   pilgrimages: Pilgrimage[];
   onClose: () => void;
+  onCreateReservation?: (date: Date) => void;
 }
 
-export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose }: DaySidebarProps) {
+export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, onCreateReservation }: DaySidebarProps) {
+  const [collapsed, setCollapsed] = React.useState(false);
   if (!date) return null;
 
   const dateStr = date.toISOString().slice(0, 10);
@@ -69,24 +71,55 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose }: 
     cancelled: 'bg-red-100 text-red-700 border-red-300',
   };
 
-  return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-slate-200 z-50 overflow-y-auto">
-      <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            {date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            {dayReservations.length} reserva{dayReservations.length !== 1 ? 's' : ''} • {activePilgrimages.length} romaria{activePilgrimages.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
+  const containerWidth = collapsed ? 'w-10' : 'w-96';
+  const hiddenWhenCollapsed = collapsed ? 'hidden' : '';
 
-      <div className="p-4 space-y-6">
+  const formatDateMaybeTime = (value: string) => {
+    if (!value) return '';
+    // Se tiver hora, mostrar data e hora; senão, só data
+    const hasTime = value.includes('T');
+    const d = new Date(value);
+    return hasTime
+      ? d.toLocaleString('pt-BR')
+      : d.toLocaleDateString('pt-BR');
+  };
+
+  return (
+    <div
+      className={`fixed right-0 ${containerWidth} bg-white shadow-2xl border-l border-slate-200 z-50 h-[calc(100vh-var(--app-header-height,56px))]`}
+      style={{ top: 'var(--app-header-height, 56px)' }}
+      role="region"
+      aria-label="Detalhes do dia da agenda"
+    >
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2 p-3 border-b border-slate-200 flex-shrink-0">
+          <div className={`min-w-0 ${hiddenWhenCollapsed}`}>
+            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              {date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {dayReservations.length} reserva{dayReservations.length !== 1 ? 's' : ''} • {activePilgrimages.length} romaria{activePilgrimages.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!collapsed && onCreateReservation && (
+              <Button size="sm" onClick={() => onCreateReservation(date)}>
+                Criar reserva
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expandir' : 'Recolher'}>
+              {collapsed ? <ChevronsLeft className="w-5 h-5" /> : <ChevronsRight className="w-5 h-5" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Conteúdo rolável */}
+        <div className={`flex-1 overflow-y-auto min-h-0 p-4 space-y-6 ${hiddenWhenCollapsed}`}>
         {/* Romarias Ativas */}
         {activePilgrimages.length > 0 && (
           <div>
@@ -140,8 +173,8 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose }: 
                       </span>
                     </div>
                     <div className="text-xs text-slate-500 space-y-1">
-                      <p>Check-in: {new Date(reservation.check_in_date).toLocaleDateString()}</p>
-                      <p>Check-out: {new Date(reservation.check_out_date).toLocaleDateString()}</p>
+                      <p>Check-in: {formatDateMaybeTime(reservation.check_in_date)}</p>
+                      <p>Check-out: {formatDateMaybeTime(reservation.check_out_date)}</p>
                     </div>
                     {pilgrimage && (
                       <div className="mt-2 flex items-center gap-1 text-xs text-purple-600">
@@ -155,6 +188,7 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose }: 
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ export default function AgendaPage() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [filterPilgrimage, setFilterPilgrimage] = React.useState<string>('all');
   const [filterStatus, setFilterStatus] = React.useState<string>('all');
-  const { reservations, loading, error } = useAgendaDB(month.getMonth() + 1, month.getFullYear());
+  const { reservations, loading, error, refetch } = useAgendaDB(month.getMonth() + 1, month.getFullYear());
   const { pilgrimages } = usePilgrimagesDB();
   const { rooms } = useRoomsDB();
   const [occupancy, setOccupancy] = React.useState<Record<string, number>>({});
@@ -71,6 +71,7 @@ export default function AgendaPage() {
 
   function handleSuccess() {
     // Recarrega dados após criar reserva
+    refetch?.();
     getOccupancyByDay(month.getMonth() + 1, month.getFullYear()).then(setOccupancy);
   }
 
@@ -158,6 +159,7 @@ export default function AgendaPage() {
           reservations={filteredReservations}
         rooms={rooms as any}
         pilgrimages={pilgrimages}
+        onCreateReservation={(d) => { setSelected(d); setOpen(true); }}
         onClose={() => setSidebarOpen(false)}
       />
     </div>

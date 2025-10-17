@@ -35,6 +35,8 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
+  const [checkInTime, setCheckInTime] = useState(''); // HH:mm
+  const [checkOutTime, setCheckOutTime] = useState(''); // HH:mm
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -45,6 +47,9 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
       const nextDay = new Date(date);
       nextDay.setDate(nextDay.getDate() + 1);
       setCheckOutDate(nextDay.toISOString().split('T')[0]);
+      // não aplicar horários padrão
+      setCheckInTime('');
+      setCheckOutTime('');
     }
   }, [open, date]);
 
@@ -81,11 +86,14 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
       setSubmitting(true);
 
       // Criar reserva para cada quarto selecionado
+      const start = checkInTime ? `${checkInDate}T${checkInTime}` : checkInDate;
+      const end = checkOutTime ? `${checkOutDate}T${checkOutTime}` : checkOutDate;
       const promises = selectedRooms.map(roomId => 
         createRoomReservation({
           room_id: roomId,
-          start: `${checkInDate}T14:00:00`,  // Check-in às 14:00
-          end: `${checkOutDate}T12:00:00`,    // Check-out às 12:00
+          // Usar data+hora quando fornecido; caso contrário, apenas a data
+          start,
+          end,
           customer_name: reservationType === 'individual' ? guestName : null,
           pilgrimage_id: reservationType === 'pilgrimage' ? selectedPilgrimage : null,
           status: 'confirmed',
@@ -107,6 +115,8 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
       setSelectedPilgrimage('');
       setSelectedRooms([]);
       setNotes('');
+  setCheckInTime('');
+  setCheckOutTime('');
       setReservationType('individual');
       
       onOpenChange(false);
@@ -202,6 +212,13 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
                 onChange={(e) => setCheckInDate(e.target.value)} 
                 required
               />
+              <Input
+                id="checkInTime"
+                type="time"
+                value={checkInTime}
+                onChange={(e) => setCheckInTime(e.target.value)}
+                placeholder="HH:MM"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="checkOut">Check-out *</Label>
@@ -211,6 +228,13 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
                 value={checkOutDate} 
                 onChange={(e) => setCheckOutDate(e.target.value)} 
                 required
+              />
+              <Input
+                id="checkOutTime"
+                type="time"
+                value={checkOutTime}
+                onChange={(e) => setCheckOutTime(e.target.value)}
+                placeholder="HH:MM"
               />
             </div>
           </div>

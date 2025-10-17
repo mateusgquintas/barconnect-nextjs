@@ -16,22 +16,44 @@ export function useAgendaDB(month: number, year: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+  const start = startDate.toISOString().slice(0, 10); // YYYY-MM-DD
+  const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999)
+    .toISOString()
+    .slice(0, 10); // YYYY-MM-DD
+
+  const fetchReservations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Importante: sobreposição (start < check_out) && (end > check_in)
+      const { data, error } = await supabase
+        .from('room_reservations')
+        .select('*')
+        .lt('check_in_date', end)
+        .gt('check_out_date', start);
+      if (error) throw error;
+      setReservations(data || []);
+    } catch (e: any) {
+      setError(e.message || 'Erro ao carregar reservas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    const start = new Date(year, month - 1, 1).toISOString().slice(0, 10);
-    const end = new Date(year, month, 0).toISOString().slice(0, 10);
-    supabase
-      .from('room_reservations')
-      .select('*')
-      .gte('check_in_date', start)
-      .lte('check_out_date', end)
-      .then(({ data, error }: any) => {
-        if (error) setError(error.message);
-        else setReservations(data || []);
-        setLoading(false);
-      });
+    fetchReservations();
+    // Realtime subscription para manter a agenda atualizada
+    const channel = (supabase as any)
+      .channel('room_reservations-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_reservations' }, () => {
+        fetchReservations();
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, year]);
 
-  return { reservations, loading, error };
+  return { reservations, loading, error, refetch: fetchReservations };
 }
