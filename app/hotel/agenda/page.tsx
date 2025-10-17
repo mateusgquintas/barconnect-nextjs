@@ -1,12 +1,12 @@
 'use client'
 import React from 'react';
 import { MonthlyCalendar } from '@/components/agenda/MonthlyCalendar';
-import { NewBookingDialog } from '@/components/agenda/NewBookingDialog';
+import { NewReservationDialog } from '@/components/agenda/NewReservationDialog';
 import { DaySidebar } from '@/components/agenda/DaySidebar';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useAgendaDB } from '@/hooks/useAgendaDB';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
-import { supabase } from '@/lib/supabase';
+import { useRoomsDB } from '@/hooks/useRoomsDB';
 import { getOccupancyByDay } from '@/lib/agendaService';
 import { DayOccupancyBar } from '@/components/agenda/DayOccupancyBar';
 
@@ -15,16 +15,25 @@ export default function AgendaPage() {
   const [selected, setSelected] = React.useState<Date | null>(null);
   const [open, setOpen] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [filterPilgrimage, setFilterPilgrimage] = React.useState<string>('all');
+  const [filterStatus, setFilterStatus] = React.useState<string>('all');
   const { reservations, loading, error } = useAgendaDB(month.getMonth() + 1, month.getFullYear());
   const { pilgrimages } = usePilgrimagesDB();
-  const [rooms, setRooms] = React.useState<any[]>([]);
+  const { rooms } = useRoomsDB();
   const [occupancy, setOccupancy] = React.useState<Record<string, number>>({});
-  React.useEffect(() => {
-    supabase.from('rooms').select('*').then(({ data }: any) => setRooms(data || []));
-  }, []);
+  
   React.useEffect(() => {
     getOccupancyByDay(month.getMonth() + 1, month.getFullYear()).then(setOccupancy);
   }, [month, reservations]);
+
+  // Filtrar reservas
+  const filteredReservations = React.useMemo(() => {
+    return reservations.filter(r => {
+      if (filterPilgrimage !== 'all' && r.pilgrimage_id !== filterPilgrimage) return false;
+      if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+      return true;
+    });
+  }, [reservations, filterPilgrimage, filterStatus]);
 
   function prevMonth() { const d = new Date(month); d.setMonth(d.getMonth()-1); setMonth(d); }
   function nextMonth() { const d = new Date(month); d.setMonth(d.getMonth()+1); setMonth(d); }
@@ -40,7 +49,7 @@ export default function AgendaPage() {
     // Conta reservas que incluem este dia
     const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
     const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-    const count = reservations.filter(b => {
+      const count = filteredReservations.filter(b => {
       const bStart = new Date(b.check_in_date);
       const bEnd = new Date(b.check_out_date);
       return bStart < dayEnd && bEnd > dayStart;
@@ -55,29 +64,14 @@ export default function AgendaPage() {
     return percent > 0 ? <DayOccupancyBar percent={percent} /> : null;
   }
 
-  async function handleCreate({ date, customer }: { date: Date; customer?: string }) {
-    if (rooms.length === 0) {
-      notifyError('Nenhum quarto disponível. Configure quartos primeiro.');
-      return false;
-    }
-    // Cria reserva simples para o primeiro quarto disponível
-    const start = new Date(date); start.setHours(0,0,0,0);
-    const end = new Date(start); end.setDate(end.getDate()+1);
-    try {
-      const { data, error } = await supabase.from('room_reservations').insert({
-        room_id: rooms[0].id,
-        check_in_date: start.toISOString().slice(0,10),
-        check_out_date: end.toISOString().slice(0,10),
-        status: 'pending',
-        customer_name: customer || null,
-      }).select('id').single();
-      if (error) throw error;
-      notifySuccess('Reserva criada');
-      return true;
-    } catch (err: any) {
-      notifyError('Erro ao criar reserva', err);
-      return false;
-    }
+  function handleOpenDialog(date: Date) {
+    setSelected(date);
+    setOpen(true);
+  }
+
+  function handleSuccess() {
+    // Recarrega dados após criar reserva
+    getOccupancyByDay(month.getMonth() + 1, month.getFullYear()).then(setOccupancy);
   }
 
   return (
@@ -90,11 +84,58 @@ export default function AgendaPage() {
           <button className="px-3 py-1 rounded border" onClick={nextMonth} disabled={loading}>
             Próximo Mês
           </button>
+          <button 
+            className="px-3 py-1 rounded border bg-primary text-primary-foreground hover:bg-primary/90" 
+            onClick={() => setOpen(true)}
+          >
+            + Nova Reserva
+          </button>
         </div>
         {selected && (
           <div className="text-sm text-muted-foreground">Selecionado: {selected.toLocaleDateString()}</div>
         )}
       </div>
+      
+        {/* Filtros */}
+        <div className="flex gap-3 items-center">
+          <div className="flex gap-2 items-center">
+            <label className="text-sm font-medium">Romaria:</label>
+            <select 
+              className="px-2 py-1 rounded border text-sm"
+              value={filterPilgrimage}
+              onChange={(e) => setFilterPilgrimage(e.target.value)}
+            >
+              <option value="all">Todas</option>
+              {pilgrimages.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-sm font-medium">Status:</label>
+            <select 
+              className="px-2 py-1 rounded border text-sm"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">Todos</option>
+              <option value="pending">Pendente</option>
+              <option value="confirmed">Confirmada</option>
+              <option value="checked_in">Check-in</option>
+              <option value="checked_out">Check-out</option>
+              <option value="cancelled">Cancelada</option>
+            </select>
+          </div>
+          {(filterPilgrimage !== 'all' || filterStatus !== 'all') && (
+            <button 
+              className="text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => { setFilterPilgrimage('all'); setFilterStatus('all'); }}
+            >
+              Limpar filtros
+            </button>
+          )}
+        </div>
+
       {loading && <div className="text-sm text-muted-foreground">Carregando...</div>}
       {error && <div className="text-sm text-red-500">Erro: {error}</div>}
       <MonthlyCalendar
@@ -104,16 +145,18 @@ export default function AgendaPage() {
         renderDayBadge={renderBadge}
         renderOccupancyBar={renderOccupancyBar}
       />
-      <NewBookingDialog
+      <NewReservationDialog
         open={open}
         onOpenChange={setOpen}
         date={selected}
-        onCreate={handleCreate}
+        pilgrimages={pilgrimages}
+        rooms={rooms as any}
+        onSuccess={handleSuccess}
       />
       <DaySidebar
         date={sidebarOpen ? selected : null}
-        reservations={reservations}
-        rooms={rooms}
+          reservations={filteredReservations}
+        rooms={rooms as any}
         pilgrimages={pilgrimages}
         onClose={() => setSidebarOpen(false)}
       />
