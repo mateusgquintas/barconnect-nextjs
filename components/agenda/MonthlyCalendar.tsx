@@ -1,11 +1,13 @@
 'use client'
 import React from 'react';
+import { DayOccupancyBar } from './DayOccupancyBar';
 
 type Props = {
   month: Date; // any date within the month to display
   selectedDate?: Date | null;
   onDayClick?: (date: Date) => void;
   renderDayBadge?: (date: Date) => React.ReactNode;
+  renderOccupancyBar?: (date: Date) => React.ReactNode;
 };
 
 function startOfMonth(d: Date) { const x = new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x; }
@@ -27,7 +29,7 @@ function isSameDay(a?: Date|null, b?: Date|null) {
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
 
-export function MonthlyCalendar({ month, selectedDate, onDayClick, renderDayBadge }: Props) {
+export function MonthlyCalendar({ month, selectedDate, onDayClick, renderDayBadge, renderOccupancyBar }: Props) {
   const days = React.useMemo(() => buildMonthDays(month), [month]);
   const monthIdx = month.getMonth();
   const year = month.getFullYear();
@@ -75,6 +77,7 @@ export function MonthlyCalendar({ month, selectedDate, onDayClick, renderDayBadg
               <div className="text-xs font-medium">{d.getDate()}</div>
               <div className="mt-1 text-xs">
                 {renderDayBadge?.(d)}
+                {renderOccupancyBar?.(d)}
               </div>
             </button>
           );

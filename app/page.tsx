@@ -13,6 +13,7 @@ import { NewComandaDialog } from "@/components/NewComandaDialog";
 import { Dashboard } from "@/components/Dashboard";
 import { Hotel } from "@/components/Hotel";
 import { HotelPilgrimages } from "@/components/HotelPilgrimages";
+import AgendaPage from "@/app/hotel/agenda/page";
 import { Inventory } from "@/components/Inventory";
 import { Transactions } from "@/components/Transactions";
 import { LoginScreen } from "@/components/LoginScreen";
@@ -317,6 +318,12 @@ export default function Home() {
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
             <Hotel />
+          </ProtectedRoute>
+        );
+      case "hotel-agenda":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AgendaPage />
           </ProtectedRoute>
         );
       case "hotel-pilgrimages":

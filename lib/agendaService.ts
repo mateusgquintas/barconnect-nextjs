@@ -1,14 +1,40 @@
+// Calcula ocupação diária (% de quartos reservados por dia)
+export async function getOccupancyByDay(month: number, year: number) {
+  // Busca todas as reservas do mês
+  type Reservation = { room_id: string; check_in_date: string; check_out_date: string };
+  const { data: reservations, error: resError } = await (supabase as any)
+    .from('room_reservations')
+    .select('room_id, check_in_date, check_out_date');
+  if (resError) throw resError;
+
+  // Busca todos os quartos
+  const { data: rooms, error: roomsError } = await (supabase as any)
+    .from('rooms')
+    .select('id');
+  if (roomsError) throw roomsError;
+  const totalRooms = rooms.length;
+
+  // Mapeia ocupação por dia
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const occupancy: Record<string, number> = {};
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // Conta reservas que incluem este dia
+    const reservedRooms = (reservations as Reservation[]).filter((r: Reservation) => {
+      return r.check_in_date <= dateStr && r.check_out_date > dateStr;
+    }).map((r: Reservation) => r.room_id);
+    const uniqueRooms = Array.from(new Set(reservedRooms));
+    occupancy[dateStr] = totalRooms ? Math.round((uniqueRooms.length / totalRooms) * 100) : 0;
+  }
+  return occupancy;
+}
 import { Booking, Room, DateRange } from '@/types/agenda';
 import { supabase } from '@/lib/supabase';
 import { hasOverlap } from '@/utils/agenda';
 
-// We support two possible schemas (based on provided SQL files):
-// - Minimal: rooms, room_reservations (schema_hotel_romarias.sql)
-// - Hotel: hotel_rooms, hotel_reservations (schema_hotel.sql)
-// We'll try primary names first, then fall back.
 const TABLES = {
   rooms: ['rooms', 'hotel_rooms'],
-  bookings: ['bookings', 'room_reservations', 'hotel_reservations'],
+  bookings: ['room_reservations', 'hotel_reservations'],
 };
 
 async function resolveFirstAvailableTable(candidates: string[]): Promise<string> {
@@ -121,9 +147,55 @@ export async function createBooking(payload: Omit<Booking,'id'|'created_at'|'sta
   return String(data?.id);
 }
 
-export async function cancelBooking(id: string): Promise<boolean> {
+export async function cancelRoomReservation(id: string): Promise<boolean> {
   const tbl = await resolveFirstAvailableTable(TABLES.bookings);
   const { error } = await (supabase as any).from(tbl).update({ status: 'cancelled' }).eq('id', id);
   if (error) throw error;
   return true;
+}
+
+export async function createRoomReservation(payload: Omit<Booking,'id'|'created_at'|'status'> & { status?: Booking['status'] }): Promise<string> {
+  const tbl = await resolveFirstAvailableTable(TABLES.bookings);
+  
+  // Client-side overlap validation as fast-fail (server should also enforce via constraints)
+  const startDate = new Date(payload.start);
+  const endDate = new Date(payload.end);
+  
+  if (startDate >= endDate) {
+    throw new Error('Data de início deve ser anterior à data de término.');
+  }
+  
+  const existing = await listBookingsInRange({ start: startDate, end: endDate });
+  const conflict = existing.some(b => 
+    b.room_id === payload.room_id && 
+    hasOverlap(
+      { start: new Date(b.start), end: new Date(b.end) },
+      { start: startDate, end: endDate }
+    )
+  );
+  
+  if (conflict) {
+    throw new Error('Conflito: já existe uma reserva neste período para o quarto selecionado.');
+  }
+  
+  // Normalize payload to table columns
+  const start = payload.start;
+  const end = payload.end;
+  const status = payload.status ?? 'confirmed';
+  const row: any = {
+    room_id: payload.room_id,
+    status,
+    customer_name: payload.customer_name ?? null,
+    pilgrimage_id: payload.pilgrimage_id ?? null,
+  };
+  // Column names differ
+  row.check_in_date = start;
+  row.check_out_date = end;
+  
+  const { data, error } = await (supabase as any).from(tbl).insert(row).select('id').single();
+  if (error) {
+    console.error('[agendaService] createRoomReservation error:', error);
+    throw new Error(error.message || 'Erro ao criar reserva');
+  }
+  return String(data?.id);
 }

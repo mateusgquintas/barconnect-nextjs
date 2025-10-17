@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { UserRole } from '@/types/user';
 import { usePermissions } from '@/hooks/usePermissions';
 
-export type PageView = 'pdv' | 'dashboard' | 'hotel' | 'hotel-pilgrimages' | 'inventory' | 'transactions';
+export type PageView = 'pdv' | 'dashboard' | 'hotel' | 'hotel-agenda' | 'hotel-pilgrimages' | 'inventory' | 'transactions';
 
 interface HeaderProps {
   onNewComanda: () => void;
@@ -123,6 +123,16 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
                     align="start" 
                     className="bg-slate-900 border-slate-700 text-white min-w-[200px]"
                   >
+                    <DropdownMenuItem
+                      onClick={() => onViewChange('hotel-agenda')}
+                      className={`cursor-pointer ${
+                        currentView === 'hotel-agenda'
+                          ? 'bg-white/10 text-white'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span role="img" aria-label="Agenda" className="mr-1">🗓️</span> Agenda do Hotel
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onViewChange('hotel')}
                       className={`cursor-pointer ${
