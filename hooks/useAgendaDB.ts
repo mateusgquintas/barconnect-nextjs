@@ -18,11 +18,10 @@ export function useAgendaDB(month: number, year: number) {
   const [error, setError] = useState<string | null>(null);
 
   const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
-  const start = startDate.toISOString().slice(0, 10); // YYYY-MM-DD
-  const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999)
-    .toISOString()
-    .slice(0, 10); // YYYY-MM-DD
+  // Usar limite superior exclusivo: primeiro dia do próximo mês
+  const endExclusive = new Date(year, month, 1);
+  const start = startDate.toISOString().slice(0, 10); // YYYY-MM-DD (inclusive)
+  const end = endExclusive.toISOString().slice(0, 10); // YYYY-MM-DD (exclusivo)
 
   const fetchReservations = async () => {
     try {
@@ -32,6 +31,7 @@ export function useAgendaDB(month: number, year: number) {
       const { data, error } = await supabase
         .from('room_reservations')
         .select('*')
+        // check_in_date < endExclusive (inclui reservas que começam no último dia do mês)
         .lt('check_in_date', end)
         .gt('check_out_date', start);
       if (error) throw error;
