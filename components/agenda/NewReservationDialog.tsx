@@ -82,6 +82,28 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
       return;
     }
 
+    // Validação: fim deve ser estritamente após início
+    // Regra: se as datas forem diferentes, ok. Se iguais, exigir ambos horários e end > start.
+    const datesEqual = checkInDate === checkOutDate;
+    if (datesEqual) {
+      if (!checkInTime || !checkOutTime) {
+        notifyError('Para mesma data, informe horários de check-in e check-out e garanta que check-out seja após o check-in.');
+        return;
+      }
+      if (checkOutTime <= checkInTime) {
+        notifyError('Horário de check-out deve ser após o horário de check-in.');
+        return;
+      }
+    } else {
+      // se datas diferentes, garantir que checkOutDate > checkInDate
+      const inD = new Date(checkInDate);
+      const outD = new Date(checkOutDate);
+      if (!(outD.getTime() > inD.getTime())) {
+        notifyError('A data de check-out deve ser após a data de check-in.');
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
 

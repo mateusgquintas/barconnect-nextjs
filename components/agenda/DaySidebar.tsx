@@ -1,6 +1,8 @@
 import React from 'react';
 import { X, Calendar, Users, Hotel, Bus, ChevronsRight, ChevronsLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { notifyError, notifySuccess } from '@/utils/notify';
+import { cancelRoomReservation } from '@/lib/agendaService';
 
 interface RoomReservation {
   id: string;
@@ -10,6 +12,7 @@ interface RoomReservation {
   check_out_date: string;
   customer_name?: string;
   pilgrimage_id?: string;
+  notes?: string | null;
 }
 
 interface Room {
@@ -34,10 +37,12 @@ interface DaySidebarProps {
   pilgrimages: Pilgrimage[];
   onClose: () => void;
   onCreateReservation?: (date: Date) => void;
+  onReservationChanged?: () => void;
 }
 
-export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, onCreateReservation }: DaySidebarProps) {
+export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, onCreateReservation, onReservationChanged }: DaySidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false);
+  const [cancellingId, setCancellingId] = React.useState<string | null>(null);
   if (!date) return null;
 
   const dateStr = date.toISOString().slice(0, 10);
@@ -70,6 +75,22 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
     checked_out: 'bg-gray-100 text-gray-700 border-gray-300',
     cancelled: 'bg-red-100 text-red-700 border-red-300',
   };
+
+  async function handleCancel(resId: string) {
+    const ok = typeof window !== 'undefined' ? window.confirm('Cancelar esta reserva?') : true;
+    if (!ok) return;
+    try {
+      setCancellingId(resId);
+      await cancelRoomReservation(resId);
+      notifySuccess('Reserva cancelada');
+      onReservationChanged?.();
+    } catch (e: any) {
+      console.error('Cancel error', e);
+      notifyError('Erro ao cancelar reserva', e);
+    } finally {
+      setCancellingId(null);
+    }
+  }
 
   const containerWidth = collapsed ? 'w-10' : 'w-96';
   const hiddenWhenCollapsed = collapsed ? 'hidden' : '';
@@ -175,6 +196,23 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
                     <div className="text-xs text-slate-500 space-y-1">
                       <p>Check-in: {formatDateMaybeTime(reservation.check_in_date)}</p>
                       <p>Check-out: {formatDateMaybeTime(reservation.check_out_date)}</p>
+                    </div>
+                    {reservation.notes && (
+                      <div className="mt-2 text-xs text-slate-600">
+                        <span className="font-medium">Obs:</span> {reservation.notes}
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center justify-end gap-2">
+                      {reservation.status !== 'cancelled' && reservation.status !== 'checked_out' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancel(reservation.id)}
+                          disabled={cancellingId === reservation.id}
+                        >
+                          {cancellingId === reservation.id ? 'Cancelando...' : 'Cancelar'}
+                        </Button>
+                      )}
                     </div>
                     {pilgrimage && (
                       <div className="mt-2 flex items-center gap-1 text-xs text-purple-600">

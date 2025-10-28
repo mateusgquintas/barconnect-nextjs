@@ -3,12 +3,15 @@ import React from 'react';
 import { MonthlyCalendar } from '@/components/agenda/MonthlyCalendar';
 import { NewReservationDialog } from '@/components/agenda/NewReservationDialog';
 import { DaySidebar } from '@/components/agenda/DaySidebar';
+import { DashboardRomarias } from '@/components/agenda/DashboardRomarias';
+import { ExportAgendaPDF } from '@/components/agenda/ExportAgendaPDF';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useAgendaDB } from '@/hooks/useAgendaDB';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
 import { useRoomsDB } from '@/hooks/useRoomsDB';
-import { getOccupancyByDay } from '@/lib/agendaService';
+import * as agendaService from '@/lib/agendaService';
 import { DayOccupancyBar } from '@/components/agenda/DayOccupancyBar';
+import { CalendarLegend } from '@/components/agenda/CalendarLegend';
 
 export default function AgendaPage() {
   const [month, setMonth] = React.useState(() => new Date());
@@ -23,8 +26,32 @@ export default function AgendaPage() {
   const [occupancy, setOccupancy] = React.useState<Record<string, number>>({});
   
   React.useEffect(() => {
-    getOccupancyByDay(month.getMonth() + 1, month.getFullYear()).then(setOccupancy);
+    const fn = (agendaService as any)?.getOccupancyByDay;
+    if (typeof fn === 'function') {
+      fn(month.getMonth() + 1, month.getFullYear()).then(setOccupancy).catch(() => {});
+    }
   }, [month, reservations]);
+
+  // Persistência de filtros
+  React.useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? window.localStorage.getItem('agenda:filters') : null;
+      if (saved) {
+        const obj = JSON.parse(saved);
+        if (obj.status) setFilterStatus(obj.status);
+        if (obj.pilgrimage) setFilterPilgrimage(obj.pilgrimage);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('agenda:filters', JSON.stringify({ status: filterStatus, pilgrimage: filterPilgrimage }));
+      }
+    } catch {}
+  }, [filterStatus, filterPilgrimage]);
 
   // Filtrar reservas
   const filteredReservations = React.useMemo(() => {
@@ -72,7 +99,10 @@ export default function AgendaPage() {
   function handleSuccess() {
     // Recarrega dados após criar reserva
     refetch?.();
-    getOccupancyByDay(month.getMonth() + 1, month.getFullYear()).then(setOccupancy);
+    const fn = (agendaService as any)?.getOccupancyByDay;
+    if (typeof fn === 'function') {
+      fn(month.getMonth() + 1, month.getFullYear()).then(setOccupancy).catch(() => {});
+    }
   }
 
   return (
@@ -137,14 +167,47 @@ export default function AgendaPage() {
           )}
         </div>
 
+      {/* Legenda de cores */}
+      <CalendarLegend />
+      
+      {/* Exportar PDF */}
+      <div className="mb-4">
+        <ExportAgendaPDF 
+          month={month}
+          reservations={filteredReservations}
+          pilgrimages={pilgrimages}
+          rooms={rooms as any}
+          occupancy={occupancy}
+        />
+      </div>
+      
+      {/* Dashboard de Romarias */}
+      <DashboardRomarias 
+        month={month}
+        reservations={filteredReservations}
+        pilgrimages={pilgrimages}
+        totalRooms={rooms.length}
+      />
+      
       {loading && <div className="text-sm text-muted-foreground">Carregando...</div>}
       {error && <div className="text-sm text-red-500">Erro: {error}</div>}
       <MonthlyCalendar
         month={month}
         selectedDate={selected || undefined}
         onDayClick={(d) => { setSelected(d); setSidebarOpen(true); }}
+        onDayDoubleClick={(d) => { setSelected(d); setOpen(true); }}
         renderDayBadge={renderBadge}
         renderOccupancyBar={renderOccupancyBar}
+        reservations={filteredReservations}
+        rooms={rooms as any}
+        pilgrimages={pilgrimages}
+        onEventClick={(reservation) => {
+          // Quando clicar em um evento, abre a sidebar naquele dia
+          const date = new Date(reservation.check_in_date);
+          setSelected(date);
+          setSidebarOpen(true);
+        }}
+        showEvents={true}
       />
       <NewReservationDialog
         open={open}
@@ -160,6 +223,7 @@ export default function AgendaPage() {
         rooms={rooms as any}
         pilgrimages={pilgrimages}
         onCreateReservation={(d) => { setSelected(d); setOpen(true); }}
+        onReservationChanged={handleSuccess}
         onClose={() => setSidebarOpen(false)}
       />
     </div>

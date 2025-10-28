@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import * as agendaService from '@/lib/agendaService';
 import { PostgrestError } from '@supabase/supabase-js';
 
 export interface Room {
@@ -27,13 +28,33 @@ export function useRoomsDB() {
   // Fetch all rooms
   const fetchRooms = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .order('number', { ascending: true });
-    if (error) setError(error);
-    else setRooms(data || []);
-    setLoading(false);
+    try {
+      const svc: any = agendaService as any;
+      if (svc && typeof svc.listRooms === 'function') {
+        const list = await svc.listRooms();
+        // Map to Room shape used here (ensure number exists if name is provided)
+        const mapped = (list || []).map((r: any) => ({
+          id: String(r.id),
+          number: Number(r.number ?? r.name ?? 0),
+          type: r.type ?? undefined,
+          status: r.status ?? undefined,
+          description: r.description ?? undefined,
+        })) as Room[];
+        setRooms(mapped);
+        setError(null);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .order('number', { ascending: true });
+      if (error) setError(error);
+      else setRooms(data || []);
+    } catch (err: any) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Add a new room

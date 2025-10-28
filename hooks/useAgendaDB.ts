@@ -9,6 +9,7 @@ export interface RoomReservation {
   check_out_date: string;
   customer_name?: string;
   pilgrimage_id?: string;
+  notes?: string | null;
 }
 
 export function useAgendaDB(month: number, year: number) {
@@ -45,13 +46,20 @@ export function useAgendaDB(month: number, year: number) {
   useEffect(() => {
     fetchReservations();
     // Realtime subscription para manter a agenda atualizada
-    const channel = (supabase as any)
-      .channel('room_reservations-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_reservations' }, () => {
-        fetchReservations();
-      })
-      .subscribe();
-    return () => { (supabase as any).removeChannel(channel); };
+    let cleanup: (() => void) | undefined;
+    try {
+      const s = supabase as any;
+      if (s && typeof s.channel === 'function') {
+        const channel = s
+          .channel('room_reservations-changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'room_reservations' }, () => {
+            fetchReservations();
+          })
+          .subscribe();
+        cleanup = () => { try { s.removeChannel?.(channel); } catch {} };
+      }
+    } catch {}
+    return () => { cleanup?.(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, year]);
 

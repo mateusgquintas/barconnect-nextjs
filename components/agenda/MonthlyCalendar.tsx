@@ -1,13 +1,41 @@
 'use client'
 import React from 'react';
 import { DayOccupancyBar } from './DayOccupancyBar';
+import { CalendarGridWithEvents } from './CalendarEventBar';
+
+interface RoomReservation {
+  id: string;
+  room_id: string;
+  status: string;
+  check_in_date: string;
+  check_out_date: string;
+  customer_name?: string;
+  pilgrimage_id?: string;
+}
+
+interface Room {
+  id: string;
+  number: number | string;
+}
+
+interface Pilgrimage {
+  id: string;
+  name: string;
+}
 
 type Props = {
   month: Date; // any date within the month to display
   selectedDate?: Date | null;
   onDayClick?: (date: Date) => void;
+  onDayDoubleClick?: (date: Date) => void;
   renderDayBadge?: (date: Date) => React.ReactNode;
   renderOccupancyBar?: (date: Date) => React.ReactNode;
+  // Novos props para visualização de eventos
+  reservations?: RoomReservation[];
+  rooms?: Room[];
+  pilgrimages?: Pilgrimage[];
+  onEventClick?: (reservation: RoomReservation) => void;
+  showEvents?: boolean;
 };
 
 function startOfMonth(d: Date) { const x = new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x; }
@@ -29,7 +57,19 @@ function isSameDay(a?: Date|null, b?: Date|null) {
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
 
-export function MonthlyCalendar({ month, selectedDate, onDayClick, renderDayBadge, renderOccupancyBar }: Props) {
+export function MonthlyCalendar({ 
+  month, 
+  selectedDate, 
+  onDayClick, 
+  onDayDoubleClick, 
+  renderDayBadge, 
+  renderOccupancyBar,
+  reservations = [],
+  rooms = [],
+  pilgrimages = [],
+  onEventClick,
+  showEvents = true,
+}: Props) {
   const days = React.useMemo(() => buildMonthDays(month), [month]);
   const monthIdx = month.getMonth();
   const year = month.getFullYear();
@@ -46,43 +86,61 @@ export function MonthlyCalendar({ month, selectedDate, onDayClick, renderDayBadg
 
   return (
     <div className="w-full" aria-label="Calendário mensal">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold" aria-live="polite">{monthLabel}</h2>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-sm text-muted-foreground mb-1" role="row">
+      <div className="grid grid-cols-7 gap-1 text-sm text-muted-foreground mb-2" role="row">
         {weekDays.map((wd) => (
-          <div key={wd} className="py-1 text-center" role="columnheader">{wd}</div>
+          <div key={wd} className="py-2 text-center font-medium" role="columnheader">{wd}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1" role="grid">
-        {days.map((d, idx) => {
-          const inCurrentMonth = d.getMonth() === monthIdx && d.getFullYear()===year;
-          const selected = isSameDay(d, selectedDate || null);
-          const key = dateKey(d);
-          return (
-            <button
-              key={idx}
-              role="gridcell"
-              aria-selected={selected}
-              aria-label={`Dia ${d.getDate()} de ${monthLabel}`}
-              data-date={key}
-              onClick={() => onDayClick?.(d)}
-              className={[
-                'h-20 p-1 rounded-xs text-left border transition-colors',
-                inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
-                selected ? 'ring-2 ring-ring' : '',
-                'hover:bg-accent hover:text-accent-foreground'
-              ].join(' ')}
-            >
-              <div className="text-xs font-medium">{d.getDate()}</div>
-              <div className="mt-1 text-xs">
-                {renderDayBadge?.(d)}
-                {renderOccupancyBar?.(d)}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      
+      {showEvents && reservations.length > 0 ? (
+        <CalendarGridWithEvents
+          month={month}
+          days={days}
+          reservations={reservations}
+          rooms={rooms}
+          pilgrimages={pilgrimages}
+          selectedDate={selectedDate}
+          onDayClick={onDayClick}
+          onDayDoubleClick={onDayDoubleClick}
+          onEventClick={onEventClick}
+          renderDayBadge={renderDayBadge}
+          renderOccupancyBar={renderOccupancyBar}
+        />
+      ) : (
+        <div className="grid grid-cols-7 gap-1" role="grid">
+          {days.map((d, idx) => {
+            const inCurrentMonth = d.getMonth() === monthIdx && d.getFullYear()===year;
+            const selected = isSameDay(d, selectedDate || null);
+            const key = dateKey(d);
+            return (
+              <button
+                key={idx}
+                role="gridcell"
+                aria-selected={selected}
+                aria-label={`Dia ${d.getDate()} de ${monthLabel}`}
+                data-date={key}
+                onClick={() => onDayClick?.(d)}
+                onDoubleClick={() => onDayDoubleClick?.(d)}
+                className={[
+                  'h-20 p-1 rounded-xs text-left border transition-colors',
+                  inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
+                  selected ? 'ring-2 ring-ring' : '',
+                  'hover:bg-accent hover:text-accent-foreground'
+                ].join(' ')}
+              >
+                <div className="text-xs font-medium">{d.getDate()}</div>
+                <div className="mt-1 text-xs">
+                  {renderDayBadge?.(d)}
+                  {renderOccupancyBar?.(d)}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

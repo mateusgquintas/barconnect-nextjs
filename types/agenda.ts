@@ -23,6 +23,7 @@ export interface Booking {
   status: BookingStatus;
   customer_name?: string | null;
   pilgrimage_id?: string | null;
+  notes?: string | null;
   created_at?: string;
 }
 

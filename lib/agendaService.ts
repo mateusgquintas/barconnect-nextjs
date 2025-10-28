@@ -129,24 +129,39 @@ export async function createBooking(payload: Omit<Booking,'id'|'created_at'|'sta
   // Normalize payload to table columns
   const start = payload.start;
   const end = payload.end;
-  const status = payload.status ?? 'confirmed';
+  const requestedStatus = payload.status ?? 'confirmed';
+  // Map status to table-specific allowed value (room_reservations uses 'reserved')
+  const normalizedStatus = (tbl === 'room_reservations' && (requestedStatus === 'confirmed' || requestedStatus === 'pending'))
+    ? 'reserved'
+    : requestedStatus;
+
   const row: any = {
     room_id: payload.room_id,
-    status,
-    customer_name: payload.customer_name ?? null,
+    status: normalizedStatus,
     pilgrimage_id: payload.pilgrimage_id ?? null,
   };
+  // Optional notes support where available
+  if ((payload as any).notes !== undefined) {
+    row.notes = (payload as any).notes || null;
+  }
+  // Se estivermos no schema room_reservations e não houver notes, preservar o nome do hóspede em notes
+  if (tbl === 'room_reservations' && !row.notes && payload.customer_name) {
+    row.notes = payload.customer_name;
+  }
   // Column names differ
   if (tbl === 'room_reservations') {
     row.check_in_date = start;
     row.check_out_date = end;
+    // room_reservations (schema_hotel_romarias) não possui customer_name
   } else if (tbl === 'hotel_reservations') {
     row.checkin_date = start;
     row.checkout_date = end;
+    row.customer_name = payload.customer_name ?? null;
   } else {
     // Default 'bookings' table uses start/end
     row.start = start;
     row.end = end;
+    row.customer_name = payload.customer_name ?? null;
   }
   
   const { data, error } = await (supabase as any).from(tbl).insert(row).select('id').single();
@@ -191,16 +206,37 @@ export async function createRoomReservation(payload: Omit<Booking,'id'|'created_
   // Normalize payload to table columns
   const start = payload.start;
   const end = payload.end;
-  const status = payload.status ?? 'confirmed';
+  const requestedStatus = payload.status ?? 'confirmed';
+  const normalizedStatus = (tbl === 'room_reservations' && (requestedStatus === 'confirmed' || requestedStatus === 'pending'))
+    ? 'reserved'
+    : requestedStatus;
   const row: any = {
     room_id: payload.room_id,
-    status,
-    customer_name: payload.customer_name ?? null,
+    status: normalizedStatus,
     pilgrimage_id: payload.pilgrimage_id ?? null,
   };
+  // Optional notes
+  if ((payload as any).notes !== undefined) {
+    row.notes = (payload as any).notes || null;
+  }
+  // Preservar nome do hóspede em notes quando usando room_reservations
+  if (tbl === 'room_reservations' && !row.notes && payload.customer_name) {
+    row.notes = payload.customer_name;
+  }
   // Column names differ
-  row.check_in_date = start;
-  row.check_out_date = end;
+  if (tbl === 'room_reservations') {
+    row.check_in_date = start;
+    row.check_out_date = end;
+    // Não enviar customer_name pois a tabela não possui essa coluna neste esquema
+  } else if (tbl === 'hotel_reservations') {
+    row.checkin_date = start;
+    row.checkout_date = end;
+    row.customer_name = payload.customer_name ?? null;
+  } else {
+    row.start = start;
+    row.end = end;
+    row.customer_name = payload.customer_name ?? null;
+  }
   
   const { data, error } = await (supabase as any).from(tbl).insert(row).select('id').single();
   if (error) {
