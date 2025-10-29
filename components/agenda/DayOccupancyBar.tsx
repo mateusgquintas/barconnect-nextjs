@@ -5,7 +5,7 @@ interface DayOccupancyBarProps {
 }
 
 // Barra visual de ocupação: verde (<50%), amarelo (50-80%), vermelho (>80%)
-export function DayOccupancyBar({ percent }: DayOccupancyBarProps) {
+export const DayOccupancyBar = React.memo(function DayOccupancyBar({ percent }: DayOccupancyBarProps) {
   let color = 'bg-green-500';
   let textColor = 'text-green-700';
   if (percent >= 80) {
@@ -30,4 +30,4 @@ export function DayOccupancyBar({ percent }: DayOccupancyBarProps) {
       </div>
     </div>
   );
-}
+});

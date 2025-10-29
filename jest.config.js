@@ -16,6 +16,9 @@ const customConfig = {
   collectCoverageFrom: [
     'components/**/*.{ts,tsx}',
     'hooks/**/*.{ts,tsx}',
+    // Exclude deprecated/archived or problematic files from coverage collection
+    '!hooks/useComandasV2.ts',
+    '!hooks/useComandasV2.ts.append',
     'lib/**/*.{ts,tsx}',
     'utils/**/*.{ts,tsx}',
     'app/**/*.{ts,tsx}',
@@ -24,13 +27,13 @@ const customConfig = {
     '!app/**/layout.*',
   ],
   coverageReporters: ['text', 'lcov'],
-  // Start with no enforced thresholds; track trends in CI and raise gradually
+  // Enforce modest thresholds to prevent coverage regressions; raise gradually over time
   coverageThreshold: {
     global: {
-      statements: 0,
-      branches: 0,
-      functions: 0,
-      lines: 0,
+      statements: 30,
+      branches: 20,
+      functions: 25,
+      lines: 30,
     }
   }
 };

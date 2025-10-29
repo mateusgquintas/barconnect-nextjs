@@ -11,5 +11,8 @@ app/debug-schema
 app/debug-supabase
 
 # Scripts locais de diagnóstico
-diagnostico.js
-testar-funcionalidades.js
+scripts/maintenance/diagnostico.js
+scripts/maintenance/testar-funcionalidades.js
+
+# Documentação arquivada
+docs/archive/

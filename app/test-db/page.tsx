@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import DebugPageWrapper from '@/components/DebugPageWrapper';
 
 export default function TestDB() {
   const [products, setProducts] = useState<any[]>([]);
@@ -146,7 +147,8 @@ export default function TestDB() {
   }, []);
 
   return (
-    <div className="p-8">
+    <DebugPageWrapper title="Teste de Conexão - Supabase">
+      <div className="p-8">
       <div className="flex gap-4 mb-4">
         <button
           onClick={handleClearLocal}
@@ -197,6 +199,7 @@ export default function TestDB() {
           Abra o console para ver logs detalhados das operações.
         </p>
       </div>
-    </div>
+      </div>
+    </DebugPageWrapper>
   );
 }

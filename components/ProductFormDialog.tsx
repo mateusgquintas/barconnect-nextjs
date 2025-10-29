@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 // Using native selects here to ensure compatibility with tests using fireEvent.change on labeled controls
 import { Label } from './ui/label';
 import { Product } from '../types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -16,6 +16,8 @@ interface ProductFormDialogProps {
 
 export function ProductFormDialog({ open, onOpenChange, product, onSave, title }: ProductFormDialogProps) {
   const [form, setForm] = useState<Partial<Product>>({});
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     if (open && product) {
@@ -62,12 +64,14 @@ export function ProductFormDialog({ open, onOpenChange, product, onSave, title }
     outros: [],
   };
 
+  const dialogTitleText = title || (product ? 'Editar Produto' : 'Novo Produto');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent aria-label={dialogTitleText} aria-labelledby={titleId} aria-describedby={descriptionId}>
         <DialogHeader>
-          <DialogTitle>{title || (product ? 'Editar Produto' : 'Novo Produto')}</DialogTitle>
-          <DialogDescription id="product-form-description">
+          <DialogTitle id={titleId}>{dialogTitleText}</DialogTitle>
+          <DialogDescription id={descriptionId}>
             Preencha os campos abaixo e clique em Salvar para {product ? 'atualizar' : 'cadastrar'} o produto.
           </DialogDescription>
         </DialogHeader>

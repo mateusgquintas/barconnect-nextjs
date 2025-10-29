@@ -9,7 +9,13 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "test:coverage": "jest --coverage --passWithNoTests"
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "supabase:menu": "node scripts/supabase-orchestrator.js",
+    "supabase:clean": "node scripts/supabase-orchestrator.js clean",
+    "supabase:clean-transactional": "node scripts/supabase-orchestrator.js clean-transactional",
+    "supabase:diagnostic": "node scripts/supabase-orchestrator.js diagnostic",
+    "supabase:fix-fk": "node scripts/supabase-orchestrator.js fix-fk",
+    "supabase:migrate-simple": "node scripts/supabase-orchestrator.js migrate-simple"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

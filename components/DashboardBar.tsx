@@ -4,6 +4,7 @@ import React, { useState, useMemo, memo, useCallback } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { logger } from '@/utils/logger';
 import { TrendingUp, ShoppingCart, DollarSign, Calendar, Search, Gift, Eye } from 'lucide-react';
 import { Comanda, Transaction, SaleRecord, PaymentMethod } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -25,7 +26,7 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
   const [selectedSale, setSelectedSale] = useState<SaleRecord | null>(null);
 
   // Debug logs para verificar dados
-  console.log('📊 DashboardBar - Dados recebidos:', {
+  logger.debug('📊 DashboardBar - Dados recebidos:', {
     transactions: transactions.length,
     comandas: comandas.length,
     salesRecords: salesRecords.length,
@@ -35,7 +36,7 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
 
   // Debug: mostrar algumas vendas para verificar formato
   if (salesRecords.length > 0) {
-    console.log('📋 Primeiras vendas:', salesRecords.slice(0, 3).map(s => ({
+    logger.debug('📋 Primeiras vendas:', salesRecords.slice(0, 3).map(s => ({
       id: s.id,
       date: s.date,
       time: s.time,
@@ -76,7 +77,7 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
     return saleDate >= start && saleDate <= end && sale.isCourtesy;
   });
 
-  console.log('🎯 Vendas filtradas:', {
+  logger.debug('🎯 Vendas filtradas:', {
     totalSalesRecords: salesRecords.length,
     salesInPeriod: salesInPeriod.length,
     courtesiesInPeriod: courtesiesInPeriod.length,

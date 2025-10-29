@@ -21,9 +21,12 @@ export * from '@testing-library/react';
 export { customRender as render };
 
 // Factory para criar dados de teste consistentes
+// Unique ID counters for factory defaults to avoid duplicate React keys in tests
+let __idCounters = { product: 0, sale: 0, transaction: 0, comanda: 0 };
+
 export const TestDataFactory = {
   createProduct: (overrides: Partial<Product> = {}): Product => ({
-    id: 'prod-1',
+    id: overrides.id ?? `prod-${++__idCounters.product}`,
     name: 'Test Product',
     price: 10.0,
     stock: 100,
@@ -38,7 +41,7 @@ export const TestDataFactory = {
   }),
 
   createSaleRecord: (overrides: Partial<SaleRecord> = {}): SaleRecord => ({
-    id: 'sale-1',
+    id: overrides.id ?? `sale-${++__idCounters.sale}`,
     items: [TestDataFactory.createOrderItem()],
     total: 10.0,
     paymentMethod: 'cash' as PaymentMethod,
@@ -51,7 +54,7 @@ export const TestDataFactory = {
   }),
 
   createTransaction: (overrides: Partial<Transaction> = {}): Transaction => ({
-    id: 'trans-1',
+    id: overrides.id ?? `trans-${++__idCounters.transaction}`,
     type: 'income',
     description: 'Test transaction',
     amount: 10.0,
@@ -62,7 +65,7 @@ export const TestDataFactory = {
   }),
 
   createComanda: (overrides: any = {}) => ({
-    id: 'cmd-1',
+    id: overrides.id ?? `cmd-${++__idCounters.comanda}`,
     number: 123,
     customerName: 'Test Customer',
     items: [TestDataFactory.createOrderItem()],

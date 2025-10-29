@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import DebugPageWrapper from '@/components/DebugPageWrapper';
 
 interface SupabaseCheck {
   salesTable: any[];
@@ -77,12 +78,17 @@ export default function DebugSupabase() {
   }, []);
 
   if (loading) {
-    return <div className="p-8">Verificando Supabase...</div>;
+    return (
+      <DebugPageWrapper title="Debug - Supabase">
+        <div className="p-8">Verificando Supabase...</div>
+      </DebugPageWrapper>
+    );
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Debug - Supabase</h1>
+    <DebugPageWrapper title="Debug - Supabase">
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Debug - Supabase</h1>
       
       {data?.error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -122,6 +128,7 @@ export default function DebugSupabase() {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </DebugPageWrapper>
   );
 }

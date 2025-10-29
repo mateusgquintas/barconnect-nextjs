@@ -70,6 +70,53 @@ export function MonthlyCalendar({
   onEventClick,
   showEvents = true,
 }: Props) {
+  const DayCell = React.useMemo(() => {
+    type CellProps = {
+      d: Date;
+      inCurrentMonth: boolean;
+      selected: boolean;
+      monthLabel: string;
+      onDayClick?: (d: Date) => void;
+      onDayDoubleClick?: (d: Date) => void;
+      renderDayBadge?: (d: Date) => React.ReactNode;
+      renderOccupancyBar?: (d: Date) => React.ReactNode;
+      dataDate: string;
+    };
+    const Comp = React.memo(function DayCell({ d, inCurrentMonth, selected, monthLabel, onDayClick, onDayDoubleClick, renderDayBadge, renderOccupancyBar, dataDate }: CellProps) {
+      return (
+        <button
+          role="gridcell"
+          aria-selected={selected}
+          aria-label={`Dia ${d.getDate()} de ${monthLabel}`}
+          data-date={dataDate}
+          onClick={() => onDayClick?.(d)}
+          onDoubleClick={() => onDayDoubleClick?.(d)}
+          className={[
+            'h-20 p-1 rounded-xs text-left border transition-colors',
+            inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
+            selected ? 'ring-2 ring-ring' : '',
+            'hover:bg-accent hover:text-accent-foreground'
+          ].join(' ')}
+        >
+          <div className="text-xs font-medium">{d.getDate()}</div>
+          <div className="mt-1 text-xs">
+            {renderDayBadge?.(d)}
+            {renderOccupancyBar?.(d)}
+          </div>
+        </button>
+      );
+    }, (prev, next) => (
+      prev.selected === next.selected &&
+      prev.inCurrentMonth === next.inCurrentMonth &&
+      prev.dataDate === next.dataDate &&
+      prev.monthLabel === next.monthLabel &&
+      prev.onDayClick === next.onDayClick &&
+      prev.onDayDoubleClick === next.onDayDoubleClick &&
+      prev.renderDayBadge === next.renderDayBadge &&
+      prev.renderOccupancyBar === next.renderOccupancyBar
+    ));
+    return Comp;
+  }, []);
   const days = React.useMemo(() => buildMonthDays(month), [month]);
   const monthIdx = month.getMonth();
   const year = month.getFullYear();
@@ -111,32 +158,23 @@ export function MonthlyCalendar({
         />
       ) : (
         <div className="grid grid-cols-7 gap-1" role="grid">
-          {days.map((d, idx) => {
+          {days.map((d) => {
             const inCurrentMonth = d.getMonth() === monthIdx && d.getFullYear()===year;
             const selected = isSameDay(d, selectedDate || null);
             const key = dateKey(d);
             return (
-              <button
-                key={idx}
-                role="gridcell"
-                aria-selected={selected}
-                aria-label={`Dia ${d.getDate()} de ${monthLabel}`}
-                data-date={key}
-                onClick={() => onDayClick?.(d)}
-                onDoubleClick={() => onDayDoubleClick?.(d)}
-                className={[
-                  'h-20 p-1 rounded-xs text-left border transition-colors',
-                  inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
-                  selected ? 'ring-2 ring-ring' : '',
-                  'hover:bg-accent hover:text-accent-foreground'
-                ].join(' ')}
-              >
-                <div className="text-xs font-medium">{d.getDate()}</div>
-                <div className="mt-1 text-xs">
-                  {renderDayBadge?.(d)}
-                  {renderOccupancyBar?.(d)}
-                </div>
-              </button>
+              <DayCell
+                key={key}
+                d={d}
+                inCurrentMonth={inCurrentMonth}
+                selected={selected}
+                monthLabel={monthLabel}
+                onDayClick={onDayClick}
+                onDayDoubleClick={onDayDoubleClick}
+                renderDayBadge={renderDayBadge}
+                renderOccupancyBar={renderOccupancyBar}
+                dataDate={key}
+              />
             );
           })}
         </div>

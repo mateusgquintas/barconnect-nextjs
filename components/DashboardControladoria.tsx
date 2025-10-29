@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, memo, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { Card } from './ui/card';
 import { DollarSign, TrendingUp, TrendingDown, Calendar, FileSpreadsheet } from 'lucide-react';
 import { Input } from './ui/input';
@@ -72,7 +73,7 @@ export const DashboardControladoria = memo<DashboardControladoria>(({ transactio
     const filteredTransactions = filterByDateRange(transactions, startDate, endDate);
     const filteredSales = filterByDateRange(salesRecords, startDate, endDate);
     
-    console.log('📈 DashboardControladoria - Dados recebidos:', {
+  logger.debug('📈 DashboardControladoria - Dados recebidos:', {
       transactions: transactions.length,
       salesRecords: salesRecords.length,
       filteredTransactions: filteredTransactions.length,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import DebugPageWrapper from '@/components/DebugPageWrapper';
 
 export default function DebugSchema() {
   const [schemas, setSchemas] = useState<any>({});
@@ -67,12 +68,17 @@ export default function DebugSchema() {
   }, []);
 
   if (loading) {
-    return <div className="p-8">Verificando schema...</div>;
+    return (
+      <DebugPageWrapper title="Debug - Schema Supabase">
+        <div className="p-8">Verificando schema...</div>
+      </DebugPageWrapper>
+    );
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Debug - Schema Supabase</h1>
+    <DebugPageWrapper title="Debug - Schema Supabase">
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Debug - Schema Supabase</h1>
       
       <div className="space-y-6">
         <div>
@@ -125,6 +131,7 @@ export default function DebugSchema() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </DebugPageWrapper>
   );
 }

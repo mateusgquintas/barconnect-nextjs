@@ -1,6 +1,7 @@
 'use client'
 
 import { usePWA } from '@/hooks/usePWA';
+import { logger } from '@/utils/logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ const PWAStatusCard = () => {
     const success = await installApp();
     if (success) {
       // Optional: Show success message
-      console.log('App instalado com sucesso!');
+      logger.debug('App instalado com sucesso!');
     }
   };
 
@@ -40,7 +41,7 @@ const PWAStatusCard = () => {
       text: 'Sistema completo de gestão para bares e restaurantes!',
     });
     if (success) {
-      console.log('App compartilhado!');
+      logger.debug('App compartilhado!');
     }
   };
 

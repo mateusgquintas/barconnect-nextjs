@@ -1,10 +1,15 @@
-'use client'
+"use client"
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { MonthlyCalendar } from '@/components/agenda/MonthlyCalendar';
 import { NewReservationDialog } from '@/components/agenda/NewReservationDialog';
 import { DaySidebar } from '@/components/agenda/DaySidebar';
 import { DashboardRomarias } from '@/components/agenda/DashboardRomarias';
-import { ExportAgendaPDF } from '@/components/agenda/ExportAgendaPDF';
+// Defer heavy PDF export component to improve initial UI responsiveness
+const ExportAgendaPDF = dynamic(() => import('@/components/agenda/ExportAgendaPDF').then(m => m.ExportAgendaPDF), {
+  ssr: false,
+  loading: () => <div className="text-sm text-muted-foreground">Preparando exportação…</div>,
+});
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useAgendaDB } from '@/hooks/useAgendaDB';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
@@ -72,24 +77,24 @@ export default function AgendaPage() {
     return `${y}-${m}-${day}`;
   }
 
-  function renderBadge(d: Date) {
+  const renderBadge = React.useCallback((d: Date) => {
     // Conta reservas que incluem este dia
     const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
     const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-      const count = filteredReservations.filter(b => {
+    const count = filteredReservations.filter(b => {
       const bStart = new Date(b.check_in_date);
       const bEnd = new Date(b.check_out_date);
       return bStart < dayEnd && bEnd > dayStart;
     }).length;
     if (!count) return null;
     return <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1 py-0.5 text-[10px]" aria-label={`${count} reservas`}>{count} res.</span>;
-  }
+  }, [filteredReservations]);
 
-  function renderOccupancyBar(d: Date) {
+  const renderOccupancyBar = React.useCallback((d: Date) => {
     const key = d.toISOString().slice(0,10);
     const percent = occupancy[key] ?? 0;
     return percent > 0 ? <DayOccupancyBar percent={percent} /> : null;
-  }
+  }, [occupancy]);
 
   function handleOpenDialog(date: Date) {
     setSelected(date);

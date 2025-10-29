@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSalesDB } from '@/hooks/useSalesDB';
 import { SaleRecord } from '@/types';
+import DebugPageWrapper from '@/components/DebugPageWrapper';
 
 export default function DebugSales() {
   const { sales, loading } = useSalesDB();
@@ -33,12 +34,17 @@ export default function DebugSales() {
   }, [sales]);
 
   if (loading) {
-    return <div className="p-8">Carregando vendas...</div>;
+    return (
+      <DebugPageWrapper title="Debug - Vendas">
+        <div className="p-8">Carregando vendas...</div>
+      </DebugPageWrapper>
+    );
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Debug - Vendas</h1>
+    <DebugPageWrapper title="Debug - Vendas">
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Debug - Vendas</h1>
       
       <div className="mb-6">
         <p><strong>Total de vendas (hook):</strong> {sales.length}</p>
@@ -79,6 +85,7 @@ export default function DebugSales() {
           ))
         )}
       </div>
-    </div>
+      </div>
+    </DebugPageWrapper>
   );
 }

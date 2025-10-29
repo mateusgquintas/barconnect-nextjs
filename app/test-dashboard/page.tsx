@@ -5,6 +5,7 @@ import { Dashboard } from '@/components/Dashboard';
 import { useComandasDB } from '@/hooks/useComandasDB';
 import { useTransactionsDB } from '@/hooks/useTransactionsDB';
 import { useProductsDB } from '@/hooks/useProductsDB';
+import DebugPageWrapper from '@/components/DebugPageWrapper';
 
 export default function TestDashboard() {
   const { sales, loading } = useSalesDB();
@@ -13,11 +14,16 @@ export default function TestDashboard() {
   const { products } = useProductsDB();
 
   if (loading) {
-    return <div className="p-8">Carregando...</div>;
+    return (
+      <DebugPageWrapper title="Teste Dashboard">
+        <div className="p-8">Carregando...</div>
+      </DebugPageWrapper>
+    );
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <DebugPageWrapper title="Teste Dashboard">
+      <div className="h-screen flex flex-col">
       <div className="p-4 bg-gray-100">
         <h1 className="text-xl font-bold">Teste Dashboard</h1>
         <p>Vendas: {sales.length} | Comandas: {comandas.length} | Transações: {transactions.length}</p>
@@ -30,6 +36,7 @@ export default function TestDashboard() {
         salesRecords={sales}
         products={products}
       />
-    </div>
+      </div>
+    </DebugPageWrapper>
   );
 }

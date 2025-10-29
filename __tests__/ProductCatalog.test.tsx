@@ -5,7 +5,7 @@ import ProductCatalog from '../components/ProductCatalog';
 import { Product } from '@/types';
 
 // Mock do AuthContext
-jest.mock('@/context/AuthContext', () => ({
+jest.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { id: '1', email: 'test@test.com' }
   })

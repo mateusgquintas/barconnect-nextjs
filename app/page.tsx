@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { SidePanelsProvider, useSidePanels } from "@/contexts/SidePanelsContext";
 import { Header, PageView } from "@/components/Header";
 import { ComandaSidebar } from "@/components/ComandaSidebar";

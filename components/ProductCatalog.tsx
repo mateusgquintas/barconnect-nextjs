@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Search, Pencil, ShoppingCart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';

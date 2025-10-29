@@ -19,6 +19,9 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "coverage/**",
+      // Deprecated or problematic files
+      "hooks/useComandasV2.ts",
+      "hooks/useComandasV2.ts.append",
       "hooks/**/*.backup.ts",
     ],
   },

@@ -1,22 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 import { createMockSupabaseClient } from './supabase-mock';
+import { env } from './env';
 
 // Validar que as variáveis existem, mas não quebrar desenvolvimento local.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Flag opcional para forçar mock em desenvolvimento
-const forceMock = (process.env.NEXT_PUBLIC_USE_SUPABASE_MOCK || '').toLowerCase() === 'true';
+const forceMock = (env.NEXT_PUBLIC_USE_SUPABASE_MOCK || '').toLowerCase() === 'true';
 const hasEnv = Boolean(supabaseUrl && supabaseAnonKey);
 // Usar mock se forçado ou se envs estiverem ausentes
 const shouldUseMock = forceMock || !hasEnv;
 
-if (shouldUseMock && process.env.NODE_ENV === 'development') {
+if (shouldUseMock && env.NODE_ENV === 'development') {
   console.log('🧪 Usando Supabase Mock - Configure as variáveis de ambiente para conectar ao Supabase real');
 }
 
 // Em produção, alertar se estiver usando valores mockados.
-if (process.env.NODE_ENV === 'production' && shouldUseMock) {
+if (env.NODE_ENV === 'production' && shouldUseMock) {
   console.error('❌ Supabase env vars ausentes em produção!');
 }
 
@@ -26,7 +27,7 @@ console.log('📊 Supabase Status:', {
   hasUrl: Boolean(supabaseUrl),
   hasKey: Boolean(supabaseAnonKey),
   forceMock: forceMock,
-  env: process.env.NODE_ENV
+  env: env.NODE_ENV
 });
 
 export const supabase = shouldUseMock 

@@ -252,4 +252,25 @@ if (shouldSilence) {
   console.log = noop as any;
   // eslint-disable-next-line no-console
   console.info = noop as any;
+
+  // Filter known, harmless Radix Dialog a11y dev warnings that trigger before children mount in JSDOM
+  // We still ensure proper ARIA wiring in components; this avoids noisy test output only.
+  const originalWarn = console.warn.bind(console);
+  const originalError = console.error.bind(console);
+  // eslint-disable-next-line no-console
+  console.warn = ((...args: any[]) => {
+    const first = String(args?.[0] ?? '');
+    if (first.includes('Missing `Description`') && first.includes('{DialogContent}')) {
+      return;
+    }
+    return originalWarn(...(args as any));
+  }) as any;
+  // eslint-disable-next-line no-console
+  console.error = ((...args: any[]) => {
+    const first = String(args?.[0] ?? '');
+    if (first.includes('`DialogContent` requires a `DialogTitle`')) {
+      return;
+    }
+    return originalError(...(args as any));
+  }) as any;
 }
