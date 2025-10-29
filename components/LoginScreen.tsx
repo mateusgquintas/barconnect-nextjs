@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
-import { Receipt, Lock, User as UserIcon } from 'lucide-react';
+import { Receipt, Lock, User as UserIcon, UserPlus } from 'lucide-react';
 import { User } from '@/types/user';
 import { getToast } from '@/utils/notify';
 import { validateCredentials } from '@/lib/authService';
+import { CreateUserDialog } from './CreateUserDialog';
+import { useUsersDB } from '@/hooks/useUsersDB';
 
 interface LoginScreenProps {
   onLogin?: (user: User) => void | Promise<void>;
@@ -16,6 +18,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
+  
+  const { createUser } = useUsersDB();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +94,32 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           >
             {isLoading ? 'Entrando...' : 'Entrar'}
           </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-500">ou</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            onClick={() => setShowCreateUserDialog(true)}
+          >
+            <UserPlus className="w-5 h-5 mr-2" />
+            Criar Usuário
+          </Button>
         </form>
 
+        <CreateUserDialog
+          open={showCreateUserDialog}
+          onOpenChange={setShowCreateUserDialog}
+          onCreateUser={createUser}
+        />
       </Card>
     </div>
   );
