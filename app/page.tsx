@@ -274,11 +274,6 @@ export default function Home() {
     ? "Venda Direta"
     : `Comanda #${selectedComanda?.number}`;
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    setCurrentView("pdv");
-  };
-
   const handleLogout = () => {
     setCurrentUser(null);
     setCurrentView("pdv");
@@ -289,7 +284,7 @@ export default function Home() {
   };
 
   if (!currentUser) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen />;
   }
 
   if (loadingComandas) {
