@@ -6,8 +6,7 @@ import { Card } from './ui/card';
 import { Receipt, Lock, User as UserIcon } from 'lucide-react';
 import { User } from '@/types/user';
 import { getToast } from '@/utils/notify';
-import { isSupabaseMock } from '@/lib/supabase';
-import { validateCredentials, loginWithEmail } from '@/lib/authService';
+import { validateCredentials } from '@/lib/authService';
 
 interface LoginScreenProps {
   onLogin?: (user: User) => void | Promise<void>;
@@ -17,8 +16,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailSent, setEmailSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,29 +33,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     } catch (err) {
       // Em caso de falha na autenticação, apenas exibir feedback
       try { getToast()?.error?.('Erro ao fazer login. Tente novamente.'); } catch {}
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setIsLoading(true);
-    try {
-      const res = await loginWithEmail(email);
-      if (res.sent) {
-        setEmailSent(true);
-        const msg = isSupabaseMock
-          ? 'Login local realizado com sucesso.'
-          : (res.message || 'Enviamos um link para seu e-mail. Abra-o para entrar.');
-        try { getToast()?.success?.(msg); } catch {}
-        if (isSupabaseMock && res.user && onLogin) {
-          await onLogin(res.user);
-        }
-      } else {
-        try { getToast()?.error?.(res.message || 'Não foi possível iniciar login por e-mail'); } catch {}
-      }
     } finally {
       setIsLoading(false);
     }
@@ -114,37 +88,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             disabled={isLoading}
           >
             {isLoading ? 'Entrando...' : 'Entrar'}
-          </Button>
-        </form>
-
-        <div className="my-6 flex items-center gap-4">
-          <div className="h-px bg-slate-200 flex-1" />
-          <span className="text-slate-500 text-sm">ou</span>
-          <div className="h-px bg-slate-200 flex-1" />
-        </div>
-
-  <form onSubmit={handleEmailLogin} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="text-slate-700 mb-2 block">Entrar com e-mail</label>
-            <div className="relative">
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                className="pl-3"
-                required
-              />
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-12 bg-indigo-600 hover:bg-indigo-500"
-            disabled={isLoading}
-          >
-            {isSupabaseMock ? 'Entrar (mock)' : (emailSent ? 'Link enviado. Verifique o e-mail' : 'Enviar link mágico')}
           </Button>
         </form>
 

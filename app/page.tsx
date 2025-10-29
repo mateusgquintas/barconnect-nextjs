@@ -17,6 +17,7 @@ import AgendaPage from "@/app/hotel/agenda/page";
 import { Inventory } from "@/components/Inventory";
 import { Transactions } from "@/components/Transactions";
 import { LoginScreen } from "@/components/LoginScreen";
+import { CreateUserDialog } from "@/components/CreateUserDialog";
 import { ResponsiveDrawer } from "@/components/ResponsiveDrawer";
 import { HoverZone, SidePanelHoverHandler } from "@/components/HoverZone";
 import { MobileTrigger } from "@/components/MobileTrigger";
@@ -32,6 +33,7 @@ import { useProductsDB } from "@/hooks/useProductsDB";
 import { useComandasDB } from "@/hooks/useComandasDB";
 import { useTransactionsDB } from "@/hooks/useTransactionsDB";
 import { useSalesDB } from "@/hooks/useSalesDB";
+import { useUsersDB } from "@/hooks/useUsersDB";
 import { useStockManager } from "@/hooks/useStockManager";
 import { useSalesProcessor } from "@/hooks/useSalesProcessor";
 import { PAYMENT_METHOD_NAMES } from "@/utils/constants";
@@ -47,6 +49,7 @@ export default function Home() {
   const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda, refetch: refetchComandas } = useComandasDB();
   const { products } = useProductsDB();
   const { transactions, addTransaction, refetch: refetchTransactions } = useTransactionsDB();
+  const { createUser } = useUsersDB();
   const { decreaseStock } = useStockManager();
   
   // Vendas agora usam Supabase
@@ -59,6 +62,7 @@ export default function Home() {
   const [selectedComandaId, setSelectedComandaId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [showNewComandaDialog, setShowNewComandaDialog] = useState(false);
+  const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
   const [directSaleItems, setDirectSaleItems] = useState<OrderItem[]>([]);
   const [isDirectSale, setIsDirectSale] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag para evitar duplicação
@@ -386,6 +390,7 @@ export default function Home() {
         userRole={currentUser.role}
         userName={currentUser.name}
         onLogout={handleLogout}
+        onCreateUser={() => setShowCreateUserDialog(true)}
       />
 
       {renderContent()}
@@ -405,6 +410,12 @@ export default function Home() {
         open={showNewComandaDialog}
         onOpenChange={setShowNewComandaDialog}
         onCreateComanda={handleCreateComanda}
+      />
+
+      <CreateUserDialog
+        open={showCreateUserDialog}
+        onOpenChange={setShowCreateUserDialog}
+        onCreateUser={createUser}
       />
       </div>
     </SidePanelsProvider>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Receipt, ShoppingCart, Plus, LayoutDashboard, Package, TrendingUpDown, ShoppingBag, LogOut, User as UserIcon, Hotel as HotelIcon, ChevronDown, Zap } from 'lucide-react';
+import { Receipt, ShoppingCart, Plus, LayoutDashboard, Package, TrendingUpDown, ShoppingBag, LogOut, User as UserIcon, Hotel as HotelIcon, ChevronDown, Zap, UserPlus } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { UserRole } from '@/types/user';
@@ -19,9 +19,10 @@ interface HeaderProps {
   userRole: UserRole;
   userName: string;
   onLogout: () => void;
+  onCreateUser?: () => void;
 }
 
-export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView, onViewChange, dashboardView, onDashboardViewChange, userRole, userName, onLogout }: HeaderProps) {
+export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView, onViewChange, dashboardView, onDashboardViewChange, userRole, userName, onLogout, onCreateUser }: HeaderProps) {
   const permissions = usePermissions();
   
   const allNavItems = [
@@ -177,6 +178,17 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
         </nav>
       </div>
       <div className="flex items-center gap-3">
+        {userRole === 'admin' && onCreateUser && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCreateUser}
+            className="text-white border-white/20 hover:bg-white/10 hover:text-white flex items-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Criar Usuário</span>
+          </Button>
+        )}
         <div className="flex items-center gap-2 text-white">
           <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
             <UserIcon className="w-4 h-4" />
