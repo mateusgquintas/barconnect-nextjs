@@ -61,17 +61,16 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
 // Layout constants
 const CELL_HEIGHT_FULL_REM = 7;      // h-28 = 7rem (112px) - células com eventos
 const CELL_HEIGHT_COMPACT_REM = 5;   // h-20 = 5rem (80px) - células vazias
-const BAR_ROW_REM = 1.75;            // Altura + espaçamento vertical por linha de evento (reduzido p/ aproximar das células)
-const BAR_TOP_MARGIN_REM = 0.25;     // Margem menor p/ não parecer "muito pra baixo"
+const BAR_ROW_REM = 1.2;             // Altura + espaçamento por linha (mais compacto para caber dentro da célula)
+const BAR_TOP_MARGIN_REM = 0.1;      // Margem sutil
+const LANE_TOP_RATIO = 0.55;         // Posição vertical base (55% da altura da célula)
 
 export function CalendarEventBar({ event, gridStartCol, gridEndCol, weekIndex, eventIndex, isCompactWeek, onClick }: CalendarEventBarProps) {
   const colors = statusColors[event.status] || statusColors.confirmed;
   
-  // Calcula posição vertical baseada no índice do evento
-  // Posiciona as barras ABAIXO das células do dia, para não ocultar a ocupação
-  // Usa altura da célula da semana (compacta ou cheia) para posicionamento preciso
+  // Calcula posição vertical para desenhar as barras DENTRO das células do dia (com leve sombreamento)
   const baseCellRem = isCompactWeek ? CELL_HEIGHT_COMPACT_REM : CELL_HEIGHT_FULL_REM;
-  const topOffset = baseCellRem + BAR_TOP_MARGIN_REM + (eventIndex * BAR_ROW_REM); // em rem
+  const topOffset = (baseCellRem * LANE_TOP_RATIO) + BAR_TOP_MARGIN_REM + (eventIndex * BAR_ROW_REM); // em rem
   
   // Calcula se é o primeiro ou último dia do evento para bordas arredondadas
   const isStart = gridStartCol > 1;
@@ -87,13 +86,13 @@ export function CalendarEventBar({ event, gridStartCol, gridEndCol, weekIndex, e
       }}
       className={`absolute z-10 ${colors.bg} ${colors.text} px-2.5 py-1 text-xs font-semibold 
         cursor-pointer transition-all duration-200 ease-out
-        hover:shadow-lg hover:scale-[1.03] hover:z-20 hover:brightness-95
+        hover:shadow-md hover:z-20 hover:brightness-95
         border-l-3 ${colors.border}
-        overflow-hidden whitespace-nowrap text-ellipsis shadow-sm`}
+        overflow-hidden whitespace-nowrap text-ellipsis shadow-sm/50 ring-1 ring-black/5 bg-opacity-70`}
       style={{
         gridColumn: `${gridStartCol} / ${gridEndCol}`,
         top: `${topOffset}rem`,
-  height: '1.6rem',
+        height: '1.2rem',
         left: '0.25rem',
         right: '0.25rem',
         borderRadius,
@@ -101,7 +100,8 @@ export function CalendarEventBar({ event, gridStartCol, gridEndCol, weekIndex, e
       }}
       title={event.tooltip || `${event.title}\n${event.startDate.toLocaleDateString('pt-BR')} - ${event.endDate.toLocaleDateString('pt-BR')}`}
     >
-      <div className="flex items-center gap-1.5 h-full">
+      <div className="flex items-center gap-1.5 h-full relative">
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/0 to-black/10" />
         {event.pilgrimage ? (
           <>
             <Bus className="w-3.5 h-3.5 flex-shrink-0" />
@@ -360,14 +360,15 @@ export function CalendarGridWithEvents({
         const weekStart = weekIndex * 7;
         const weekDays = days.slice(weekStart, weekStart + 7);
         
-        // Calcula linhas necessárias (aproximação: número de eventos ativos na semana, limitado a 4)
+  // Calcula linhas necessárias (aproximação: número de eventos ativos na semana, limitado a 4)
         const weekStartDate = new Date(weekDays[0]);
         weekStartDate.setHours(0,0,0,0);
         const weekEndDate = new Date(weekDays[6]);
         weekEndDate.setHours(23,59,59,999);
         const activeThisWeek = events.filter(e => e.startDate < weekEndDate && e.endDate > weekStartDate).length;
-        const rows = Math.min(4, activeThisWeek);
-        const paddingBottomRem = rows > 0 ? (BAR_TOP_MARGIN_REM + rows * BAR_ROW_REM) : 0;
+  // As barras agora ficam DENTRO das células; não precisamos reservar espaço abaixo
+  const rows = Math.min(4, activeThisWeek);
+  const paddingBottomRem = 0;
         
   // Compactar semanas vazias (sem eventos) para economizar espaço
   const isEmpty = activeThisWeek === 0;
@@ -411,7 +412,7 @@ export function CalendarGridWithEvents({
               );
             })}
             
-            {/* Barras de eventos sobrepostas */}
+            {/* Barras de eventos sobrepostas (dentro das células, com leve sombreamento) */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="relative grid grid-cols-7 gap-1 h-full pointer-events-auto">
                 {renderEventBars(weekIndex, isEmpty)}

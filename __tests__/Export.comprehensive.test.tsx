@@ -22,18 +22,31 @@ import {
   TestScenarios 
 } from './utils/testUtils';
 
-// Mock do XLSX
-jest.mock('xlsx', () => ({
-  utils: {
-    json_to_sheet: jest.fn((data) => ({ data, type: 'sheet' })),
-    book_new: jest.fn(() => ({ sheets: {}, sheetNames: [] })),
-    book_append_sheet: jest.fn((workbook, sheet, name) => {
-      workbook.sheets[name] = sheet;
-      workbook.sheetNames.push(name);
-    }),
-  },
-  writeFile: jest.fn(),
-}));
+// Mock do ExcelJS
+jest.mock('exceljs', () => {
+  const mockWorksheet = {
+    columns: [],
+    addRow: jest.fn(),
+    getRow: jest.fn().mockReturnValue({
+      font: {},
+      fill: {}
+    })
+  };
+  
+  const mockWorkbook = {
+    addWorksheet: jest.fn().mockReturnValue(mockWorksheet),
+    xlsx: {
+      writeBuffer: jest.fn().mockResolvedValue(Buffer.from('mock-excel-data'))
+    }
+  };
+  
+  return {
+    __esModule: true,
+    default: {
+      Workbook: jest.fn(() => mockWorkbook)
+    }
+  };
+});
 
 jest.mock('@/utils/exportToExcel');
 // Mock recharts to simple stubs to avoid rendering issues in JSDOM
@@ -93,7 +106,7 @@ describe('Exportação - Testes Abrangentes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExportDashboardToExcel.mockImplementation(() => {
+    mockExportDashboardToExcel.mockImplementation(async () => {
       // Simula a criação e download do arquivo
       console.log('Arquivo Excel exportado com sucesso');
     });
@@ -220,7 +233,7 @@ describe('Exportação - Testes Abrangentes', () => {
       };
 
       // Chamar função real de exportação para testar estrutura
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         // Verificar estrutura esperada dos dados
         expect(data.transactions).toHaveLength(2);
         expect(data.salesRecords).toHaveLength(2);
@@ -232,7 +245,7 @@ describe('Exportação - Testes Abrangentes', () => {
     });
 
     it('deve incluir todas as colunas necessárias para transações', () => {
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         // Simular transformação dos dados como na função real
         const processedTransactions = data.transactions.map(t => ({
           Data: t.date,
@@ -263,7 +276,7 @@ describe('Exportação - Testes Abrangentes', () => {
     });
 
     it('deve incluir todas as colunas necessárias para vendas', () => {
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         // Simular transformação dos dados como na função real
         const processedSales = data.salesRecords.map(s => ({
           Data: s.date,
@@ -293,7 +306,7 @@ describe('Exportação - Testes Abrangentes', () => {
     });
 
     it('deve formatar datas corretamente', () => {
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         // Verificar formato das datas
         expect(data.transactions[0].date).toMatch(/\d{4}-\d{2}-\d{2}/);
         expect(data.salesRecords[0].date).toMatch(/\d{4}-\d{2}-\d{2}/);
@@ -310,7 +323,7 @@ describe('Exportação - Testes Abrangentes', () => {
     });
 
     it('deve calcular totais corretamente', () => {
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         const totalEntradas = data.transactions
           .filter(t => t.type === 'income')
           .reduce((sum, t) => sum + t.amount, 0);
@@ -341,7 +354,7 @@ describe('Exportação - Testes Abrangentes', () => {
       const startDate = '2025-10-01';
       const endDate = '2025-10-31';
 
-      mockExportDashboardToExcel.mockImplementation(() => {
+      mockExportDashboardToExcel.mockImplementation(async () => {
         // Na função real, o nome seria: dashboard_2025-10-01_a_2025-10-31.xlsx
         const expectedFileName = `dashboard_${startDate}_a_${endDate}.xlsx`;
         expect(expectedFileName).toBe('dashboard_2025-10-01_a_2025-10-31.xlsx');
@@ -367,7 +380,7 @@ describe('Exportação - Testes Abrangentes', () => {
     });
 
     it('deve preservar tipos de dados numéricos', () => {
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         data.transactions.forEach(t => {
           expect(typeof t.amount).toBe('number');
         });
@@ -393,7 +406,7 @@ describe('Exportação - Testes Abrangentes', () => {
   TestDataFactory.createSaleRecord({ id: 'sale-6', paymentMethod: 'courtesy', total: 25 }),
       ];
 
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         expect(data.salesRecords).toHaveLength(4);
         
         const paymentMethods = data.salesRecords.map(s => s.paymentMethod);
@@ -449,7 +462,7 @@ describe('Exportação - Testes Abrangentes', () => {
   TestDataFactory.createTransaction({ id: 'trans-5', date: '2025-10-20', amount: 75 }),
       ];
 
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         // Na função real, seria filtrado por período
         const filteredTransactions = data.transactions.filter(t => 
           t.date >= '2025-10-01' && t.date <= '2025-10-31'
@@ -468,22 +481,22 @@ describe('Exportação - Testes Abrangentes', () => {
   });
 
   describe('5. Cenários de Erro e Edge Cases', () => {
-    it('deve tratar erro de exportação graciosamente', () => {
-      mockExportDashboardToExcel.mockImplementation(() => {
+    it('deve tratar erro de exportação graciosamente', async () => {
+      mockExportDashboardToExcel.mockImplementation(async () => {
         throw new Error('Falha na exportação');
       });
 
-      expect(() => {
-        mockExportDashboardToExcel({
+      await expect(async () => {
+        await mockExportDashboardToExcel({
           transactions: mockTransactions,
           salesRecords: mockSalesRecords,
           startDate: '2025-10-01',
           endDate: '2025-10-31'
         });
-      }).toThrow('Falha na exportação');
+      }).rejects.toThrow('Falha na exportação');
     });
 
-    it('deve funcionar com valores monetários extremos', () => {
+    it('deve funcionar com valores monetários extremos', async () => {
       const extremeData = [
   TestDataFactory.createTransaction({ id: 'trans-6', amount: 0.01 }), // Valor mínimo
   TestDataFactory.createTransaction({ id: 'trans-7', amount: 999999.99 }), // Valor alto
@@ -491,7 +504,7 @@ describe('Exportação - Testes Abrangentes', () => {
   TestDataFactory.createSaleRecord({ id: 'sale-8', total: 10000.00 }),
       ];
 
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         expect(data.transactions[0].amount).toBe(0.01);
         expect(data.transactions[1].amount).toBe(999999.99);
         expect(data.salesRecords[0].total).toBe(0.50);
@@ -518,7 +531,7 @@ describe('Exportação - Testes Abrangentes', () => {
         }),
       ];
 
-      mockExportDashboardToExcel.mockImplementation((data) => {
+      mockExportDashboardToExcel.mockImplementation(async (data) => {
         expect(data.transactions[0].description).toContain('ç');
         expect(data.salesRecords[0].customerName).toContain('&');
       });

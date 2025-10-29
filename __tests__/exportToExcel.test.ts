@@ -1,26 +1,54 @@
-jest.mock('xlsx', () => ({
-  writeFile: jest.fn(),
-  utils: {
-    json_to_sheet: jest.fn(() => ({})),
-    sheet_to_json: jest.fn(() => []),
-    book_new: jest.fn(() => ({ SheetNames: [], Sheets: {} })),
-    book_append_sheet: jest.fn(),
-  },
-}));
+/**
+ * @jest-environment jsdom
+ */
+jest.mock('exceljs');
 
 import { exportDashboardToExcel } from '../utils/exportToExcel';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 describe('exportDashboardToExcel', () => {
-  const mockWriteFile = XLSX.writeFile as jest.Mock;
-  const mockJsonToSheet = XLSX.utils.json_to_sheet as jest.Mock;
+  let mockWorksheet: any;
+  let mockWorkbook: any;
 
-  afterEach(() => {
-    mockWriteFile.mockReset();
-    mockJsonToSheet.mockReset();
+  beforeEach(() => {
+    // Mock da worksheet
+    mockWorksheet = {
+      columns: [],
+      addRow: jest.fn(),
+      getRow: jest.fn().mockReturnValue({
+        font: {},
+        fill: {}
+      })
+    };
+
+    // Mock do workbook
+    mockWorkbook = {
+      addWorksheet: jest.fn().mockReturnValue(mockWorksheet),
+      xlsx: {
+        writeBuffer: jest.fn().mockResolvedValue(Buffer.from('mock-excel-data'))
+      }
+    };
+
+    // Mock do construtor ExcelJS.Workbook
+    (ExcelJS.Workbook as jest.Mock) = jest.fn(() => mockWorkbook);
+
+    // Mock de URL e DOM
+    global.URL.createObjectURL = jest.fn(() => 'mock-blob-url');
+    global.URL.revokeObjectURL = jest.fn();
+    
+    const mockLink = {
+      href: '',
+      download: '',
+      click: jest.fn()
+    };
+    jest.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
   });
 
-  it('gera planilha com abas e headers corretos', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('gera planilha com abas e headers corretos', async () => {
     const transactions = [
       { date: '2025-10-01', type: 'income', category: 'Bar', description: 'Venda', amount: 100 },
       { date: '2025-10-02', type: 'expense', category: 'Compra', description: 'Reposição', amount: 50 },
@@ -30,47 +58,64 @@ describe('exportDashboardToExcel', () => {
       { date: '2025-10-02', customerName: 'Maria', total: 120 },
     ];
 
-    exportDashboardToExcel({ transactions, salesRecords, startDate: '2025-10-01', endDate: '2025-10-02' });
+    await exportDashboardToExcel({ transactions, salesRecords, startDate: '2025-10-01', endDate: '2025-10-02' });
 
-    expect(mockJsonToSheet).toHaveBeenCalledWith([
-      { Data: '2025-10-01', Tipo: 'Entrada', Categoria: 'Bar', Descrição: 'Venda', Valor: 100 },
-      { Data: '2025-10-02', Tipo: 'Saída', Categoria: 'Compra', Descrição: 'Reposição', Valor: 50 },
-    ]);
-
-    expect(mockJsonToSheet).toHaveBeenCalledWith([
-      { Data: '2025-10-01', Cliente: 'João', Total: 80 },
-      { Data: '2025-10-02', Cliente: 'Maria', Total: 120 },
-    ]);
-
-    expect(mockWriteFile).toHaveBeenCalledTimes(1);
+    // Verifica criação do workbook
+    expect(ExcelJS.Workbook).toHaveBeenCalled();
+    
+    // Verifica criação de worksheets
+    expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Transações');
+    expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Vendas');
+    
+    // Verifica adição de linhas
+    expect(mockWorksheet.addRow).toHaveBeenCalledWith({
+      date: '2025-10-01',
+      type: 'Entrada',
+      category: 'Bar',
+      description: 'Venda',
+      amount: 100
+    });
+    
+    expect(mockWorksheet.addRow).toHaveBeenCalledWith({
+      date: '2025-10-01',
+      customerName: 'João',
+      total: 80
+    });
+    
+    // Verifica geração do arquivo
+    expect(mockWorkbook.xlsx.writeBuffer).toHaveBeenCalled();
+    
+    // Verifica download
+    const link = (document.createElement as jest.Mock).mock.results[0].value;
+    expect(link.click).toHaveBeenCalled();
+    expect(link.download).toBe('dashboard_2025-10-01_a_2025-10-02.xlsx');
   });
 
-  it('exporta corretamente com arrays vazios', () => {
-    exportDashboardToExcel({ transactions: [], salesRecords: [], startDate: '2025-10-01', endDate: '2025-10-02' });
+  it('exporta corretamente com arrays vazios', async () => {
+    await exportDashboardToExcel({ transactions: [], salesRecords: [], startDate: '2025-10-01', endDate: '2025-10-02' });
 
-    expect(mockJsonToSheet).toHaveBeenCalledWith([]);
-    expect(mockJsonToSheet).toHaveBeenCalledTimes(2);
-    expect(mockWriteFile).toHaveBeenCalledTimes(1);
+    expect(mockWorkbook.addWorksheet).toHaveBeenCalledTimes(2);
+    expect(mockWorkbook.xlsx.writeBuffer).toHaveBeenCalled();
   });
 
-  it('exporta corretamente com dados inválidos (faltando campos)', () => {
+  it('exporta corretamente com dados inválidos (faltando campos)', async () => {
     const transactions = [
-      { date: '2025-10-01', type: 'income' }, // faltando campos
+      { date: '2025-10-01', type: 'income' } as any, // faltando campos
     ];
     const salesRecords = [
-      { date: '2025-10-01' }, // faltando campos
+      { date: '2025-10-01' } as any, // faltando campos
     ];
 
-    exportDashboardToExcel({ transactions, salesRecords, startDate: '2025-10-01', endDate: '2025-10-02' });
+    await exportDashboardToExcel({ transactions, salesRecords, startDate: '2025-10-01', endDate: '2025-10-02' });
 
-    expect(mockJsonToSheet).toHaveBeenCalledWith([
-      { Data: '2025-10-01', Tipo: 'Entrada', Categoria: undefined, Descrição: undefined, Valor: undefined },
-    ]);
+    expect(mockWorksheet.addRow).toHaveBeenCalledWith({
+      date: '2025-10-01',
+      type: 'Entrada',
+      category: undefined,
+      description: undefined,
+      amount: undefined
+    });
 
-    expect(mockJsonToSheet).toHaveBeenCalledWith([
-      { Data: '2025-10-01', Cliente: undefined, Total: undefined },
-    ]);
-
-    expect(mockWriteFile).toHaveBeenCalledTimes(1);
+    expect(mockWorkbook.xlsx.writeBuffer).toHaveBeenCalled();
   });
 });

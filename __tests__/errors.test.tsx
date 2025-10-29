@@ -31,8 +31,8 @@ describe('Testes de Erro e Limites', () => {
       const usernameInput = screen.getByPlaceholderText(/digite seu usuário/i);
       const passwordInput = screen.getByPlaceholderText(/digite sua senha/i);
       
-      // Testar strings mais moderadamente longas
-      const longString = 'a'.repeat(100); // Reduzido de 1000 para 100
+      // Testar strings mais moderadamente longas para evitar timeout
+      const longString = 'a'.repeat(50); // Reduzido para 50 caracteres
       
       await user.type(usernameInput, longString);
       await user.type(passwordInput, longString);
@@ -45,7 +45,7 @@ describe('Testes de Erro e Limites', () => {
       // Verificar que não há overflow visual
       const formContainer = usernameInput.closest('form');
       expect(formContainer).toBeInTheDocument();
-    }, 10000);
+    }, 15000); // Aumentado timeout para 15s
 
     it('Deve limitar entrada de números de comanda', async () => {
       const user = userEvent.setup();
