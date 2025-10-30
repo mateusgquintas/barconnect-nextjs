@@ -31,6 +31,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       const validatedUser = await validateCredentials(username, password);
       if (!validatedUser) {
         try { getToast()?.error?.('Usuário ou senha incorretos'); } catch {}
+        setIsLoading(false);
         return;
       }
       try { getToast()?.success?.(`Bem-vindo, ${validatedUser.name}!`); } catch {}
@@ -38,7 +39,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     } catch (err) {
       // Em caso de falha na autenticação, apenas exibir feedback
       try { getToast()?.error?.('Erro ao fazer login. Tente novamente.'); } catch {}
-    } finally {
       setIsLoading(false);
     }
   };
@@ -61,7 +61,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input
                 id="username"
+                name="username"
                 type="text"
+                autoComplete="username"
                 placeholder="Digite seu usuário"
                 value={username}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
@@ -77,7 +79,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input
                 id="password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="Digite sua senha"
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
@@ -89,13 +93,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
           <Button
             type="submit"
-            className="w-full h-12 bg-slate-900 hover:bg-slate-800"
+            className="w-full bg-slate-900 hover:bg-slate-800"
+            style={{ height: '48px', width: '100%', minWidth: '100%' }}
             disabled={isLoading}
           >
             {isLoading ? 'Entrando...' : 'Entrar'}
           </Button>
 
-          <div className="relative">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-slate-200" />
             </div>
@@ -107,11 +112,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-base"
+            style={{ height: '48px', width: '100%', minWidth: '100%' }}
             onClick={() => setShowCreateUserDialog(true)}
           >
-            <UserPlus className="w-5 h-5 mr-2" />
-            Criar Usuário
+            <UserPlus className="w-5 h-5" />
+            <span>Criar Usuário</span>
           </Button>
         </form>
 

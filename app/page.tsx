@@ -283,8 +283,12 @@ export default function Home() {
     toast.success("Logout realizado com sucesso");
   };
 
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+  };
+
   if (!currentUser) {
-    return <LoginScreen />;
+    return <LoginScreen onLogin={handleLogin} />;
   }
 
   if (loadingComandas) {

@@ -1,6 +1,7 @@
 // Serviço de autenticação com integração Supabase
 import { User, UserRole } from '@/types/user';
 import { supabase, isSupabaseMock } from './supabase';
+import bcrypt from 'bcryptjs';
 
 // Base de usuários para fallback (caso Supabase não esteja disponível)
 const FALLBACK_USERS_DB: Array<{ username: string; password: string; role: UserRole; name: string }> = [
@@ -20,27 +21,45 @@ const FALLBACK_USERS_DB: Array<{ username: string; password: string; role: UserR
 
 export const validateCredentials = async (username: string, password: string): Promise<User | null> => {
   try {
-    // Primeiro, tentar buscar do Supabase
+    // Buscar usuário apenas por username (sem filtrar por password na query)
     const { data, error } = await (supabase.from('users') as any)
       .select('*')
       .eq('username', username)
-      .eq('password', password)
       .single();
 
+    // Se encontrou o usuário no Supabase, validar a senha
     if (!error && data) {
-      return {
-        id: data.id || `user_${Date.now()}`,
-        name: data.name || data.username,
-        username: data.username,
-        password: data.password,
-        role: data.role as UserRole
-      };
+      // Verificar se a senha é hash (começa com $2a$ ou $2b$) ou texto plano
+      const isHashed = data.password.startsWith('$2a$') || data.password.startsWith('$2b$');
+      
+      let passwordMatch = false;
+      if (isHashed) {
+        // Comparar com bcrypt se for hash
+        passwordMatch = await bcrypt.compare(password, data.password);
+      } else {
+        // Comparar texto plano (para compatibilidade temporária)
+        passwordMatch = data.password === password;
+      }
+      
+      if (passwordMatch) {
+        return {
+          id: data.id || `user_${Date.now()}`,
+          name: data.name || data.username,
+          username: data.username,
+          password: data.password,
+          role: data.role as UserRole
+        };
+      }
+      // Senha incorreta no Supabase, NÃO tentar fallback (usuário existe no banco)
+      return null;
     }
+    
+    // Usuário não encontrado no Supabase (error existe), tentar fallback
   } catch (dbError) {
-    console.log('📝 Banco indisponível, usando credenciais locais');
+    // Erro ao acessar banco, usar fallback
   }
 
-  // Fallback para credenciais locais
+  // Fallback para credenciais locais (quando usuário não existe no Supabase)
   const user = FALLBACK_USERS_DB.find(u => u.username === username && u.password === password);
   
   if (user) {

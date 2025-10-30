@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, UserRole } from '@/types/user';
 import { validateCredentials } from '@/lib/authService';
+import bcrypt from 'bcryptjs';
 
 export function useUsersDB() {
   const [users, setUsers] = useState<User[]>([]);
@@ -58,12 +59,15 @@ export function useUsersDB() {
         return false;
       }
 
-      // 3. Criar novo usuário
+      // 3. Fazer hash da senha antes de salvar
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+      // 4. Criar novo usuário com senha hasheada
       const { data, error } = await (supabase.from('users') as any)
         .insert({
           name: userData.name,
           username: userData.username,
-          password: userData.password,
+          password: hashedPassword,
           role: userData.role
         })
         .select()
@@ -79,7 +83,7 @@ export function useUsersDB() {
           id: data.id,
           name: data.name,
           username: data.username,
-          password: data.password ?? '',
+          password: hashedPassword,
           role: data.role as UserRole
         };
         setUsers(prev => [newUser, ...prev]);
@@ -107,8 +111,14 @@ export function useUsersDB() {
         return false;
       }
 
+      // Se estiver atualizando a senha, fazer hash
+      const updatedData = { ...updates };
+      if (updates.password) {
+        updatedData.password = await bcrypt.hash(updates.password, 10);
+      }
+
       const { error } = await (supabase.from('users') as any)
-        .update(updates)
+        .update(updatedData)
         .eq('id', userId);
 
       if (error) {
