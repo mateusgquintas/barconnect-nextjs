@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests",
+    "precommit": "npm run build && npm test",
+    "check": "npm run build && npm test",
     "supabase:menu": "node scripts/supabase-orchestrator.js",
     "supabase:clean": "node scripts/supabase-orchestrator.js clean",
     "supabase:clean-transactional": "node scripts/supabase-orchestrator.js clean-transactional",
