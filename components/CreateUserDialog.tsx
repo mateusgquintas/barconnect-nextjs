@@ -6,18 +6,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserRole } from '@/types/user';
-import { Lock, User, Shield } from 'lucide-react';
+import { Lock, User, Shield, Mail } from 'lucide-react';
 import { getToast } from '@/utils/notify';
 
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateUser: (data: { name: string; username: string; password: string; role: UserRole }, adminCredentials: { username: string; password: string }) => Promise<boolean>;
+  onCreateUser: (data: { name: string; username: string; email: string; password: string; role: UserRole }, adminCredentials: { username: string; password: string }) => Promise<boolean>;
 }
 
 export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUserDialogProps) {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('operator');
   
@@ -29,8 +30,15 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !username.trim() || !password.trim()) {
+    if (!name.trim() || !username.trim() || !email.trim() || !password.trim()) {
       try { getToast()?.error?.('Preencha todos os campos do novo usuário'); } catch {}
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      try { getToast()?.error?.('Email inválido'); } catch {}
       return;
     }
     
@@ -42,7 +50,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
     setIsLoading(true);
     try {
       const success = await onCreateUser(
-        { name, username, password, role },
+        { name, username, email, password, role },
         { username: adminUsername, password: adminPassword }
       );
       
@@ -51,6 +59,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
         // Reset form
         setName('');
         setUsername('');
+        setEmail('');
         setPassword('');
         setRole('operator');
         setAdminUsername('');
@@ -107,6 +116,28 @@ export function CreateUserDialog({ open, onOpenChange, onCreateUser }: CreateUse
                   required
                 />
               </div>
+              <p className="text-xs text-slate-500">
+                Identificador único para login (sem espaços ou caracteres especiais)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Pessoal</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Ex: joao@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
+              <p className="text-xs text-slate-500">
+                Email real para autenticação e recuperação de senha
+              </p>
             </div>
 
             <div className="space-y-2">

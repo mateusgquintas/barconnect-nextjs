@@ -1,0 +1,9 @@
+# Migrations
+
+Esta pasta está reservada para futuras migrações do banco de dados.
+
+## Como usar:
+
+1. Crie arquivos numerados: `001-nome-da-migracao.sql`
+2. Execute em ordem crescente
+3. Documente cada migração no próprio arquivo

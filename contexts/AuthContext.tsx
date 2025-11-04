@@ -1,8 +1,13 @@
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types/user';
-import { loginWithEmail as svcLoginWithEmail, validateCredentials, getOrCreateUserByUsername, signOut as svcSignOut } from '@/lib/authService';
-import { supabase, isSupabaseMock } from '@/lib/supabase';
+import { 
+  loginWithEmail as svcLoginWithEmail, 
+  validateCredentials, 
+  signOut as svcSignOut 
+} from '@/lib/authService';
+import { useAuthProfile } from '@/hooks/useAuthProfile';
+import { isSupabaseMock } from '@/lib/supabase';
 
 interface AuthContextProps {
   user: User | null;
@@ -10,6 +15,7 @@ interface AuthContextProps {
   logout: () => void;
   loginWithCredentials: (username: string, password: string) => Promise<boolean>;
   loginWithEmail: (email: string) => Promise<{ sent: boolean; message?: string }>;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -17,83 +23,98 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [initialized, setInitialized] = useState(false);
+  
+  // Usar novo hook para gerenciar perfil via Supabase Auth
+  const { profile, isAuthenticated, isLoading } = useAuthProfile();
 
+  // Sincronizar perfil do hook com estado local
   useEffect(() => {
-    // Carregar usuário do localStorage (opcional)
-    const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
+    if (profile && !isSupabaseMock) {
+      setUser(profile);
+    }
+  }, [profile]);
 
+  // Carregar usuário do localStorage (fallback para mock ou primeira carga)
   useEffect(() => {
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-    else localStorage.removeItem('user');
+    if (isSupabaseMock || !profile) {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try {
+          setUser(JSON.parse(stored));
+        } catch (error) {
+          console.error('❌ Erro ao carregar usuário do localStorage:', error);
+          localStorage.removeItem('user');
+        }
+      }
+    }
+    setInitialized(true);
+  }, [profile]);
+
+  // Salvar no localStorage (útil para mock e reload rápido)
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
   }, [user]);
 
-  // Integração com Supabase Auth quando disponível
-  useEffect(() => {
-    let unsub: any;
-    (async () => {
-      try {
-        if (!isSupabaseMock && (supabase as any).auth?.getUser) {
-          const { data } = await (supabase as any).auth.getUser();
-          const email = data?.user?.email as string | undefined;
-          if (email) {
-            // Garante usuário de aplicação e carrega papel
-            const appUser = await getOrCreateUserByUsername(email);
-            setUser(appUser);
-          }
-
-          // Listener para mudanças de sessão
-          unsub = (supabase as any).auth.onAuthStateChange(async (event: string, session: any) => {
-            if (event === 'SIGNED_IN') {
-              const email = session?.user?.email as string | undefined;
-              if (email) {
-                const appUser = await getOrCreateUserByUsername(email);
-                setUser(appUser);
-              }
-            }
-            if (event === 'SIGNED_OUT') {
-              setUser(null);
-            }
-          });
-        }
-      } finally {
-        setInitialized(true);
+  /**
+   * Login com email/senha via Supabase Auth
+   */
+  async function loginWithCredentials(username: string, password: string): Promise<boolean> {
+    try {
+      const validated = await validateCredentials(username, password);
+      if (validated) {
+        setUser(validated);
+        console.log('✅ Login com credenciais bem-sucedido');
+        return true;
       }
-    })();
-
-    return () => {
-      if (unsub && typeof unsub?.data?.subscription?.unsubscribe === 'function') {
-        try { unsub.data.subscription.unsubscribe(); } catch {}
-      }
-    };
-  }, []);
-
-  async function loginWithCredentials(username: string, password: string) {
-    const validated = await validateCredentials(username, password);
-    if (validated) {
-      setUser(validated);
-      return true;
+      console.warn('⚠️ Credenciais inválidas');
+      return false;
+    } catch (error) {
+      console.error('❌ Erro ao fazer login:', error);
+      return false;
     }
-    return false;
   }
 
-  async function loginWithEmail(email: string) {
-    const res = await svcLoginWithEmail(email);
-    if (res.user) {
-      // Ambiente mock: já loga
-      setUser(res.user);
+  /**
+   * Login com Magic Link (email OTP)
+   */
+  async function loginWithEmail(email: string): Promise<{ sent: boolean; message?: string }> {
+    try {
+      const res = await svcLoginWithEmail(email);
+      
+      // Em modo mock, já loga diretamente
+      if (res.user) {
+        setUser(res.user);
+      }
+      
+      return { sent: res.sent, message: res.message };
+    } catch (error: any) {
+      console.error('❌ Erro ao enviar magic link:', error);
+      return { sent: false, message: error?.message || 'Erro ao enviar link' };
     }
-    return { sent: res.sent, message: res.message };
   }
 
+  /**
+   * Logout
+   */
   function logout() {
     setUser(null);
     svcSignOut();
+    console.log('✅ Logout realizado');
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, loginWithCredentials, loginWithEmail }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      setUser, 
+      logout, 
+      loginWithCredentials, 
+      loginWithEmail,
+      isLoading
+    }}>
       {children}
     </AuthContext.Provider>
   );

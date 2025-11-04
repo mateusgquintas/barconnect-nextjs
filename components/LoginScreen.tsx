@@ -56,7 +56,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   <form onSubmit={handleSubmit} className="space-y-4" role="form">
           <div>
-            <label htmlFor="username" className="text-slate-700 mb-2 block">Usuário</label>
+            <label htmlFor="username" className="text-slate-700 mb-2 block">Usuário ou Email</label>
             <div className="relative">
               <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input
@@ -64,7 +64,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 name="username"
                 type="text"
                 autoComplete="username"
-                placeholder="Digite seu usuário"
+                placeholder="Digite seu usuário ou email"
                 value={username}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 className="pl-10"

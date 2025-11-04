@@ -36,57 +36,45 @@ export function useUsersDB() {
   }, []);
 
   const createUser = async (
-    userData: { name: string; username: string; password: string; role: UserRole },
+    userData: { name: string; username: string; email: string; password: string; role: UserRole },
     adminCredentials: { username: string; password: string }
   ): Promise<boolean> => {
     try {
-      // 1. Validar credenciais de admin
-      const adminUser = await validateCredentials(adminCredentials.username, adminCredentials.password);
-      
-      if (!adminUser || adminUser.role !== 'admin') {
-        console.error('❌ Credenciais de administrador inválidas');
-        return false;
-      }
-
-      // 2. Verificar se username já existe
-      const { data: existing } = await (supabase.from('users') as any)
-        .select('id')
-        .eq('username', userData.username)
-        .single();
-
-      if (existing) {
-        console.error('❌ Nome de usuário já existe');
-        return false;
-      }
-
-      // 3. Fazer hash da senha antes de salvar
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-      // 4. Criar novo usuário com senha hasheada
-      const { data, error } = await (supabase.from('users') as any)
-        .insert({
+      // Chamar API Route que usa Service Role Key
+      const response = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userData.email, // Email real fornecido pelo usuário
+          password: userData.password,
           name: userData.name,
           username: userData.username,
-          password: hashedPassword,
-          role: userData.role
+          role: userData.role,
+          adminUsername: adminCredentials.username,
+          adminPassword: adminCredentials.password
         })
-        .select()
-        .single();
+      });
 
-      if (error) {
-        console.error('❌ Erro ao criar usuário:', error);
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ Erro ao criar usuário:', result.error);
         return false;
       }
 
-      if (data) {
+      if (result.success) {
+        // Atualizar lista local
         const newUser: User = {
-          id: data.id,
-          name: data.name,
-          username: data.username,
-          password: hashedPassword,
-          role: data.role as UserRole
+          id: result.user.id,
+          name: result.user.name,
+          username: result.user.username,
+          password: '',
+          role: result.user.role as UserRole
         };
         setUsers(prev => [newUser, ...prev]);
+        console.log('✅ Usuário criado com sucesso!');
         return true;
       }
 
