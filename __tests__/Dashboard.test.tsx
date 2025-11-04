@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dashboard } from '../components/Dashboard';
 import { Comanda, Transaction, SaleRecord } from '@/types';
@@ -82,11 +82,14 @@ describe('Dashboard', () => {
   });
 
   describe('Renderização condicional', () => {
-    it('renderiza DashboardBar quando activeView é bar', () => {
+    it('renderiza DashboardBar quando activeView é bar', async () => {
       render(<Dashboard {...defaultProps} activeView="bar" />);
       
-      // DashboardBar tem textos específicos
-      expect(screen.getByText(/receita total/i)).toBeInTheDocument();
+      // Esperar carregamento de dados (useEffect)
+      await waitFor(() => {
+        expect(screen.getByText(/receita total/i)).toBeInTheDocument();
+      });
+      
       expect(screen.getByText(/vendas do período/i)).toBeInTheDocument();
     });
 
@@ -98,23 +101,27 @@ describe('Dashboard', () => {
   });
 
   describe('Métricas financeiras', () => {
-    it('calcula receita total corretamente', () => {
+    it('calcula receita total corretamente', async () => {
       render(<Dashboard {...defaultProps} />);
       
-      // Buscar especificamente no card de Receita Total
-      const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
-      expect(receitaCard).toHaveTextContent('R$ 17.00');
+      // Esperar carregamento de dados
+      await waitFor(() => {
+        const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
+        expect(receitaCard).toHaveTextContent('R$ 17.00');
+      });
     });
 
-    it('conta vendas realizadas corretamente', () => {
+    it('conta vendas realizadas corretamente', async () => {
       render(<Dashboard {...defaultProps} />);
       
-      // Buscar no card de Comandas (vendas realizadas)
-      const comandasCard = screen.getByText('Comandas').closest('[data-slot="card"]');
-      expect(comandasCard).toHaveTextContent('1');
+      // Esperar carregamento e buscar no card de Comandas
+      await waitFor(() => {
+        const comandasCard = screen.getByText('Comandas').closest('[data-slot="card"]');
+        expect(comandasCard).toHaveTextContent('1');
+      });
     });
 
-    it('calcula ticket médio corretamente', () => {
+    it('calcula ticket médio corretamente', async () => {
       const multiSales = [
         mockSaleRecord,
         { ...mockSaleRecord, id: '3', total: 25.00, isCourtesy: false, isDirectSale: false }
@@ -122,17 +129,22 @@ describe('Dashboard', () => {
       
       render(<Dashboard {...defaultProps} salesRecords={multiSales} />);
       
-      // Buscar no card de Ticket Médio
-      const ticketCard = screen.getByText('Ticket Médio').closest('[data-slot="card"]');
-      expect(ticketCard).toHaveTextContent('R$ 21.00');
+      // Esperar carregamento e buscar no card de Ticket Médio
+      await waitFor(() => {
+        const ticketCard = screen.getByText('Ticket Médio').closest('[data-slot="card"]');
+        expect(ticketCard).toHaveTextContent('R$ 21.00');
+      });
     });
 
-    it('separa cortesias das vendas normais', () => {
+    it('separa cortesias das vendas normais', async () => {
       render(<Dashboard {...defaultProps} />);
       
-      // Receita Total deve mostrar apenas vendas não-cortesia
-      const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
-      expect(receitaCard).toHaveTextContent('R$ 17.00');
+      // Esperar carregamento
+      await waitFor(() => {
+        // Receita Total deve mostrar apenas vendas não-cortesia
+        const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
+        expect(receitaCard).toHaveTextContent('R$ 17.00');
+      });
       
       // Deve existir pelo menos uma menção a cortesias
       expect(screen.getAllByText(/cortesias/i).length).toBeGreaterThan(0);
@@ -150,7 +162,7 @@ describe('Dashboard', () => {
       expect(startDateInput).toHaveValue('2025-09-01');
     });
 
-    it('filtra vendas por período selecionado', () => {
+    it('filtra vendas por período selecionado', async () => {
       const saleOutOfPeriod: SaleRecord = {
         ...mockSaleRecord,
         id: '4',
@@ -162,47 +174,63 @@ describe('Dashboard', () => {
       
       render(<Dashboard {...defaultProps} salesRecords={[mockSaleRecord, saleOutOfPeriod]} />);
       
-      // Só deve contar venda de outubro
-      const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
-      expect(receitaCard).toHaveTextContent('R$ 17.00');
+      // Esperar carregamento e verificar filtro
+      await waitFor(() => {
+        // Só deve contar venda de novembro
+        const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
+        expect(receitaCard).toHaveTextContent('R$ 17.00');
+      });
     });
   });
 
   describe('Estados vazios', () => {
-    it('funciona com dados vazios', () => {
+    it('funciona com dados vazios', async () => {
       render(<Dashboard {...defaultProps} salesRecords={[]} transactions={[]} comandas={[]} />);
       
-      // Receita Total deve mostrar zero
-      const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
-      expect(receitaCard).toHaveTextContent('R$ 0.00');
+      // Esperar carregamento
+      await waitFor(() => {
+        // Receita Total deve mostrar zero
+        const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
+        expect(receitaCard).toHaveTextContent('R$ 0.00');
+      });
       
       // Comandas deve mostrar zero
       const comandasCard = screen.getByText('Comandas').closest('[data-slot="card"]');
       expect(comandasCard).toHaveTextContent('0');
     });
 
-    it('calcula ticket médio zero quando não há vendas', () => {
+    it('calcula ticket médio zero quando não há vendas', async () => {
       render(<Dashboard {...defaultProps} salesRecords={[]} />);
       
-      // Ticket Médio deve mostrar zero
-      const ticketCard = screen.getByText('Ticket Médio').closest('[data-slot="card"]');
-      expect(ticketCard).toHaveTextContent('R$ 0.00');
+      // Esperar carregamento
+      await waitFor(() => {
+        // Ticket Médio deve mostrar zero
+        const ticketCard = screen.getByText('Ticket Médio').closest('[data-slot="card"]');
+        expect(ticketCard).toHaveTextContent('R$ 0.00');
+      });
     });
   });
 
   describe('Acessibilidade', () => {
-    it('possui estrutura semântica adequada', () => {
+    it('possui estrutura semântica adequada', async () => {
       render(<Dashboard {...defaultProps} />);
       
-      // Cards de métricas devem ser identificáveis
-      expect(screen.getByText(/receita total/i)).toBeInTheDocument();
+      // Esperar carregamento e verificar cards
+      await waitFor(() => {
+        expect(screen.getByText(/receita total/i)).toBeInTheDocument();
+      });
     });
 
-    it('inputs de data possuem labels adequados', () => {
+    it('inputs de data possuem labels adequados', async () => {
       render(<Dashboard {...defaultProps} />);
       
+      // Esperar carregamento dos inputs
+      await waitFor(() => {
+        const dateInputs = screen.getAllByDisplayValue(/2025-11/);
+        expect(dateInputs.length).toBeGreaterThan(0);
+      });
+      
       const dateInputs = screen.getAllByDisplayValue(/2025-11/);
-      expect(dateInputs.length).toBeGreaterThan(0);
       dateInputs.forEach(input => {
         expect(input).toHaveAttribute('type', 'date');
       });
@@ -210,7 +238,7 @@ describe('Dashboard', () => {
   });
 
   describe('Produtos mais vendidos', () => {
-    it('identifica produtos populares por quantidade', () => {
+    it('identifica produtos populares por quantidade', async () => {
       const salesWithDifferentProducts = [
         mockSaleRecord, // 2x Cerveja
         {
@@ -229,14 +257,17 @@ describe('Dashboard', () => {
       
       render(<Dashboard {...defaultProps} salesRecords={salesWithDifferentProducts} />);
       
-      // Refrigerante (5 unidades) deve aparecer antes de Cerveja (2 unidades)
-      expect(screen.getByText('Refrigerante')).toBeInTheDocument();
+      // Esperar carregamento e verificar produtos
+      await waitFor(() => {
+        expect(screen.getByText('Refrigerante')).toBeInTheDocument();
+      });
+      
       expect(screen.getByText('Cerveja')).toBeInTheDocument();
     });
   });
 
   describe('Métodos de pagamento', () => {
-    it('contabiliza diferentes métodos de pagamento', () => {
+    it('contabiliza diferentes métodos de pagamento', async () => {
       const salesWithDifferentPayments = [
         mockSaleRecord, // cash
         { ...mockSaleRecord, id: '6', paymentMethod: 'credit' as const, isDirectSale: false },
@@ -245,13 +276,15 @@ describe('Dashboard', () => {
       
       render(<Dashboard {...defaultProps} salesRecords={salesWithDifferentPayments} />);
       
-      // Deve mostrar estatísticas de métodos de pagamento
-      expect(screen.getByText(/dinheiro|cash/i)).toBeInTheDocument();
+      // Esperar carregamento e verificar métodos de pagamento
+      await waitFor(() => {
+        expect(screen.getByText(/dinheiro|cash/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe('Responsividade', () => {
-    it('funciona em diferentes resoluções', () => {
+    it('funciona em diferentes resoluções', async () => {
       // Simula tela menor
       Object.defineProperty(window, 'innerWidth', {
         writable: true,
@@ -261,13 +294,16 @@ describe('Dashboard', () => {
       
       render(<Dashboard {...defaultProps} />);
       
-      // Dashboard deve renderizar sem erros
+      // Esperar carregamento
+      await waitFor(() => {
+        expect(screen.getByText(/receita total/i)).toBeInTheDocument();
+      });
       expect(screen.getByText(/receita total/i)).toBeInTheDocument();
     });
   });
 
   describe('Performance com grandes datasets', () => {
-    it('renderiza eficientemente com muitas vendas', () => {
+    it('renderiza eficientemente com muitas vendas', async () => {
       // Cria 50 vendas simuladas (quantidade mais realista para testes)
       const largeSalesDataset = Array.from({ length: 50 }, (_, index) => ({
         ...mockSaleRecord,
@@ -279,6 +315,12 @@ describe('Dashboard', () => {
       
       const startTime = performance.now();
       render(<Dashboard {...defaultProps} salesRecords={largeSalesDataset} />);
+      
+      // Esperar carregamento completo
+      await waitFor(() => {
+        expect(screen.getByText(/receita total/i)).toBeInTheDocument();
+      });
+      
       const endTime = performance.now();
       
       // Renderização deve ser razoavelmente rápida (menos de 1.5s para 50 vendas após updates)
