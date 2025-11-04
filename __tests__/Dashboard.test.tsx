@@ -11,7 +11,7 @@ const mockTransaction: Transaction = {
   description: 'Venda',
   amount: 50.00,
   category: 'vendas',
-  date: '2025-10-08',
+  date: '2025-11-08',
   time: '14:30'
 };
 
@@ -25,7 +25,7 @@ const mockComanda: Comanda = {
       quantity: 2
     }
   ],
-  createdAt: new Date('2025-10-08T10:00:00Z'),
+  createdAt: new Date('2025-11-08T10:00:00Z'),
   status: 'open'
 };
 
@@ -41,7 +41,7 @@ const mockSaleRecord: SaleRecord = {
   ],
   total: 17.00,
   paymentMethod: 'cash',
-  date: '08/10/2025',
+  date: '08/11/2025',
   time: '14:30',
   isDirectSale: false,
   isCourtesy: false
@@ -58,7 +58,7 @@ const mockSaleCourtesy: SaleRecord = {
   ],
   total: 5.00,
   paymentMethod: 'courtesy',
-  date: '08/10/2025',
+  date: '08/11/2025',
   time: '15:00',
   isDirectSale: true,
   isCourtesy: true
@@ -143,7 +143,7 @@ describe('Dashboard', () => {
     it('permite alterar data de início', async () => {
       render(<Dashboard {...defaultProps} />);
       
-      const startDateInput = screen.getAllByDisplayValue(/2025-10/)[0]; // Primeiro input de data
+      const startDateInput = screen.getAllByDisplayValue(/2025-11/)[0]; // Primeiro input de data
       await userEvent.clear(startDateInput);
       await userEvent.type(startDateInput, '2025-09-01');
       
@@ -201,7 +201,7 @@ describe('Dashboard', () => {
     it('inputs de data possuem labels adequados', () => {
       render(<Dashboard {...defaultProps} />);
       
-      const dateInputs = screen.getAllByDisplayValue(/2025-10/);
+      const dateInputs = screen.getAllByDisplayValue(/2025-11/);
       expect(dateInputs.length).toBeGreaterThan(0);
       dateInputs.forEach(input => {
         expect(input).toHaveAttribute('type', 'date');

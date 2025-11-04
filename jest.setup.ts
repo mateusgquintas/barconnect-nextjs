@@ -43,6 +43,17 @@ const createSupabaseChainFor = (table?: string) => {
       }
       return Promise.resolve({ data: { id: 'new-id' }, error: null });
     }),
+    maybeSingle: jest.fn().mockImplementation(() => {
+      // Para testes de autenticação
+      if (table === 'users') {
+        // Retornar dados mockados de usuários
+        return Promise.resolve({ 
+          data: null, // Por padrão retorna null (usuário não encontrado)
+          error: null 
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    }),
   };
 
   // Implementar comportamento de insert por tabela (inclui caso de erro esperado em testes)
