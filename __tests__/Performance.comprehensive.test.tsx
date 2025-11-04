@@ -416,7 +416,7 @@ describe('Performance e Cache - Testes Abrangentes', () => {
       const user = userEvent.setup();
       
       render(
-        <Transactions 
+        <Transactions
           transactions={mockTransactions}
           salesRecords={mockSalesRecords}
           onAddTransaction={jest.fn()}
@@ -425,22 +425,18 @@ describe('Performance e Cache - Testes Abrangentes', () => {
         />
       );
 
-      // Buscar o input de data inicial pelo valor dinâmico do mês atual
-      const today = new Date();
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+      // Buscar o input de data inicial pelo valor fornecido nas props
+      const startDateValue = "2025-10-01";
 
       const { duration } = await PerformanceMeasurer.measureAsyncOperation(async () => {
-        const startDateInput = screen.getByDisplayValue(firstDayStr);
+        const startDateInput = screen.getByDisplayValue(startDateValue);
         await user.clear(startDateInput);
-        await user.type(startDateInput, firstDayStr);
+        await user.type(startDateInput, startDateValue);
       });
 
       // Filtragem deve ser instantânea
       expect(duration).toBeLessThan(2500);
-    });
-
-    it('deve scrollar listas grandes sem lag', async () => {
+    });    it('deve scrollar listas grandes sem lag', async () => {
       const user = userEvent.setup();
       
       render(<Dashboard />);
