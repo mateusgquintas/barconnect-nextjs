@@ -2,16 +2,7 @@
 import React from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface Pilgrimage {
-  id: string;
-  name: string;
-  arrivalDate: string;
-  departureDate: string;
-  numberOfPeople: number;
-  busGroup: string;
-  status?: string;
-}
+import { Pilgrimage as PilgrimageType } from '@/types';
 
 interface RoomReservation {
   id: string;
@@ -28,10 +19,17 @@ interface Room {
   number: number | string;
 }
 
+// Helper para pegar datas de uma romaria (compatível com occurrences)
+const getPilgrimageDates = (p: PilgrimageType) => {
+  const arrivalDate = p.arrivalDate || p.occurrences?.[0]?.arrivalDate || '';
+  const departureDate = p.departureDate || p.occurrences?.[0]?.departureDate || '';
+  return { arrivalDate, departureDate };
+};
+
 interface Props {
   month: Date;
   reservations: RoomReservation[];
-  pilgrimages: Pilgrimage[];
+  pilgrimages: PilgrimageType[];
   rooms: Room[];
   occupancy: Record<string, number>;
 }
@@ -47,8 +45,10 @@ export function ExportAgendaPDF({ month, reservations, pilgrimages, rooms, occup
       
       // Estatísticas
       const totalPilgrimages = pilgrimages.filter(p => {
-        const arrival = new Date(p.arrivalDate);
-        const departure = new Date(p.departureDate);
+        const { arrivalDate, departureDate } = getPilgrimageDates(p);
+        if (!arrivalDate || !departureDate) return false;
+        const arrival = new Date(arrivalDate);
+        const departure = new Date(departureDate);
         const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
         const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
         return arrival <= monthEnd && departure >= monthStart && p.status !== 'cancelled';
@@ -168,16 +168,18 @@ export function ExportAgendaPDF({ month, reservations, pilgrimages, rooms, occup
               </tr>
             </thead>
             <tbody>
-              ${activePilgrimages.map(p => `
+              ${activePilgrimages.map(p => {
+                const { arrivalDate, departureDate } = getPilgrimageDates(p);
+                return `
                 <tr>
                   <td>${p.name}</td>
                   <td>${p.busGroup || 'N/A'}</td>
                   <td>${p.numberOfPeople}</td>
-                  <td>${new Date(p.arrivalDate).toLocaleDateString('pt-BR')}</td>
-                  <td>${new Date(p.departureDate).toLocaleDateString('pt-BR')}</td>
+                  <td>${arrivalDate ? new Date(arrivalDate).toLocaleDateString('pt-BR') : '-'}</td>
+                  <td>${departureDate ? new Date(departureDate).toLocaleDateString('pt-BR') : '-'}</td>
                   <td><span class="status-badge status-${p.status || 'confirmed'}">${p.status || 'Confirmada'}</span></td>
                 </tr>
-              `).join('')}
+              `}).join('')}
             </tbody>
           </table>
 

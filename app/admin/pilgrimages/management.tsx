@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
 import { useRoomsDB } from '@/hooks/useRoomsDB';
 import { toast } from 'sonner';
-import { Pilgrimage } from '@/types';
+import { Pilgrimage, PilgrimageFormData } from '@/types';
 import { Room } from '@/hooks/useRoomsDB';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import { Bus, Users, Edit, Trash2 } from 'lucide-react';
 export default function PilgrimagesManagement() {
   const { pilgrimages, loading, createPilgrimage, updatePilgrimage, deletePilgrimage } = usePilgrimagesDB();
   const { rooms, updateRoom } = useRoomsDB();
-  const [form, setForm] = useState<Omit<Pilgrimage, 'id'>>({
+  const [form, setForm] = useState<PilgrimageFormData>({
     name: '',
     arrivalDate: '',
     departureDate: '',
@@ -47,8 +47,8 @@ export default function PilgrimagesManagement() {
   const handleEdit = (pilgrimage: Pilgrimage) => {
     setForm({
       name: pilgrimage.name,
-      arrivalDate: pilgrimage.arrivalDate,
-      departureDate: pilgrimage.departureDate,
+      arrivalDate: pilgrimage.arrivalDate || pilgrimage.occurrences?.[0]?.arrivalDate || '',
+      departureDate: pilgrimage.departureDate || pilgrimage.occurrences?.[0]?.departureDate || '',
       numberOfPeople: pilgrimage.numberOfPeople,
       busGroup: pilgrimage.busGroup,
     });

@@ -9,7 +9,11 @@ export interface Room {
   type?: string;
   status?: string;
   description?: string;
+  capacity?: number;         // Capacidade de pessoas (compatibilidade com agenda)
+  floor?: number;            // Andar do quarto (compatibilidade com agenda)
   created_at?: string;
+  
+  // Legacy fields (serão migrados para room_reservations)
   pilgrimage_id?: string;    // ID da romaria associada
   guest_name?: string;       // Nome do hóspede principal
   guest_cpf?: string;        // CPF do hóspede
@@ -18,6 +22,34 @@ export interface Room {
   check_in_date?: string;    // Data de check-in
   check_out_date?: string;   // Data de check-out
   observations?: string;     // Observações
+  
+  // Novos campos de amenidades (migration 006)
+  custom_name?: string;      // Nome personalizado/apelido
+  beds?: number;             // Número de camas
+  daily_rate?: number;       // Taxa diária (R$)
+  room_size?: number;        // Área em m²
+  
+  // Amenidades principais
+  has_minibar?: boolean;     // Frigobar
+  has_ac?: boolean;          // Ar-condicionado
+  has_tv?: boolean;          // TV
+  has_wifi?: boolean;        // Wi-Fi
+  has_balcony?: boolean;     // Varanda
+  
+  // Amenidades banheiro
+  has_bathtub?: boolean;     // Banheira
+  has_hairdryer?: boolean;   // Secador de cabelo
+  
+  // Amenidades extras
+  has_safe?: boolean;        // Cofre
+  has_phone?: boolean;       // Telefone
+  has_bathrobe?: boolean;    // Roupão/chinelos
+  
+  // Características especiais
+  view_type?: string;        // Tipo de vista (oceano/cidade/jardim/etc)
+  is_accessible?: boolean;   // Acessível para PCD
+  is_smoking_allowed?: boolean; // Permite fumar
+  is_pet_friendly?: boolean; // Pet friendly
 }
 
 export function useRoomsDB() {
@@ -39,6 +71,8 @@ export function useRoomsDB() {
           type: r.type ?? undefined,
           status: r.status ?? undefined,
           description: r.description ?? undefined,
+          capacity: r.capacity ?? undefined,
+          floor: r.floor ?? undefined,
         })) as Room[];
         setRooms(mapped);
         setError(null);

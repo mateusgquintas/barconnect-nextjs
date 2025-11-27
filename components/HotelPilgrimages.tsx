@@ -3,17 +3,24 @@ import { useState } from 'react';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
 // import { useRoomsDB } from '../hooks/useRoomsDB';
 import { useRoomsDB } from '@/hooks/useRoomsDB';
-import { Pilgrimage } from '@/types';
+import { Pilgrimage, PilgrimageFormData, PilgrimageOccurrence } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bus, Users, Calendar, Plus, Pencil, Trash2, Eye, Bed, Search, Phone } from 'lucide-react';
+import { Bus, Users, Calendar, Plus, Pencil, Trash2, Eye, Bed, Search, Phone, CalendarPlus, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+
+// Helper para compatibilidade com múltiplas datas
+const getPilgrimageDates = (p: Pilgrimage) => {
+  const arrivalDate = p.arrivalDate || p.occurrences?.[0]?.arrivalDate || '';
+  const departureDate = p.departureDate || p.occurrences?.[0]?.departureDate || '';
+  return { arrivalDate, departureDate };
+};
 
 export function HotelPilgrimages() {
   const { pilgrimages, createPilgrimage, updatePilgrimage, deletePilgrimage, loading } = usePilgrimagesDB();
@@ -25,7 +32,7 @@ export function HotelPilgrimages() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedPilgrimage, setSelectedPilgrimage] = useState<Pilgrimage | null>(null);
   // Form states
-  const [form, setForm] = useState<Omit<Pilgrimage, 'id'>>({
+  const [form, setForm] = useState<PilgrimageFormData>({
     name: '',
     arrivalDate: '',
     departureDate: '',
@@ -35,6 +42,9 @@ export function HotelPilgrimages() {
   });
   const [formStatus, setFormStatus] = useState<'active' | 'completed' | 'cancelled'>('active');
   const [formNotes, setFormNotes] = useState('');
+  // Estado para múltiplas occurrences
+  const [formOccurrences, setFormOccurrences] = useState<Omit<PilgrimageOccurrence, 'id' | 'pilgrimageId'>[]>([]);
+  const [showMultipleDates, setShowMultipleDates] = useState(false);
 
   const filteredPilgrimages = pilgrimages.filter(p => {
     const matchesSearch =
@@ -56,6 +66,30 @@ export function HotelPilgrimages() {
     setForm({ name: '', arrivalDate: '', departureDate: '', numberOfPeople: 0, busGroup: '', contactPhone: '' });
     setFormStatus('active');
     setFormNotes('');
+    setFormOccurrences([]);
+    setShowMultipleDates(false);
+  };
+
+  const addOccurrence = () => {
+    setFormOccurrences(prev => [
+      ...prev,
+      {
+        arrivalDate: '',
+        departureDate: '',
+        status: 'scheduled',
+        notes: ''
+      }
+    ]);
+  };
+
+  const removeOccurrence = (index: number) => {
+    setFormOccurrences(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateOccurrence = (index: number, field: keyof Omit<PilgrimageOccurrence, 'id' | 'pilgrimageId'>, value: any) => {
+    setFormOccurrences(prev => prev.map((occ, i) => 
+      i === index ? { ...occ, [field]: value } : occ
+    ));
   };
 
   const handleOpenAddDialog = () => {
@@ -65,16 +99,31 @@ export function HotelPilgrimages() {
 
   const handleOpenEditDialog = (pilgrimage: Pilgrimage) => {
     setSelectedPilgrimage(pilgrimage);
+    const arrivalDate = pilgrimage.arrivalDate || pilgrimage.occurrences?.[0]?.arrivalDate || '';
+    const departureDate = pilgrimage.departureDate || pilgrimage.occurrences?.[0]?.departureDate || '';
     setForm({
       name: pilgrimage.name,
-      arrivalDate: pilgrimage.arrivalDate,
-      departureDate: pilgrimage.departureDate,
+      arrivalDate,
+      departureDate,
       numberOfPeople: pilgrimage.numberOfPeople,
       busGroup: pilgrimage.busGroup,
       contactPhone: pilgrimage.contactPhone || '',
     });
     setFormStatus((pilgrimage.status as any) || 'active');
     setFormNotes((pilgrimage as any).notes || '');
+    
+    // Carregar occurrences existentes (excluindo a primeira que já está no form)
+    const existingOccurrences = pilgrimage.occurrences || [];
+    if (existingOccurrences.length > 1) {
+      setFormOccurrences(existingOccurrences.slice(1).map(occ => ({
+        arrivalDate: occ.arrivalDate,
+        departureDate: occ.departureDate,
+        status: occ.status,
+        notes: occ.notes
+      })));
+      setShowMultipleDates(true);
+    }
+    
     setShowEditDialog(true);
   };
 
@@ -88,7 +137,39 @@ export function HotelPilgrimages() {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
-    await createPilgrimage({ ...form, status: formStatus, notes: formNotes });
+    
+    // Validar occurrences adicionais
+    if (showMultipleDates) {
+      for (let i = 0; i < formOccurrences.length; i++) {
+        const occ = formOccurrences[i];
+        if (!occ.arrivalDate || !occ.departureDate) {
+          toast.error(`Preencha as datas da ocorrência ${i + 2}`);
+          return;
+        }
+        if (new Date(occ.arrivalDate) >= new Date(occ.departureDate)) {
+          toast.error(`Data de partida deve ser posterior à chegada (ocorrência ${i + 2})`);
+          return;
+        }
+      }
+    }
+    
+    // Criar romaria com occurrences
+    const allOccurrences: Omit<PilgrimageOccurrence, 'id' | 'pilgrimageId'>[] = [
+      {
+        arrivalDate: form.arrivalDate,
+        departureDate: form.departureDate,
+        status: 'scheduled',
+        notes: formNotes
+      },
+      ...formOccurrences
+    ];
+    
+    await createPilgrimage({ 
+      ...form, 
+      status: formStatus, 
+      notes: formNotes,
+      occurrences: allOccurrences as any // IDs serão gerados pelo backend
+    });
     setShowAddDialog(false);
     resetForm();
   };
@@ -98,7 +179,39 @@ export function HotelPilgrimages() {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
-    await updatePilgrimage(selectedPilgrimage.id, { ...form, status: formStatus, notes: formNotes });
+    
+    // Validar occurrences adicionais
+    if (showMultipleDates) {
+      for (let i = 0; i < formOccurrences.length; i++) {
+        const occ = formOccurrences[i];
+        if (!occ.arrivalDate || !occ.departureDate) {
+          toast.error(`Preencha as datas da ocorrência ${i + 2}`);
+          return;
+        }
+        if (new Date(occ.arrivalDate) >= new Date(occ.departureDate)) {
+          toast.error(`Data de partida deve ser posterior à chegada (ocorrência ${i + 2})`);
+          return;
+        }
+      }
+    }
+    
+    // Atualizar romaria com occurrences
+    const allOccurrences: Omit<PilgrimageOccurrence, 'id' | 'pilgrimageId'>[] = [
+      {
+        arrivalDate: form.arrivalDate,
+        departureDate: form.departureDate,
+        status: 'scheduled',
+        notes: formNotes
+      },
+      ...formOccurrences
+    ];
+    
+    await updatePilgrimage(selectedPilgrimage.id, { 
+      ...form, 
+      status: formStatus, 
+      notes: formNotes,
+      occurrences: allOccurrences as any // IDs serão gerados pelo backend
+    });
     setShowEditDialog(false);
     resetForm();
   };
@@ -221,14 +334,14 @@ export function HotelPilgrimages() {
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant={filterStatus === 'all' ? 'default' : 'outline'}
-                  size="sm"
+
                   onClick={() => setFilterStatus('all')}
                 >
                   Todas
                 </Button>
                 <Button
                   variant={filterStatus === 'active' ? 'default' : 'outline'}
-                  size="sm"
+
                   onClick={() => setFilterStatus('active')}
                   className={filterStatus === 'active' ? '' : 'border-green-300 text-green-700 hover:bg-green-50'}
                 >
@@ -236,7 +349,7 @@ export function HotelPilgrimages() {
                 </Button>
                 <Button
                   variant={filterStatus === 'completed' ? 'default' : 'outline'}
-                  size="sm"
+
                   onClick={() => setFilterStatus('completed')}
                   className={filterStatus === 'completed' ? '' : 'border-blue-300 text-blue-700 hover:bg-blue-50'}
                 >
@@ -244,7 +357,7 @@ export function HotelPilgrimages() {
                 </Button>
                 <Button
                   variant={filterStatus === 'cancelled' ? 'default' : 'outline'}
-                  size="sm"
+
                   onClick={() => setFilterStatus('cancelled')}
                   className={filterStatus === 'cancelled' ? '' : 'border-red-300 text-red-700 hover:bg-red-50'}
                 >
@@ -278,10 +391,10 @@ export function HotelPilgrimages() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <Calendar className="w-4 h-4" />
-                    <span>{formatDate(pilgrimage.arrivalDate)} - {formatDate(pilgrimage.departureDate)}</span>
+                    <span>{formatDate(getPilgrimageDates(pilgrimage).arrivalDate)} - {formatDate(getPilgrimageDates(pilgrimage).departureDate)}</span>
                   </div>
                   <div className="text-sm text-slate-500">
-                    {calculateDays(pilgrimage.arrivalDate, pilgrimage.departureDate)} dias de hospedagem
+                    {calculateDays(getPilgrimageDates(pilgrimage).arrivalDate, getPilgrimageDates(pilgrimage).departureDate)} dias de hospedagem
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <Users className="w-4 h-4" />
@@ -294,13 +407,13 @@ export function HotelPilgrimages() {
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1 gap-2" onClick={() => handleOpenDetailsDialog(pilgrimage)}>
+                  <Button variant="outline" className="flex-1 gap-2" onClick={() => handleOpenDetailsDialog(pilgrimage)}>
                     <Eye className="w-4 h-4" /> Detalhes
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenEditDialog(pilgrimage)}>
+                  <Button variant="outline" onClick={() => handleOpenEditDialog(pilgrimage)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50" onClick={() => handleDeletePilgrimage(pilgrimage.id)}>
+                  <Button variant="outline" className="text-red-600 hover:bg-red-50" onClick={() => handleDeletePilgrimage(pilgrimage.id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -345,6 +458,76 @@ export function HotelPilgrimages() {
                 <Input id="departureDate" type="date" value={form.departureDate} onChange={e => setForm(f => ({ ...f, departureDate: e.target.value }))} className="mt-1" />
               </div>
             </div>
+            
+            {/* Múltiplas Datas */}
+            <div className="space-y-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+ 
+                onClick={() => setShowMultipleDates(!showMultipleDates)} 
+                className="w-full gap-2"
+              >
+                <CalendarPlus className="w-4 h-4" />
+                {showMultipleDates ? 'Ocultar' : 'Adicionar'} datas adicionais (romaria recorrente)
+              </Button>
+              
+              {showMultipleDates && (
+                <div className="space-y-3 p-4 border rounded-lg bg-slate-50">
+                  <p className="text-sm text-slate-600">
+                    Adicione múltiplas datas para romarias que retornam regularmente (ex: mensalmente, anualmente)
+                  </p>
+                  
+                  {formOccurrences.map((occ, index) => (
+                    <div key={index} className="flex gap-2 items-start p-3 bg-white rounded border">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Chegada {index + 2}</Label>
+                          <Input 
+                            type="date" 
+                            value={occ.arrivalDate} 
+                            onChange={e => updateOccurrence(index, 'arrivalDate', e.target.value)}
+                            className="mt-1"
+
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Partida {index + 2}</Label>
+                          <Input 
+                            type="date" 
+                            value={occ.departureDate} 
+                            onChange={e => updateOccurrence(index, 'departureDate', e.target.value)}
+                            className="mt-1"
+
+                          />
+                        </div>
+                      </div>
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => removeOccurrence(index)}
+                        className="text-red-600 hover:bg-red-50 mt-5"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  <Button 
+                    type="button"
+                    variant="outline" 
+ 
+                    onClick={addOccurrence} 
+                    className="w-full gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar data
+                  </Button>
+                </div>
+              )}
+            </div>
+            
             <div>
               <Label htmlFor="numberOfPeople">Número de Pessoas *</Label>
               <Input id="numberOfPeople" type="number" value={form.numberOfPeople} onChange={e => setForm(f => ({ ...f, numberOfPeople: Number(e.target.value) }))} placeholder="Ex: 45" className="mt-1" min="1" />
@@ -403,6 +586,76 @@ export function HotelPilgrimages() {
                 <Input id="edit-departureDate" type="date" value={form.departureDate} onChange={e => setForm(f => ({ ...f, departureDate: e.target.value }))} className="mt-1" />
               </div>
             </div>
+            
+            {/* Múltiplas Datas - Edit */}
+            <div className="space-y-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+ 
+                onClick={() => setShowMultipleDates(!showMultipleDates)} 
+                className="w-full gap-2"
+              >
+                <CalendarPlus className="w-4 h-4" />
+                {showMultipleDates ? 'Ocultar' : 'Gerenciar'} datas adicionais
+              </Button>
+              
+              {showMultipleDates && (
+                <div className="space-y-3 p-4 border rounded-lg bg-slate-50">
+                  <p className="text-sm text-slate-600">
+                    Gerencie múltiplas datas para esta romaria
+                  </p>
+                  
+                  {formOccurrences.map((occ, index) => (
+                    <div key={index} className="flex gap-2 items-start p-3 bg-white rounded border">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Chegada {index + 2}</Label>
+                          <Input 
+                            type="date" 
+                            value={occ.arrivalDate} 
+                            onChange={e => updateOccurrence(index, 'arrivalDate', e.target.value)}
+                            className="mt-1"
+
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Partida {index + 2}</Label>
+                          <Input 
+                            type="date" 
+                            value={occ.departureDate} 
+                            onChange={e => updateOccurrence(index, 'departureDate', e.target.value)}
+                            className="mt-1"
+
+                          />
+                        </div>
+                      </div>
+                      <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => removeOccurrence(index)}
+                        className="text-red-600 hover:bg-red-50 mt-5"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  <Button 
+                    type="button"
+                    variant="outline" 
+ 
+                    onClick={addOccurrence} 
+                    className="w-full gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar data
+                  </Button>
+                </div>
+              )}
+            </div>
+            
             <div>
               <Label htmlFor="edit-numberOfPeople">Número de Pessoas *</Label>
               <Input id="edit-numberOfPeople" type="number" value={form.numberOfPeople} onChange={e => setForm(f => ({ ...f, numberOfPeople: Number(e.target.value) }))} placeholder="Ex: 45" className="mt-1" min="1" />
@@ -459,8 +712,8 @@ export function HotelPilgrimages() {
               </div>
               <div className="p-4 bg-slate-50 rounded-lg">
                 <p className="text-sm text-slate-600 mb-1">Período</p>
-                <p className="text-slate-900">{formatDate(selectedPilgrimage.arrivalDate)} até {formatDate(selectedPilgrimage.departureDate)}</p>
-                <p className="text-sm text-slate-500 mt-1">{calculateDays(selectedPilgrimage.arrivalDate, selectedPilgrimage.departureDate)} dias de hospedagem</p>
+                <p className="text-slate-900">{formatDate(getPilgrimageDates(selectedPilgrimage).arrivalDate)} até {formatDate(getPilgrimageDates(selectedPilgrimage).departureDate)}</p>
+                <p className="text-sm text-slate-500 mt-1">{calculateDays(getPilgrimageDates(selectedPilgrimage).arrivalDate, getPilgrimageDates(selectedPilgrimage).departureDate)} dias de hospedagem</p>
               </div>
               <div className="p-4 bg-slate-50 rounded-lg">
                 <p className="text-sm text-slate-600 mb-1">Número de Pessoas</p>

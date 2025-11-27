@@ -1,16 +1,7 @@
 'use client'
 import React from 'react';
 import { Bus, Users, TrendingUp, Calendar, Percent } from 'lucide-react';
-
-interface Pilgrimage {
-  id: string;
-  name: string;
-  arrivalDate: string;
-  departureDate: string;
-  numberOfPeople: number;
-  busGroup: string;
-  status?: string;
-}
+import { Pilgrimage as PilgrimageType } from '@/types';
 
 interface RoomReservation {
   id: string;
@@ -24,9 +15,16 @@ interface RoomReservation {
 interface Props {
   month: Date;
   reservations: RoomReservation[];
-  pilgrimages: Pilgrimage[];
+  pilgrimages: PilgrimageType[];
   totalRooms: number;
 }
+
+// Helper para pegar datas de uma romaria (compatível com occurrences)
+const getPilgrimageDates = (p: PilgrimageType) => {
+  const arrivalDate = p.arrivalDate || p.occurrences?.[0]?.arrivalDate;
+  const departureDate = p.departureDate || p.occurrences?.[0]?.departureDate;
+  return { arrivalDate, departureDate };
+};
 
 export function DashboardRomarias({ month, reservations, pilgrimages, totalRooms }: Props) {
   // Filtrar romarias ativas no mês
@@ -34,9 +32,11 @@ export function DashboardRomarias({ month, reservations, pilgrimages, totalRooms
   const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59);
   
   const activePilgrimages = pilgrimages.filter(p => {
+    const { arrivalDate, departureDate } = getPilgrimageDates(p);
+    if (!arrivalDate || !departureDate) return false;
     if (p.status === 'cancelled') return false;
-    const arrival = new Date(p.arrivalDate);
-    const departure = new Date(p.departureDate);
+    const arrival = new Date(arrivalDate);
+    const departure = new Date(departureDate);
     return arrival <= monthEnd && departure >= monthStart;
   });
 

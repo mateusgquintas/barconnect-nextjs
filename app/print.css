@@ -1,0 +1,274 @@
+/* Print Styles for Hotel Management Page */
+
+@media print {
+  /* Reset page margins and setup */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide elements that shouldn't be printed */
+  .no-print,
+  button:not(.print-only),
+  nav,
+  aside,
+  .sidebar,
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  .edit-button,
+  .action-button {
+    display: none !important;
+  }
+
+  /* Hide filter controls when print-hide-filters class is present */
+  body.print-hide-filters .filters-card {
+    display: none !important;
+  }
+
+  /* Keep filter display when showing */
+  body:not(.print-hide-filters) .filters-card {
+    display: block !important;
+    page-break-after: always;
+  }
+
+  body:not(.print-hide-filters) .filters-card * {
+    display: block !important;
+  }
+
+  /* General layout */
+  body {
+    background: white !important;
+    font-size: 10pt;
+    line-height: 1.3;
+  }
+
+  /* Header styling */
+  h1 {
+    font-size: 18pt;
+    margin-bottom: 0.5cm;
+    color: #1e293b !important;
+  }
+
+  h2 {
+    font-size: 14pt;
+    margin-bottom: 0.3cm;
+    color: #334155 !important;
+  }
+
+  h3 {
+    font-size: 12pt;
+    margin-bottom: 0.2cm;
+    color: #475569 !important;
+  }
+
+  /* Stats cards - make horizontal and compact */
+  .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 0.3cm !important;
+    margin-bottom: 0.5cm !important;
+    page-break-inside: avoid;
+  }
+
+  .stats-card {
+    border: 1px solid #e2e8f0 !important;
+    padding: 0.3cm !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  /* Room cards grid - optimize for print */
+  .rooms-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.4cm !important;
+    margin-top: 0.5cm !important;
+  }
+
+  .room-card {
+    border: 1px solid #cbd5e1 !important;
+    padding: 0.4cm !important;
+    background: white !important;
+    page-break-inside: avoid;
+    margin-bottom: 0.3cm;
+  }
+
+  /* Ensure room cards don't break across pages */
+  .room-card {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Badges and status indicators */
+  .badge {
+    border: 1px solid currentColor !important;
+    padding: 2px 6px !important;
+    font-size: 8pt !important;
+    display: inline-block !important;
+  }
+
+  /* Print header with date and title */
+  .print-header {
+    display: block !important;
+    margin-bottom: 0.5cm;
+    padding-bottom: 0.3cm;
+    border-bottom: 2px solid #1e293b;
+  }
+
+  .print-header h1 {
+    margin: 0;
+  }
+
+  .print-date {
+    font-size: 9pt;
+    color: #64748b !important;
+    margin-top: 0.2cm;
+  }
+
+  /* Filter summary for print */
+  .filter-summary {
+    display: block !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 0.3cm !important;
+    margin-bottom: 0.5cm !important;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+
+  .filter-summary-title {
+    font-weight: bold;
+    margin-bottom: 0.2cm;
+    color: #334155 !important;
+  }
+
+  .filter-item {
+    display: inline-block;
+    margin-right: 0.5cm;
+    margin-bottom: 0.1cm;
+  }
+
+  /* Icons - ensure they print */
+  svg {
+    display: inline-block !important;
+    width: 12pt !important;
+    height: 12pt !important;
+    vertical-align: middle;
+  }
+
+  /* Remove shadows and transitions */
+  * {
+    box-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Text colors for print */
+  .text-slate-900,
+  .text-slate-800 {
+    color: #1e293b !important;
+  }
+
+  .text-slate-600,
+  .text-slate-500 {
+    color: #475569 !important;
+  }
+
+  /* Ensure backgrounds print correctly */
+  .bg-green-100 {
+    background-color: #dcfce7 !important;
+  }
+
+  .bg-red-100 {
+    background-color: #fee2e2 !important;
+  }
+
+  .bg-yellow-100 {
+    background-color: #fef9c3 !important;
+  }
+
+  .bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+
+  .bg-blue-100 {
+    background-color: #dbeafe !important;
+  }
+
+  /* Compact spacing for print */
+  .space-y-4 > * + *,
+  .space-y-2 > * + * {
+    margin-top: 0.2cm !important;
+  }
+
+  /* Grid adjustments */
+  .grid {
+    display: grid !important;
+  }
+
+  /* Footer with page number */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: #64748b !important;
+    padding: 0.2cm;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* Page breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  /* Ensure proper card display */
+  .card,
+  [class*="card"] {
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* Occupancy indicator */
+  .occupancy-indicator {
+    font-size: 8pt !important;
+    display: inline-block !important;
+  }
+
+  /* Make sure room numbers are prominent */
+  .room-number {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    color: #1e293b !important;
+  }
+
+  /* Amenities list for print */
+  .amenities-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.2cm !important;
+    margin-top: 0.2cm !important;
+  }
+
+  .amenity-item {
+    font-size: 8pt !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.1cm !important;
+  }
+}

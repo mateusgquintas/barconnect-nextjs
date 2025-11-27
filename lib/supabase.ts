@@ -32,6 +32,12 @@ console.log('📊 Supabase Status:', {
 
 export const supabase = shouldUseMock 
   ? (createMockSupabaseClient() as any)
-  : createClient(supabaseUrl!, supabaseAnonKey!);
+  : createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        persistSession: false, // Desabilita persistência de sessão para evitar erros OAuth
+        autoRefreshToken: false,
+        detectSessionInUrl: false, // Evita tentar detectar sessão OAuth na URL
+      },
+    });
 
 export const isSupabaseMock = shouldUseMock;

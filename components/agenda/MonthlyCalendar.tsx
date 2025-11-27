@@ -2,6 +2,7 @@
 import React from 'react';
 import { DayOccupancyBar } from './DayOccupancyBar';
 import { CalendarGridWithEvents } from './CalendarEventBar';
+import { Pilgrimage as PilgrimageType } from '@/types';
 
 interface RoomReservation {
   id: string;
@@ -18,11 +19,6 @@ interface Room {
   number: number | string;
 }
 
-interface Pilgrimage {
-  id: string;
-  name: string;
-}
-
 type Props = {
   month: Date; // any date within the month to display
   selectedDate?: Date | null;
@@ -33,7 +29,7 @@ type Props = {
   // Novos props para visualização de eventos
   reservations?: RoomReservation[];
   rooms?: Room[];
-  pilgrimages?: Pilgrimage[];
+  pilgrimages?: PilgrimageType[];
   onEventClick?: (reservation: RoomReservation) => void;
   showEvents?: boolean;
 };

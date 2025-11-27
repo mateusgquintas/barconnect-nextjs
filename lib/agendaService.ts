@@ -59,11 +59,142 @@ export async function listRooms(): Promise<Room[]> {
   if (error) throw error;
   // Normalize to our Room type shape where possible
   return (data || []).map((r: any) => ({
-    id: String(r.id),
+    id: String(r.id ?? r.number),
     name: String(r.number ?? r.name ?? r.id).trim(),
-    capacity: r.capacity ?? null,
+    number: r.number ?? r.name ?? r.id,
+    type: r.type,
+    floor: r.floor,
+    capacity: r.capacity ?? 2,
     status: (r.status as any) || 'active',
+    
+    // Informações básicas (migration 006)
+    beds: r.beds,
+    customName: r.custom_name,
+    dailyRate: r.daily_rate,
+    roomSize: r.room_size,
+    
+    // Amenidades principais
+    hasMinibar: r.has_minibar ?? false,
+    hasAc: r.has_ac ?? false,
+    hasTv: r.has_tv ?? false,
+    hasWifi: r.has_wifi ?? false,
+    hasBalcony: r.has_balcony ?? false,
+    
+    // Amenidades banheiro
+    hasBathtub: r.has_bathtub ?? false,
+    hasHairdryer: r.has_hairdryer ?? false,
+    
+    // Amenidades extras
+    hasSafe: r.has_safe ?? false,
+    hasPhone: r.has_phone ?? false,
+    hasBathrobe: r.has_bathrobe ?? false,
+    
+    // Características especiais
+    viewType: r.view_type,
+    isAccessible: r.is_accessible ?? false,
+    isSmokingAllowed: r.is_smoking_allowed ?? false,
+    isPetFriendly: r.is_pet_friendly ?? false,
   }));
+}
+
+/**
+ * Retorna quartos disponíveis no período especificado.
+ * Filtra quartos que:
+ * 1. Não estão em manutenção ou inativos
+ * 2. Não possuem reservas conflitantes no período [start, end)
+ * 3. Não estão bloqueados por romarias (considerando todas as occurrences)
+ */
+export async function getAvailableRooms(
+  start: string | Date,
+  end: string | Date,
+  excludePilgrimageId?: string // Permitir excluir uma romaria específica (útil ao editar)
+): Promise<Room[]> {
+  // Buscar todos os quartos
+  const allRooms = await listRooms();
+  
+  // Buscar reservas que podem conflitar no período
+  const startDate = typeof start === 'string' ? new Date(start) : start;
+  const endDate = typeof end === 'string' ? new Date(end) : end;
+  
+  // Validação básica
+  if (startDate >= endDate) {
+    throw new Error('Data de início deve ser anterior à data de término.');
+  }
+  
+  const bookings = await listBookingsInRange({ start: startDate, end: endDate });
+  
+  // Buscar romarias com suas ocorrências para validar bloqueios
+  const { data: pilgrimagesData, error: pilgrimagesError } = await (supabase as any)
+    .from('pilgrimages')
+    .select(`
+      id,
+      pilgrimages_occurrences:pilgrimage_occurrences(
+        id,
+        arrival_date,
+        departure_date,
+        status
+      )
+    `);
+  
+  if (pilgrimagesError) {
+    console.warn('[getAvailableRooms] Erro ao buscar romarias:', pilgrimagesError);
+  }
+  
+  // Mapear ocorrências ativas que conflitam com o período solicitado
+  const conflictingPilgrimageIds = new Set<string>();
+  if (pilgrimagesData) {
+    for (const pilgrimage of pilgrimagesData) {
+      // Ignorar romaria específica se fornecida (útil ao editar)
+      if (excludePilgrimageId && pilgrimage.id === excludePilgrimageId) {
+        continue;
+      }
+      
+      const occurrences = pilgrimage.pilgrimages_occurrences || [];
+      for (const occ of occurrences) {
+        // Considerar apenas ocorrências ativas ou agendadas
+        if (occ.status === 'cancelled' || occ.status === 'completed') {
+          continue;
+        }
+        
+        const occStart = new Date(occ.arrival_date);
+        const occEnd = new Date(occ.departure_date);
+        
+        // Verificar overlap: occurrence[start, end) com período solicitado[start, end)
+        if (hasOverlap(
+          { start: occStart, end: occEnd },
+          { start: startDate, end: endDate }
+        )) {
+          conflictingPilgrimageIds.add(pilgrimage.id);
+          break; // Já encontrou conflito, não precisa verificar outras occurrences
+        }
+      }
+    }
+  }
+  
+  // Filtrar quartos disponíveis
+  return allRooms.filter(room => {
+    // Excluir quartos em manutenção ou inativos
+    if (room.status === 'maintenance' || room.status === 'inactive') {
+      return false;
+    }
+    
+    // Verificar se existe alguma reserva conflitante para este quarto
+    const hasBookingConflict = bookings.some(booking => {
+      // Se a reserva pertence a uma romaria conflitante, considerar indisponível
+      if (booking.pilgrimage_id && conflictingPilgrimageIds.has(booking.pilgrimage_id)) {
+        return booking.room_id === room.id;
+      }
+      
+      // Verificar overlap normal de reservas
+      return booking.room_id === room.id &&
+        hasOverlap(
+          { start: new Date(booking.start), end: new Date(booking.end) },
+          { start: startDate, end: endDate }
+        );
+    });
+    
+    return !hasBookingConflict;
+  });
 }
 
 export async function listBookingsInRange(range: DateRange): Promise<Booking[]> {

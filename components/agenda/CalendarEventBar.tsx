@@ -1,15 +1,11 @@
 'use client'
 import React from 'react';
 import { Hotel, Users, Bus } from 'lucide-react';
+import { Pilgrimage as PilgrimageType } from '@/types';
 
 interface Room {
   id: string;
   number: number | string;
-}
-
-interface Pilgrimage {
-  id: string;
-  name: string;
 }
 
 interface RoomReservation {
@@ -32,7 +28,7 @@ interface CalendarEvent {
   color: string;
   textColor: string;
   room?: Room;
-  pilgrimage?: Pilgrimage;
+  pilgrimage?: PilgrimageType;
   status: string;
   reservation: RoomReservation;
   isHighCapacity?: boolean; // Romaria ocupando > 80% dos quartos
@@ -132,7 +128,7 @@ interface CalendarGridWithEventsProps {
   days: Date[];
   reservations: RoomReservation[];
   rooms: Room[];
-  pilgrimages: Pilgrimage[];
+  pilgrimages: PilgrimageType[];
   selectedDate?: Date | null;
   onDayClick?: (date: Date) => void;
   onDayDoubleClick?: (date: Date) => void;

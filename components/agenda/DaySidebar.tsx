@@ -1,8 +1,10 @@
 import React from 'react';
-import { X, Calendar, Users, Hotel, Bus, ChevronsRight, ChevronsLeft } from 'lucide-react';
+import { X, Calendar, Users, Hotel, Bus, ChevronsRight, ChevronsLeft, Bed, Building2, DollarSign, Wifi, Tv, Wind, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { cancelRoomReservation } from '@/lib/agendaService';
+import { Pilgrimage as PilgrimageType } from '@/types';
 
 interface RoomReservation {
   id: string;
@@ -19,22 +21,30 @@ interface Room {
   id: string;
   number: string;
   floor?: number;
+  capacity?: number;
+  type?: string;
+  beds?: number;
+  customName?: string;
+  // Amenidades (quando implementadas)
+  hasMinibar?: boolean;
+  hasAC?: boolean;
+  hasTv?: boolean;
+  hasWifi?: boolean;
+  hasBalcony?: boolean;
 }
 
-interface Pilgrimage {
-  id: string;
-  name: string;
-  arrivalDate: string;
-  departureDate: string;
-  numberOfPeople: number;
-  status?: string;
-}
+// Helper para pegar datas de uma romaria (compatível com occurrences)
+const getPilgrimageDates = (p: PilgrimageType) => {
+  const arrivalDate = p.arrivalDate || p.occurrences?.[0]?.arrivalDate || '';
+  const departureDate = p.departureDate || p.occurrences?.[0]?.departureDate || '';
+  return { arrivalDate, departureDate };
+};
 
 interface DaySidebarProps {
   date: Date | null;
   reservations: RoomReservation[];
   rooms: Room[];
-  pilgrimages: Pilgrimage[];
+  pilgrimages: PilgrimageType[];
   onClose: () => void;
   onCreateReservation?: (date: Date) => void;
   onReservationChanged?: () => void;
@@ -54,11 +64,28 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
 
   // Filtra romarias ativas neste dia
   const activePilgrimages = pilgrimages.filter(p => {
-    return p.arrivalDate <= dateStr && p.departureDate > dateStr && p.status !== 'cancelled';
+    const { arrivalDate, departureDate } = getPilgrimageDates(p);
+    if (!arrivalDate || !departureDate) return false;
+    return arrivalDate <= dateStr && departureDate > dateStr && p.status !== 'cancelled';
   });
 
   const getRoomById = (id: string) => rooms.find(r => r.id === id);
   const getPilgrimageById = (id: string) => pilgrimages.find(p => p.id === id);
+
+  // Helper para calcular duração da reserva
+  const calculateDuration = (checkIn: string, checkOut: string): number => {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Helper para estimar taxa (exemplo: R$ 150/dia)
+  const estimateRate = (duration: number): number => {
+    const dailyRate = 150; // Pode ser configurável por tipo de quarto no futuro
+    return dailyRate * duration;
+  };
 
   const statusLabels: Record<string, string> = {
     pending: 'Pendente',
@@ -149,18 +176,23 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
               Romarias Ativas
             </h3>
             <div className="space-y-3">
-              {activePilgrimages.map(pilgrimage => (
+              {activePilgrimages.map(pilgrimage => {
+                const { arrivalDate, departureDate } = getPilgrimageDates(pilgrimage);
+                return (
                 <div key={pilgrimage.id} className="p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <h4 className="font-medium text-purple-900">{pilgrimage.name}</h4>
                   <div className="text-sm text-purple-700 mt-1">
-                    <p>{new Date(pilgrimage.arrivalDate).toLocaleDateString()} - {new Date(pilgrimage.departureDate).toLocaleDateString()}</p>
+                    <p>
+                      {arrivalDate && new Date(arrivalDate).toLocaleDateString()} - 
+                      {departureDate && new Date(departureDate).toLocaleDateString()}
+                    </p>
                     <p className="flex items-center gap-1 mt-1">
                       <Users className="w-3 h-3" />
                       {pilgrimage.numberOfPeople} pessoas
                     </p>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         )}
@@ -178,31 +210,133 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
               {dayReservations.map(reservation => {
                 const room = getRoomById(reservation.room_id);
                 const pilgrimage = reservation.pilgrimage_id ? getPilgrimageById(reservation.pilgrimage_id) : null;
+                const duration = calculateDuration(reservation.check_in_date, reservation.check_out_date);
+                const estimatedRate = estimateRate(duration);
+                
                 return (
-                  <div key={reservation.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-medium text-slate-900">
-                          Quarto {room?.number || reservation.room_id}
-                        </h4>
-                        {reservation.customer_name && (
-                          <p className="text-sm text-slate-600">{reservation.customer_name}</p>
+                  <div key={reservation.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                    {/* Header com quarto e status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Hotel className="w-4 h-4 text-slate-600 flex-shrink-0" />
+                          <h4 className="font-semibold text-slate-900">
+                            Quarto {room?.number || reservation.room_id}
+                          </h4>
+                        </div>
+                        {room?.customName && (
+                          <p className="text-xs text-slate-500 italic ml-6">{room.customName}</p>
                         )}
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs border ${statusColors[reservation.status] || 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`px-2 py-1 rounded text-xs border whitespace-nowrap ${statusColors[reservation.status] || 'bg-gray-100 text-gray-700'}`}>
                         {statusLabels[reservation.status] || reservation.status}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-500 space-y-1">
-                      <p>Check-in: {formatDateMaybeTime(reservation.check_in_date)}</p>
-                      <p>Check-out: {formatDateMaybeTime(reservation.check_out_date)}</p>
-                    </div>
-                    {reservation.notes && (
-                      <div className="mt-2 text-xs text-slate-600">
-                        <span className="font-medium">Obs:</span> {reservation.notes}
+
+                    {/* Informações do quarto */}
+                    {room && (
+                      <div className="flex flex-wrap gap-2">
+                        {room.capacity && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{room.capacity} {room.capacity === 1 ? 'pessoa' : 'pessoas'}</span>
+                          </Badge>
+                        )}
+                        {room.beds && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Bed className="w-3 h-3" />
+                            <span>{room.beds} {room.beds === 1 ? 'cama' : 'camas'}</span>
+                          </Badge>
+                        )}
+                        {room.floor !== undefined && (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            <span>{room.floor}º andar</span>
+                          </Badge>
+                        )}
+                        {room.type && (
+                          <Badge variant="outline">
+                            {room.type}
+                          </Badge>
+                        )}
                       </div>
                     )}
-                    <div className="mt-2 flex items-center justify-end gap-2">
+
+                    {/* Amenidades (quando disponíveis) */}
+                    {room && (room.hasWifi || room.hasTv || room.hasAC || room.hasMinibar || room.hasBalcony) && (
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+                        {room.hasWifi && (
+                          <div className="flex items-center gap-1 text-xs text-slate-600" title="Wi-Fi">
+                            <Wifi className="w-3 h-3" />
+                          </div>
+                        )}
+                        {room.hasTv && (
+                          <div className="flex items-center gap-1 text-xs text-slate-600" title="TV">
+                            <Tv className="w-3 h-3" />
+                          </div>
+                        )}
+                        {room.hasAC && (
+                          <div className="flex items-center gap-1 text-xs text-slate-600" title="Ar-condicionado">
+                            <Wind className="w-3 h-3" />
+                          </div>
+                        )}
+                        {room.hasMinibar && (
+                          <div className="flex items-center gap-1 text-xs text-slate-600" title="Frigobar">
+                            <Coffee className="w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Hóspede/Romaria */}
+                    {reservation.customer_name && (
+                      <div className="pt-2 border-t border-slate-200">
+                        <p className="text-sm text-slate-700">
+                          <span className="font-medium">Hóspede:</span> {reservation.customer_name}
+                        </p>
+                      </div>
+                    )}
+                    {pilgrimage && (
+                      <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
+                        <Bus className="w-4 h-4 text-purple-600" />
+                        <p className="text-sm text-purple-700 font-medium">{pilgrimage.name}</p>
+                      </div>
+                    )}
+
+                    {/* Datas e duração */}
+                    <div className="pt-2 border-t border-slate-200 space-y-1">
+                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                        <div>
+                          <span className="font-medium">Check-in:</span>
+                          <p className="text-slate-700">{formatDateMaybeTime(reservation.check_in_date)}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Check-out:</span>
+                          <p className="text-slate-700">{formatDateMaybeTime(reservation.check_out_date)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-600">
+                          Duração: <span className="font-medium text-slate-700">{duration} {duration === 1 ? 'dia' : 'dias'}</span>
+                        </span>
+                        <div className="flex items-center gap-1 text-green-700 font-semibold">
+                          <DollarSign className="w-3 h-3" />
+                          <span>~R$ {estimatedRate.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Observações */}
+                    {reservation.notes && (
+                      <div className="pt-2 border-t border-slate-200">
+                        <p className="text-xs text-slate-600">
+                          <span className="font-medium">Obs:</span> {reservation.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Botões de ação */}
+                    <div className="pt-2 flex items-center justify-end gap-2">
                       {reservation.status !== 'cancelled' && reservation.status !== 'checked_out' && (
                         <Button
                           variant="outline"
@@ -214,12 +348,6 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
                         </Button>
                       )}
                     </div>
-                    {pilgrimage && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-purple-600">
-                        <Bus className="w-3 h-3" />
-                        <span>{pilgrimage.name}</span>
-                      </div>
-                    )}
                   </div>
                 );
               })}
