@@ -67,8 +67,9 @@ const VIEW_TYPES = [
 ];
 
 const ROOM_TYPES = [
-  { value: 'standard', label: 'Padrão' },
-  { value: 'double', label: 'Duplo' },
+  { value: 'standard', label: 'Prédio Principal' },
+  { value: 'anexo', label: 'Anexo' },
+  { value: 'pousada', label: 'Pousada' },
   { value: 'suite', label: 'Suíte' },
   { value: 'deluxe', label: 'Deluxe' },
   { value: 'executive', label: 'Executive' },
@@ -112,28 +113,42 @@ export function RoomEditDialog({ open, onOpenChange, room, onSave, mode }: RoomE
 
   useEffect(() => {
     if (room && mode === 'edit') {
-      // Inicializar configuração de camas baseado no total
-      // Por padrão, assumir uma cama de casal se beds >= 1
-      const initialBeds: BedConfig[] = [];
-      const totalBeds = room.beds || 1;
+      console.log('🔍 Carregando quarto para edição:', room);
+      console.log('🛏️ bed_configuration:', room.bed_configuration);
       
-      // Estimativa simples: se capacity >= 2, usar casal, senão solteiro
-      if (totalBeds === 1) {
-        initialBeds.push({
-          id: '1',
-          type: (room.capacity || 0) >= 2 ? 'casal' : 'solteiro',
-          quantity: 1
-        });
+      // Inicializar configuração de camas do banco (se existir) ou estimar
+      let initialBeds: BedConfig[] = [];
+      
+      // Prioridade 1: Usar configuração salva no banco
+      if (room.bed_configuration && Array.isArray(room.bed_configuration) && room.bed_configuration.length > 0) {
+        console.log('✅ Usando configuração salva no banco');
+        initialBeds = room.bed_configuration.map((bed: any) => ({
+          id: bed.id || String(Date.now() + Math.random()),
+          type: bed.type || 'solteiro',
+          quantity: bed.quantity || 1
+        }));
       } else {
-        // Múltiplas camas - dividir entre casal e solteiro
-        const casalBeds = Math.floor(totalBeds / 2);
-        const solteiroBeds = totalBeds % 2;
+        console.log('⚠️ Estimando camas baseado em beds:', room.beds, 'capacity:', room.capacity);
+        // Prioridade 2: Estimar baseado em beds e capacity
+        const totalBeds = room.beds || 1;
         
-        if (casalBeds > 0) {
-          initialBeds.push({ id: '1', type: 'casal', quantity: casalBeds });
-        }
-        if (solteiroBeds > 0) {
-          initialBeds.push({ id: '2', type: 'solteiro', quantity: solteiroBeds });
+        if (totalBeds === 1) {
+          initialBeds.push({
+            id: '1',
+            type: (room.capacity || 0) >= 2 ? 'casal' : 'solteiro',
+            quantity: 1
+          });
+        } else {
+          // Múltiplas camas - dividir entre casal e solteiro
+          const casalBeds = Math.floor(totalBeds / 2);
+          const solteiroBeds = totalBeds % 2;
+          
+          if (casalBeds > 0) {
+            initialBeds.push({ id: '1', type: 'casal', quantity: casalBeds });
+          }
+          if (solteiroBeds > 0) {
+            initialBeds.push({ id: '2', type: 'solteiro', quantity: solteiroBeds });
+          }
         }
       }
       
@@ -240,7 +255,12 @@ export function RoomEditDialog({ open, onOpenChange, room, onSave, mode }: RoomE
     e.preventDefault();
     setLoading(true);
     try {
-      await onSave(formData);
+      // Incluir configuração de camas no formData
+      const dataToSave = {
+        ...formData,
+        bed_configuration: bedConfigs
+      };
+      await onSave(dataToSave);
       onOpenChange(false);
     } catch (error) {
       console.error('Erro ao salvar quarto:', error);

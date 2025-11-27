@@ -6,7 +6,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Bed, Users, Clock, DollarSign, Search, Bus, UserPlus, Wrench, Plus, Edit, Tv, Wind, Wifi, Wine, Home, Building2, X, Calendar, TrendingUp, FileSpreadsheet, Printer, Bath, Lock, Phone, Eye, Accessibility, Cigarette, PawPrint, MapPin, Filter } from 'lucide-react';
+import { Bed, Users, Clock, DollarSign, Search, Bus, UserPlus, Wrench, Plus, Edit, Tv, Wind, Wifi, Wine, Home, Building2, X, Calendar, TrendingUp, FileSpreadsheet, Printer, Bath, Lock, Phone, Eye, Accessibility, Cigarette, PawPrint, MapPin, Filter, LogOut, LogIn, CheckCircle } from 'lucide-react';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
@@ -24,7 +24,9 @@ const getPilgrimageDates = (p: PilgrimageType) => {
   return { arrivalDate, departureDate };
 };
 const roomTypeLabels = {
-  standard: 'Padrão',
+  standard: 'Prédio Principal',
+  anexo: 'Anexo',
+  pousada: 'Pousada',
   single: 'Solteiro',
   double: 'Casal',
   suite: 'Suíte',
@@ -67,6 +69,7 @@ export function Hotel() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPilgrimage, setFilterPilgrimage] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [filterBuilding, setFilterBuilding] = useState<string>('all');
   const [filterFloor, setFilterFloor] = useState<string>('all');
   const [filterMinCapacity, setFilterMinCapacity] = useState<string>('');
   const [filterMaxCapacity, setFilterMaxCapacity] = useState<string>('');
@@ -100,6 +103,7 @@ export function Hotel() {
     const matchesStatus = filterStatus === 'all' || room.status === filterStatus;
     const matchesPilgrimage = filterPilgrimage === 'all' || room.pilgrimage_id === filterPilgrimage;
     const matchesType = filterType === 'all' || room.type === filterType;
+    const matchesBuilding = filterBuilding === 'all' || room.type === filterBuilding;
     const matchesFloor = filterFloor === 'all' || (room.floor?.toString() === filterFloor);
     
     // Capacity filter
@@ -121,7 +125,7 @@ export function Hotel() {
     const matchesDateAvailability = !selectedDate || room.status === 'maintenance' || availableRoomIds.has(room.id);
     
     return matchesSearch && matchesStatus && matchesPilgrimage && matchesType && 
-           matchesFloor && matchesMinCapacity && matchesMaxCapacity && matchesAmenities &&
+           matchesBuilding && matchesFloor && matchesMinCapacity && matchesMaxCapacity && matchesAmenities &&
            matchesDateAvailability;
   }).sort((a, b) => {
     // Aplicar ordenação
@@ -162,6 +166,25 @@ export function Hotel() {
   const getBedsDetailList = (room: Room): Array<{quantity: number, type: string}> => {
     if (!room.beds || room.beds === 0) return [];
     
+    // Mapeamento de tipos de cama
+    const bedTypeLabels: Record<string, string> = {
+      'solteiro': 'Solteiro',
+      'casal': 'Casal',
+      'queen': 'Queen',
+      'king': 'King',
+      'beliche': 'Beliche',
+      'sofa-cama': 'Sofá-cama'
+    };
+    
+    // Prioridade 1: Usar configuração salva no banco
+    if (room.bed_configuration && Array.isArray(room.bed_configuration) && room.bed_configuration.length > 0) {
+      return room.bed_configuration.map((bed: any) => ({
+        quantity: bed.quantity || 1,
+        type: bedTypeLabels[bed.type] || bed.type || 'Solteiro'
+      }));
+    }
+    
+    // Prioridade 2: Estimar baseado em capacity e beds
     const capacity = room.capacity || 0;
     const beds = room.beds || 0;
     const bedsList: Array<{quantity: number, type: string}> = [];
@@ -652,6 +675,25 @@ export function Hotel() {
                   </Select>
                 </div>
 
+                {/* Building Filter */}
+                <div>
+                  <Label htmlFor="filter-building" className="text-sm font-medium text-slate-700 mb-2 block">
+                    <Building2 className="w-4 h-4 inline mr-1" />
+                    Edifício
+                  </Label>
+                  <Select value={filterBuilding} onValueChange={setFilterBuilding}>
+                    <SelectTrigger id="filter-building">
+                      <SelectValue placeholder="Todos os edifícios" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os edifícios</SelectItem>
+                      <SelectItem value="standard">Prédio Principal</SelectItem>
+                      <SelectItem value="anexo">Anexo</SelectItem>
+                      <SelectItem value="pousada">Pousada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Floor Filter */}
                 <div>
                   <Label htmlFor="filter-floor" className="text-sm font-medium text-slate-700 mb-2 block">
@@ -873,179 +915,133 @@ export function Hotel() {
         </div>
 
         {/* Rooms Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 rooms-grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 rooms-grid">
           {filteredRooms.map((room) => (
-            <Card key={room.id} className="p-0 hover:shadow-lg transition-shadow room-card overflow-hidden">
-              {/* Header com cor de status */}
-              <div className={`p-4 ${
-                room.status === 'available' ? 'bg-green-50 border-b-2 border-green-200' :
-                room.status === 'occupied' ? 'bg-red-50 border-b-2 border-red-200' :
-                room.status === 'cleaning' ? 'bg-yellow-50 border-b-2 border-yellow-200' :
-                'bg-gray-50 border-b-2 border-gray-200'
+            <Card key={room.id} className="p-0 hover:shadow-lg transition-all duration-200 room-card overflow-hidden border-2 hover:border-slate-300 flex flex-col">
+              {/* Header compacto */}
+              <div className={`p-2 ${
+                room.status === 'available' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200' :
+                room.status === 'occupied' ? 'bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-200' :
+                room.status === 'cleaning' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200' :
+                'bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200'
               }`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-slate-900 text-xl font-bold room-number">Quarto {room.number}</h3>
-                      {room.floor && (
-                        <Badge variant="outline" className="text-xs bg-white">
-                          <Building2 className="w-3 h-3 mr-1" />
-                          {room.floor}º andar
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="text-xs bg-white">
-                        {roomTypeLabels[room.type as keyof typeof roomTypeLabels] || room.type || 'Padrão'}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-slate-900 text-lg font-bold room-number truncate">
+                      {room.custom_name || `Quarto ${room.number}`}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <Badge variant="outline" className="text-xs bg-white h-5 px-1.5 py-0">
+                        <Building2 className="w-3 h-3 mr-0.5" />
+                        {room.floor}º
                       </Badge>
-                      {/* Capacidade sempre visível */}
-                      <div className="flex items-center gap-1 text-xs text-slate-600 bg-white px-2 py-1 rounded-md border border-slate-200">
-                        <Users className="w-3 h-3" />
-                        <span>{room.capacity || 2} {(room.capacity || 2) === 1 ? 'pessoa' : 'pessoas'}</span>
-                      </div>
+                      <Badge variant="outline" className="text-xs bg-white h-5 px-1.5 py-0">
+                        {roomTypeLabels[room.type as keyof typeof roomTypeLabels] || room.type}
+                      </Badge>
                     </div>
-                    {/* Lista de camas detalhada */}
-                    {room.beds && room.beds > 0 && (
-                      <div className="mt-2 bg-slate-50 rounded-md p-2 border border-slate-200">
-                        <div className="flex items-center gap-1 mb-1">
-                          <Bed className="w-3 h-3 text-slate-600" />
-                          <span className="text-xs font-medium text-slate-700">Camas:</span>
-                        </div>
-                        <ul className="space-y-0.5 ml-4">
-                          {getBedsDetailList(room).map((bed, idx) => (
-                            <li key={idx} className="text-xs text-slate-600 flex items-center gap-1">
-                              <span className="text-slate-400">•</span>
-                              <span>{bed.quantity} {bed.quantity === 1 ? 'cama' : 'camas'} de {bed.type}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-center gap-1">
+                    <Badge className={`${statusColors[room.status as keyof typeof statusColors] || ''} border text-xs h-5 px-2`}>
+                      {statusLabels[room.status as keyof typeof statusLabels] || room.status}
+                    </Badge>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleEditRoom(room)}
-                      className="h-8 w-8 p-0 no-print"
+                      className="h-6 w-6 p-0 no-print hover:bg-white/80"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3.5 w-3.5" />
                     </Button>
-                    <Badge className={`${statusColors[room.status as keyof typeof statusColors] || ''} border`}>
-                      {statusLabels[room.status as keyof typeof statusLabels] || room.status}
-                    </Badge>
                   </div>
                 </div>
               </div>
 
-              {/* Body do card */}
-              <div className="p-4">
-                {/* Diária e tamanho */}
-                {(room.daily_rate || room.room_size) && (
-                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100">
-                    {room.daily_rate && (
-                      <div className="flex items-center gap-1 text-sm">
-                        <DollarSign className="w-4 h-4 text-green-600" />
-                        <span className="font-semibold text-green-600">R$ {room.daily_rate.toFixed(2)}</span>
-                        <span className="text-xs text-slate-500">/noite</span>
+              {/* Body compacto */}
+              <div className="px-2.5 pb-3 space-y-2 flex-1">
+                {/* Capacidade e Camas */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-sm text-slate-700">
+                    <Users className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="font-medium">{room.capacity || 2}</span>
+                    <span className="text-xs text-slate-500">{(room.capacity || 2) === 1 ? 'pessoa' : 'pessoas'}</span>
+                  </div>
+                  {room.daily_rate && (
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="w-3.5 h-3.5 text-green-600" />
+                      <span className="font-bold text-green-600 text-sm">R$ {room.daily_rate.toFixed(2)}</span>
+                      <span className="text-xs text-slate-400">/noite</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Lista de camas */}
+                {room.beds && room.beds > 0 && (
+                  <div className="bg-slate-50 rounded-md p-2 border border-slate-200">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Bed className="w-3 h-3 text-slate-600" />
+                      <span className="text-xs font-medium text-slate-700">Camas:</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {getBedsDetailList(room).map((bed, idx) => (
+                        <div key={idx} className="text-xs text-slate-600 flex items-center gap-1 ml-4">
+                          <span className="text-slate-400">•</span>
+                          <span>{bed.quantity}x {bed.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Amenidades compactas */}
+                {(room.has_tv || room.has_ac || room.has_wifi || room.has_minibar || room.has_balcony) && (
+                  <div className="flex flex-wrap gap-1">
+                    {room.has_tv && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
+                        <Tv className="w-3 h-3" />
+                        <span>TV</span>
                       </div>
                     )}
-                    {room.room_size && (
-                      <div className="flex items-center gap-1 text-sm text-slate-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{room.room_size}m²</span>
+                    {room.has_ac && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-cyan-50 text-cyan-700 rounded text-xs">
+                        <Wind className="w-3 h-3" />
+                        <span>AC</span>
+                      </div>
+                    )}
+                    {room.has_wifi && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs">
+                        <Wifi className="w-3 h-3" />
+                        <span>Wi-Fi</span>
+                      </div>
+                    )}
+                    {room.has_minibar && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">
+                        <Wine className="w-3 h-3" />
+                        <span>Frigobar</span>
+                      </div>
+                    )}
+                    {room.has_balcony && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-xs">
+                        <Home className="w-3 h-3" />
+                        <span>Varanda</span>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Amenidades - sempre visíveis com ícones */}
-                {(room.has_tv || room.has_ac || room.has_wifi || room.has_minibar || room.has_balcony || 
-                  room.has_bathtub || room.has_safe || room.has_phone || room.view_type) && (
-                  <div className="mb-3">
-                    <p className="text-xs font-medium text-slate-700 mb-2">Amenidades</p>
-                    <div className="flex flex-wrap gap-2">
-                      {room.has_tv && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs">
-                          <Tv className="w-3 h-3" />
-                          <span>TV</span>
-                        </div>
-                      )}
-                      {room.has_ac && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-cyan-50 text-cyan-700 rounded-md text-xs">
-                          <Wind className="w-3 h-3" />
-                          <span>AC</span>
-                        </div>
-                      )}
-                      {room.has_wifi && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-xs">
-                          <Wifi className="w-3 h-3" />
-                          <span>Wi-Fi</span>
-                        </div>
-                      )}
-                      {room.has_minibar && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-md text-xs">
-                          <Wine className="w-3 h-3" />
-                          <span>Frigobar</span>
-                        </div>
-                      )}
-                      {room.has_balcony && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-md text-xs">
-                          <Home className="w-3 h-3" />
-                          <span>Varanda</span>
-                        </div>
-                      )}
-                      {room.has_bathtub && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs">
-                          <Bath className="w-3 h-3" />
-                          <span>Banheira</span>
-                        </div>
-                      )}
-                      {room.has_safe && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-md text-xs">
-                          <Lock className="w-3 h-3" />
-                          <span>Cofre</span>
-                        </div>
-                      )}
-                      {room.has_phone && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-md text-xs">
-                          <Phone className="w-3 h-3" />
-                          <span>Telefone</span>
-                        </div>
-                      )}
-                      {room.view_type && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-sky-50 text-sky-700 rounded-md text-xs">
-                          <Eye className="w-3 h-3" />
-                          <span>Vista {room.view_type}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Características especiais */}
-                {(room.is_accessible || room.is_smoking_allowed || room.is_pet_friendly) && (
-                  <div className="mb-3">
-                    <div className="flex flex-wrap gap-2">
-                      {room.is_accessible && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs border border-blue-200">
-                          <Accessibility className="w-3 h-3" />
-                          <span>Acessível</span>
-                        </div>
-                      )}
-                      {room.is_smoking_allowed && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 rounded-md text-xs border border-orange-200">
-                          <Cigarette className="w-3 h-3" />
-                          <span>Fumantes</span>
-                        </div>
-                      )}
-                      {room.is_pet_friendly && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-pink-50 text-pink-700 rounded-md text-xs border border-pink-200">
-                          <PawPrint className="w-3 h-3" />
-                          <span>Pets OK</span>
-                        </div>
-                      )}
-                    </div>
+                {/* Características especiais em linha */}
+                {(room.is_accessible || room.is_pet_friendly) && (
+                  <div className="flex flex-wrap gap-1">
+                    {room.is_accessible && (
+                      <Badge variant="outline" className="text-xs h-5 px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-200">
+                        <Accessibility className="w-3 h-3 mr-0.5" />
+                        Acessível
+                      </Badge>
+                    )}
+                    {room.is_pet_friendly && (
+                      <Badge variant="outline" className="text-xs h-5 px-1.5 py-0 bg-pink-50 text-pink-700 border-pink-200">
+                        <PawPrint className="w-3 h-3 mr-0.5" />
+                        Pets
+                      </Badge>
+                    )}
                   </div>
                 )}
 
@@ -1066,8 +1062,8 @@ export function Hotel() {
                   </div>
                 )}
 
-                {/* Ocupação para a data selecionada */}
-                {selectedDate && roomOccupancy[room.id] !== undefined && (
+                {/* Ocupação para a data selecionada (apenas se diferente de hoje) */}
+                {selectedDate && selectedDate !== new Date().toISOString().split('T')[0] && roomOccupancy[room.id] !== undefined && (
                   <div className={`mb-3 p-2 rounded-md border ${
                     roomOccupancy[room.id] === 100 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
                   }`}>
@@ -1112,64 +1108,57 @@ export function Hotel() {
                 )}
 
                 {room.observations && (
-                  <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded mb-3 border border-slate-200">
+                  <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
                     {room.observations}
                   </p>
                 )}
+              </div>
 
-                {/* Ações rápidas */}
-                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 no-print">
-                  {room.status === 'occupied' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleChangeStatus(room.id, 'cleaning')}
-                    >
-                      <Clock className="w-3 h-3 mr-1" />
-                      Check-out
-                    </Button>
-                  )}
-                  {room.status === 'cleaning' && (
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => handleChangeStatus(room.id, 'available')}
-                    >
-                      <Bed className="w-3 h-3 mr-1" />
-                      Liberar
-                    </Button>
-                  )}
-                  {room.status === 'available' && (
-                    <>
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
-                        onClick={() => handleChangeStatus(room.id, 'occupied')}
-                      >
-                        <UserPlus className="w-3 h-3 mr-1" />
-                        Check-in
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleChangeStatus(room.id, 'maintenance')}
-                      >
-                        <Wrench className="w-3 h-3" />
-                      </Button>
-                    </>
-                  )}
-                  {room.status === 'maintenance' && (
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => handleChangeStatus(room.id, 'available')}
-                    >
-                      <Bed className="w-3 h-3 mr-1" />
-                      Disponibilizar
-                    </Button>
-                  )}
-                </div>
+              {/* Ações do quarto - Sempre na parte inferior */}
+              <div className="flex gap-2 no-print px-3 pb-3">
+                {room.status === 'occupied' && (
+                  <Button
+                    size="sm"
+                    onClick={() => handleChangeStatus(room.id, 'cleaning')}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Check-out
+                  </Button>
+                )}
+                {room.status === 'cleaning' && (
+                  <Button
+                    size="sm"
+                    onClick={() => handleChangeStatus(room.id, 'available')}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Liberar
+                  </Button>
+                )}
+                {room.status === 'available' && (
+                  <Button
+                    size="sm"
+                    onClick={() => handleChangeStatus(room.id, 'occupied')}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    Check-in
+                  </Button>
+                )}
+                {room.status === 'maintenance' && (
+                  <Button
+                    size="sm"
+                    onClick={() => handleChangeStatus(room.id, 'available')}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    Disponibilizar
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleChangeStatus(room.id, 'maintenance')}
+                >
+                  <Wrench className="w-4 h-4" />
+                </Button>
               </div>
             </Card>
           ))}

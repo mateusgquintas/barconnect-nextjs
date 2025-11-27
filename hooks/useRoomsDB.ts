@@ -26,6 +26,7 @@ export interface Room {
   // Novos campos de amenidades (migration 006)
   custom_name?: string;      // Nome personalizado/apelido
   beds?: number;             // Número de camas
+  bed_configuration?: any;   // Configuração detalhada de camas (JSONB)
   daily_rate?: number;       // Taxa diária (R$)
   room_size?: number;        // Área em m²
   
@@ -73,6 +74,25 @@ export function useRoomsDB() {
           description: r.description ?? undefined,
           capacity: r.capacity ?? undefined,
           floor: r.floor ?? undefined,
+          bed_configuration: r.bed_configuration ?? undefined,
+          beds: r.beds ?? undefined,
+          custom_name: r.custom_name ?? undefined,
+          daily_rate: r.daily_rate ?? undefined,
+          room_size: r.room_size ?? undefined,
+          has_minibar: r.has_minibar ?? false,
+          has_ac: r.has_ac ?? false,
+          has_tv: r.has_tv ?? false,
+          has_wifi: r.has_wifi ?? false,
+          has_balcony: r.has_balcony ?? false,
+          has_bathtub: r.has_bathtub ?? false,
+          has_hairdryer: r.has_hairdryer ?? false,
+          has_safe: r.has_safe ?? false,
+          has_phone: r.has_phone ?? false,
+          has_bathrobe: r.has_bathrobe ?? false,
+          view_type: r.view_type ?? undefined,
+          is_accessible: r.is_accessible ?? false,
+          is_smoking_allowed: r.is_smoking_allowed ?? false,
+          is_pet_friendly: r.is_pet_friendly ?? false,
         })) as Room[];
         setRooms(mapped);
         setError(null);
