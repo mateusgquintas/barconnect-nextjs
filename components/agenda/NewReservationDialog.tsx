@@ -47,6 +47,7 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
   useEffect(() => {
     if (open && date) {
       setStep(1);
+      setReservationType('pilgrimage'); // Padrão: Romaria/Grupo
       setCheckInDate(date.toISOString().split('T')[0]);
       const nextDay = new Date(date);
       nextDay.setDate(nextDay.getDate() + 1);
@@ -413,15 +414,23 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
                   )}
 
                   {selectedRooms.length > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      {selectedRooms.length} quarto(s) selecionado(s)
-                      {reservationType === 'pilgrimage' && selectedRooms.length > 1 && 
-                        `: ${selectedRooms.map(id => {
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedRooms.length} quarto(s) selecionado(s)
+                        {reservationType === 'pilgrimage' && selectedRooms.length > 1 && 
+                          `: ${selectedRooms.map(id => {
+                            const room = availableRooms.find(r => r.id === id);
+                            return room ? room.number : id;
+                          }).join(', ')}`
+                        }
+                      </p>
+                      <p className="text-sm font-semibold text-blue-600">
+                        Total: {selectedRooms.reduce((sum, id) => {
                           const room = availableRooms.find(r => r.id === id);
-                          return room ? room.number : id;
-                        }).join(', ')}`
-                      }
-                    </p>
+                          return sum + (room?.capacity || 0);
+                        }, 0)} pessoas
+                      </p>
+                    </div>
                   )}
                 </>
               )}
@@ -588,6 +597,7 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
               <Button 
                 onClick={handleSubmit} 
                 disabled={submitting}
+                className="min-w-[160px]"
               >
                 {submitting ? 'Criando...' : 'Confirmar Reserva'}
               </Button>
