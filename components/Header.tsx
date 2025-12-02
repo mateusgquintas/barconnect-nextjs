@@ -26,9 +26,8 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
   
   const allNavItems = [
     { id: 'pdv' as PageView, label: 'PDV', icon: ShoppingBag, permission: 'pdv' as const },
-    { id: 'dashboard' as PageView, label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' as const },
-    { id: 'hotel' as PageView, label: 'Hotel', icon: HotelIcon, permission: 'hotel' as const },
     { id: 'inventory' as PageView, label: 'Estoque', icon: Package, permission: 'estoque' as const },
+    { id: 'hotel' as PageView, label: 'Hotel', icon: HotelIcon, permission: 'hotel' as const },
     { id: 'transactions' as PageView, label: 'Financeiro', icon: TrendingUpDown, permission: 'financeiro' as const },
   ];
 
@@ -51,14 +50,14 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
           {navItems.map((item) => {
             const Icon = item.icon;
             
-            // Dashboard com dropdown
-            if (item.id === 'dashboard') {
+            // Financeiro com dropdown (Dashboards + Registros)
+            if (item.id === 'transactions') {
               return (
                 <DropdownMenu key={item.id}>
                   <DropdownMenuTrigger asChild>
                     <button
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                        currentView === item.id
+                        currentView === item.id || currentView === 'dashboard'
                           ? 'bg-white/20 text-white'
                           : 'text-slate-300 hover:bg-white/10 hover:text-white'
                       }`}
@@ -78,12 +77,12 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
                         onDashboardViewChange('bar');
                       }}
                       className={`cursor-pointer ${
-                        dashboardView === 'bar'
+                        currentView === 'dashboard' && dashboardView === 'bar'
                           ? 'bg-white/10 text-white'
                           : 'text-slate-300 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      Bar
+                      Dashboard Bar
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
@@ -91,18 +90,29 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
                         onDashboardViewChange('controladoria');
                       }}
                       className={`cursor-pointer ${
-                        dashboardView === 'controladoria'
+                        currentView === 'dashboard' && dashboardView === 'controladoria'
                           ? 'bg-white/10 text-white'
                           : 'text-slate-300 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      Controladoria
+                      Dashboard Controladoria
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onViewChange('transactions')}
+                      className={`cursor-pointer ${
+                        currentView === 'transactions'
+                          ? 'bg-white/10 text-white'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      Registros
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               );
             }
-            // Hotel com dropdown customizado
+            
+            // Hotel com dropdown
             if (item.id === 'hotel') {
               return (
                 <DropdownMenu key={item.id}>
