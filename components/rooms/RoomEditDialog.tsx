@@ -113,22 +113,17 @@ export function RoomEditDialog({ open, onOpenChange, room, onSave, mode }: RoomE
 
   useEffect(() => {
     if (room && mode === 'edit') {
-      console.log('🔍 Carregando quarto para edição:', room);
-      console.log('🛏️ bed_configuration:', room.bed_configuration);
-      
       // Inicializar configuração de camas do banco (se existir) ou estimar
       let initialBeds: BedConfig[] = [];
       
       // Prioridade 1: Usar configuração salva no banco
       if (room.bed_configuration && Array.isArray(room.bed_configuration) && room.bed_configuration.length > 0) {
-        console.log('✅ Usando configuração salva no banco');
         initialBeds = room.bed_configuration.map((bed: any) => ({
           id: bed.id || String(Date.now() + Math.random()),
           type: bed.type || 'solteiro',
           quantity: bed.quantity || 1
         }));
       } else {
-        console.log('⚠️ Estimando camas baseado em beds:', room.beds, 'capacity:', room.capacity);
         // Prioridade 2: Estimar baseado em beds e capacity
         const totalBeds = room.beds || 1;
         
