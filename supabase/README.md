@@ -1,19 +1,25 @@
-# 📊 Supabase - Estrutura do Banco de Dados BarConnect
+# 📊 Supabase - Database Central
 
-> AVISO IMPORTANTE: Este documento descreve a análise inicial. A fonte única de verdade agora é o arquivo `supabase/schema-unificado.sql` com guia `supabase/COMO-APLICAR.md` e políticas `supabase/rls-policies*.sql`. Para autenticação e RLS de longo prazo, consulte `supabase/AUTH-ARQUITETURA.md`.
-
-> **Data da Análise:** 31 de Outubro de 2025  
-> **Objetivo:** Organizar e consolidar o schema do banco de dados de forma eficiente
+> **FONTE DA VERDADE:** Os arquivos em `migrations/` são a única fonte verdadeira do schema.
+> Este documento fornece visão geral e referências úteis.
 
 ---
 
-## 🎯 **SITUAÇÃO ATUAL**
+## 📁 Estrutura
 
-Após análise detalhada do código e dos schemas existentes, identificamos:
+### ✅ Essencial (Usar sempre)
+- **`migrations/`** - Todas as migrations do banco (FONTE DA VERDADE)
+- **`queries-uteis.sql`** - Queries úteis para desenvolvimento
+- **`relatorios.sql`** - Queries de relatórios e análises
+- **`rls-policies.secure.sql`** - Políticas de segurança RLS
+- **`validacao-pos-unificacao.sql`** - Validações de integridade
+- **`verificar-tabelas.sql`** - Scripts de verificação
 
-### ✅ **O que ESTÁ sendo usado ativamente:**
+---
 
-#### **Sistema PDV (Comandas & Vendas) - 100% Funcional**
+## 🗄️ Schema Atual
+
+### Sistema PDV (100% Funcional)
 ```
 ✅ users                  → Autenticação (admin/operador)
 ✅ products               → Catálogo de produtos
