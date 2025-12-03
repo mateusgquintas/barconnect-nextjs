@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AgendaPage from '@/app/hotel/agenda/page';
 import * as agendaService from '@/lib/agendaService';
@@ -10,7 +10,7 @@ jest.mock('@/lib/agendaService', () => ({
     { id: 'room-1', name: 'Quarto 101', capacity: 2, status: 'active' }
   ]),
   listBookingsInRange: jest.fn().mockResolvedValue([]),
-  createBooking: jest.fn().mockImplementation(async (payload) => {
+  createBooking: jest.fn().mockImplementation(async () => {
     // Check for conflict by inspecting previously created bookings
     const mockCreateBooking = agendaService.createBooking as jest.Mock;
     const calls = mockCreateBooking.mock.calls;
@@ -23,7 +23,6 @@ jest.mock('@/lib/agendaService', () => ({
 }));
 
 // Utils
-const qsa = (root: ParentNode, sel: string) => Array.from(root.querySelectorAll(sel)) as HTMLElement[];
 
 describe('AgendaPage flow (with service)', () => {
   beforeEach(() => {
@@ -31,7 +30,6 @@ describe('AgendaPage flow (with service)', () => {
   });
 
   it('cria reserva e bloqueia duplicata no mesmo período (service level)', async () => {
-    const user = userEvent.setup();
     render(<AgendaPage />);
 
     // Wait for rooms to load

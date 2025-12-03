@@ -55,16 +55,16 @@ export function ProductInfoDialog({ open, onOpenChange, product }: ProductInfoDi
     // Lista de semanas ordenadas (com vendas)
     const weeksWithSales = Object.keys(weekMap).sort();
     // Se houver vendas, pega as 8 semanas mais recentes com vendas
-    let weeks: string[] = [];
+    const weeks: string[] = [];
     if (weeksWithSales.length > 0) {
       const last = weeksWithSales[weeksWithSales.length - 1];
-      let cursor = startOfWeek(parseISO(last), { weekStartsOn: 1 });
+      const cursor = startOfWeek(parseISO(last), { weekStartsOn: 1 });
       for (let i = 0; i < 8; i++) {
         weeks.push(format(addWeeks(cursor, -7 + i), 'yyyy-MM-dd'));
       }
     } else {
       // Se não houver vendas, mostra as últimas 8 semanas a partir de hoje
-      let cursor = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const cursor = startOfWeek(new Date(), { weekStartsOn: 1 });
       for (let i = 0; i < 8; i++) {
         weeks.push(format(addWeeks(cursor, -7 + i), 'yyyy-MM-dd'));
       }

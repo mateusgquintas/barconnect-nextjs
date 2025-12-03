@@ -4,9 +4,15 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: '.env.local' });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ifewhvbdgxhyuiwpmwhx.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmZXdodmJkZ3hoeXVpd3Btd2h4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE2MDAzMzEsImV4cCI6MjA0NzE3NjMzMX0.r8yqg15u9e-qPr2Y7wjS5MvDWRnz9ztHXgHmLf0aPlE';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Variáveis SUPABASE não encontradas no .env.local');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
