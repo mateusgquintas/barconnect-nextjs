@@ -124,27 +124,14 @@ export function RoomEditDialog({ open, onOpenChange, room, onSave, mode }: RoomE
           quantity: bed.quantity || 1
         }));
       } else {
-        // Prioridade 2: Estimar baseado em beds e capacity
+        // Prioridade 2: Criar configuração básica se não existir
+        // Usar apenas beds como quantidade de solteiros (padrão mais seguro)
         const totalBeds = room.beds || 1;
-        
-        if (totalBeds === 1) {
-          initialBeds.push({
-            id: '1',
-            type: (room.capacity || 0) >= 2 ? 'casal' : 'solteiro',
-            quantity: 1
-          });
-        } else {
-          // Múltiplas camas - dividir entre casal e solteiro
-          const casalBeds = Math.floor(totalBeds / 2);
-          const solteiroBeds = totalBeds % 2;
-          
-          if (casalBeds > 0) {
-            initialBeds.push({ id: '1', type: 'casal', quantity: casalBeds });
-          }
-          if (solteiroBeds > 0) {
-            initialBeds.push({ id: '2', type: 'solteiro', quantity: solteiroBeds });
-          }
-        }
+        initialBeds.push({
+          id: '1',
+          type: 'solteiro',
+          quantity: totalBeds
+        });
       }
       
       setBedConfigs(initialBeds.length > 0 ? initialBeds : [{ id: '1', type: 'solteiro', quantity: 1 }]);
