@@ -171,7 +171,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de sucesso ao adicionar transação', async () => {
-      const _user = userEvent.setup();
+      const user = userEvent.setup();
       const mockOnClose = jest.fn();
       const addTransactionMock = jest.fn().mockResolvedValue({ 
         success: true, 
@@ -277,7 +277,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de erro para campos obrigatórios', async () => {
-      const _user = userEvent.setup();
+      const user = userEvent.setup();
       const mockOnClose = jest.fn();
       const addTransactionMock = jest.fn();
 
@@ -317,7 +317,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de erro para login inválido', async () => {
-      const _user = userEvent.setup();
+      const user = userEvent.setup();
       
       // Mock não vai ser chamado com credenciais inválidas
       const mockOnLogin = jest.fn();

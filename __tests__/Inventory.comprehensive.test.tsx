@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { Inventory } from '@/components/Inventory';
@@ -18,12 +18,12 @@ jest.mock('@/hooks/useProductsDB', () => ({
 
 // Mock de dialogs para evitar erros relacionados
 jest.mock('@/components/ProductFormDialog', () => ({
-  ProductFormDialog: ({ open, onOpenChange, product, onSave, title }: any) => 
+  ProductFormDialog: ({ open, title }: any) => 
     open ? <div data-testid="product-form-dialog">{title}</div> : null
 }));
 
 jest.mock('@/components/ProductInfoDialog', () => ({
-  ProductInfoDialog: ({ open, onOpenChange, product }: any) => 
+  ProductInfoDialog: ({ open }: any) => 
     open ? <div data-testid="product-info-dialog">Info Dialog</div> : null
 }));
 jest.mock('@/utils/format', () => ({

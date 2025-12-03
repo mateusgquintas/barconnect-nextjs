@@ -7,7 +7,7 @@ beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = () => {};
   }
 });
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 // Mock global para hasPointerCapture (Radix Select + JSDOM)
 beforeAll(() => {
   if (!window.HTMLElement.prototype.hasPointerCapture) {
