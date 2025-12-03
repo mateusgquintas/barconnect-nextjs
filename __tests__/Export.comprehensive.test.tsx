@@ -17,8 +17,7 @@ import { exportDashboardToExcel } from '@/utils/exportToExcel';
 import { 
   render, 
   screen, 
-  TestDataFactory, 
-  TestScenarios 
+  TestDataFactory
 } from './utils/testUtils';
 
 // Mock do ExcelJS

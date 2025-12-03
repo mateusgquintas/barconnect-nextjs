@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import AgendaPage from '@/app/hotel/agenda/page';
 import * as agendaService from '@/lib/agendaService';
 

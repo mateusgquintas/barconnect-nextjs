@@ -13,14 +13,11 @@ import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { Dashboard } from '@/components/Dashboard';
-import { NewComandaDialog } from '@/components/NewComandaDialog';
 import { NewTransactionDialog } from '@/components/NewTransactionDialog';
-import { AddItemDialog } from '@/components/AddItemDialog';
 import { LoginScreen } from '@/components/LoginScreen';
 import { 
   TestDataFactory, 
-  MockHookFactory,
-  TestScenarios 
+  MockHookFactory
 } from './utils/testUtils';
 
 // Mock para Sonner toast library: criar mock dentro da factory
@@ -119,8 +116,6 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     TestDataFactory.createSaleRecord({ comandaNumber: 103, total: 35 }),
   ];
   
-  const mockOnLogin = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
     ToastTester.reset();
@@ -167,8 +162,6 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de sucesso ao editar produto', async () => {
-      const user = userEvent.setup();
-      
       // Simular produto editado sem UI - apenas testar o toast
       act(() => {
         mockToast.success('Produto atualizado com sucesso');
@@ -178,7 +171,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de sucesso ao adicionar transação', async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       const mockOnClose = jest.fn();
       const addTransactionMock = jest.fn().mockResolvedValue({ 
         success: true, 
@@ -247,8 +240,6 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de sucesso ao fechar comanda', async () => {
-      const user = userEvent.setup();
-      
       // Simular comanda fechada sem UI - apenas testar o toast
       act(() => {
         mockToast.success('Comanda fechada com sucesso');
@@ -260,14 +251,13 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
 
   describe('2. Toasts de Erro', () => {
     it.skip('deve mostrar toast de erro ao falhar adicionar produto', async () => {
-      const user = userEvent.setup();
       const addProductMock = jest.fn().mockRejectedValue(new Error('Erro ao adicionar produto'));
       mockHooks.useProductsDB.addProduct = addProductMock;
 
       render(<Dashboard />);
 
       const addButton = screen.getByRole('button', { name: /adicionar produto/i });
-      await user.click(addButton);
+      await userEvent.setup().click(addButton);
 
       await act(async () => {
         try {
@@ -277,7 +267,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
             stock: 50,
             category: ''
           });
-        } catch (error) {
+        } catch {
           // Simular tratamento de erro
           mockToast.error('Erro ao adicionar produto');
         }
@@ -287,7 +277,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de erro para campos obrigatórios', async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       const mockOnClose = jest.fn();
       const addTransactionMock = jest.fn();
 
@@ -313,8 +303,6 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de erro para falha de conexão', async () => {
-      const user = userEvent.setup();
-      
       // Simular erro de conexão
       mockHooks.useProductsDB.error = 'Erro de conexão com o servidor';
       mockHooks.useProductsDB.loading = false;
@@ -329,7 +317,7 @@ describe('Feedback e Notificações - Testes Abrangentes', () => {
     });
 
     it('deve mostrar toast de erro para login inválido', async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       
       // Mock não vai ser chamado com credenciais inválidas
       const mockOnLogin = jest.fn();
