@@ -335,18 +335,24 @@ export function Hotel() {
       }
 
       try {
-        const start = new Date(selectedDate);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(selectedDate);
-        end.setHours(23, 59, 59, 999);
+        // Usar strings de data no formato ISO (YYYY-MM-DD) para consistência
+        // Isso garante que o agendaService.ts interprete corretamente
+        const startDate = new Date(selectedDate);
+        startDate.setHours(0, 0, 0, 0);
+        
+        // End date é o início do próximo dia (não 23:59:59)
+        // Isso mantém a semântica [start, end) usada em todo o sistema
+        const endDate = new Date(selectedDate);
+        endDate.setDate(endDate.getDate() + 1);
+        endDate.setHours(0, 0, 0, 0);
 
         // Get available rooms for the selected day
-        const availableRooms = await getAvailableRooms(start, end);
+        const availableRooms = await getAvailableRooms(startDate, endDate);
         const availableIds = new Set(availableRooms.map(r => r.id));
         setAvailableRoomIds(availableIds);
 
         // Get all bookings in the day to check occupancy
-        const bookings = await listBookingsInRange({ start, end });
+        const bookings = await listBookingsInRange({ start: startDate, end: endDate });
         
         // Calculate occupancy for each room (occupied or not on this day)
         const occupancyMap: Record<string, number> = {};
@@ -360,12 +366,16 @@ export function Hotel() {
           }
 
           // Check if room is occupied on this specific day
-          const dayStr = selectedDate;
+          const day = new Date(selectedDate);
+          day.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(day);
+          dayEnd.setDate(dayEnd.getDate() + 1);
+          
           const isOccupied = roomBookings.some(booking => {
             const bookingStart = new Date(booking.start);
             const bookingEnd = new Date(booking.end);
-            const day = new Date(dayStr);
-            return day >= bookingStart && day < bookingEnd;
+            // Overlap: booking.start < dayEnd && booking.end > day
+            return bookingStart < dayEnd && bookingEnd > day;
           });
           
           occupancyMap[room.id] = isOccupied ? 100 : 0;

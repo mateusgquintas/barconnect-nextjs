@@ -69,6 +69,7 @@ export async function listRooms(): Promise<Room[]> {
     
     // Informações básicas (migration 006)
     beds: r.beds,
+    bed_configuration: r.bed_configuration, // JSONB com configuração detalhada de camas
     customName: r.custom_name,
     dailyRate: r.daily_rate,
     roomSize: r.room_size,
@@ -94,6 +95,12 @@ export async function listRooms(): Promise<Room[]> {
     isAccessible: r.is_accessible ?? false,
     isSmokingAllowed: r.is_smoking_allowed ?? false,
     isPetFriendly: r.is_pet_friendly ?? false,
+    
+    // Custos e manutenção (migration 011)
+    fixedCostMonthly: r.fixed_cost_monthly,
+    variableCostDaily: r.variable_cost_daily,
+    lastMaintenanceDate: r.last_maintenance_date,
+    maintenanceNotes: r.maintenance_notes,
   }));
 }
 

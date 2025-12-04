@@ -10,6 +10,7 @@ export interface Room {
   
   // Informações básicas
   beds?: number;
+  bed_configuration?: any;   // JSONB array with {id, type, quantity}
   customName?: string;
   dailyRate?: number;        // Taxa diária (R$)
   roomSize?: number;         // Área em m²
@@ -38,6 +39,12 @@ export interface Room {
   isAccessible?: boolean;    // Acessível para PCD
   isSmokingAllowed?: boolean; // Permite fumar
   isPetFriendly?: boolean;   // Pet friendly
+  
+  // Custos e manutenção (migration 011)
+  fixedCostMonthly?: number;   // Custo fixo mensal (R$)
+  variableCostDaily?: number;  // Custo variável por dia (R$)
+  lastMaintenanceDate?: string; // Data última manutenção
+  maintenanceNotes?: string;    // Observações de manutenção
 }
 
 // Interface simplificada para uso no Agenda (sem occurrences)

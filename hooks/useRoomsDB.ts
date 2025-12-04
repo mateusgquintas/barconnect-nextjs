@@ -51,6 +51,12 @@ export interface Room {
   is_accessible?: boolean;   // Acessível para PCD
   is_smoking_allowed?: boolean; // Permite fumar
   is_pet_friendly?: boolean; // Pet friendly
+  
+  // Custos e manutenção (migration 011)
+  fixed_cost_monthly?: number;   // Custo fixo mensal (R$)
+  variable_cost_daily?: number;  // Custo variável por dia (R$)
+  last_maintenance_date?: string; // Data última manutenção
+  maintenance_notes?: string;     // Observações de manutenção
 }
 
 export function useRoomsDB() {
@@ -93,6 +99,11 @@ export function useRoomsDB() {
           is_accessible: r.is_accessible ?? false,
           is_smoking_allowed: r.is_smoking_allowed ?? false,
           is_pet_friendly: r.is_pet_friendly ?? false,
+          // Custos e manutenção (migration 011)
+          fixed_cost_monthly: r.fixedCostMonthly ?? undefined,
+          variable_cost_daily: r.variableCostDaily ?? undefined,
+          last_maintenance_date: r.lastMaintenanceDate ?? undefined,
+          maintenance_notes: r.maintenanceNotes ?? undefined,
         })) as Room[];
         setRooms(mapped);
         setError(null);

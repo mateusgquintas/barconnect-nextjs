@@ -72,6 +72,16 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
                     className="bg-slate-900 border-slate-700 text-white min-w-[200px]"
                   >
                     <DropdownMenuItem
+                      onClick={() => onViewChange('transactions')}
+                      className={`cursor-pointer ${
+                        currentView === 'transactions'
+                          ? 'bg-white/10 text-white'
+                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      Registros
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => {
                         onViewChange('dashboard');
                         onDashboardViewChange('bar');
@@ -96,16 +106,6 @@ export function Header({ onNewComanda, onDirectSale, onQuickComanda, currentView
                       }`}
                     >
                       Dashboard Controladoria
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onViewChange('transactions')}
-                      className={`cursor-pointer ${
-                        currentView === 'transactions'
-                          ? 'bg-white/10 text-white'
-                          : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      Registros
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
