@@ -22,16 +22,13 @@
 
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Dashboard } from '@/components/Dashboard';
-import { HomeScreen } from '@/components/HomeScreen';
 import { Inventory } from '@/components/Inventory';
 import { Transactions } from '@/components/Transactions';
 import { 
   TestDataFactory, 
-  MockHookFactory,
-  TestScenarios,
-  silenceConsole 
+  MockHookFactory
 } from './utils/testUtils';
 
 // Mock para hooks de dados (já definido globalmente no jest.setup.ts)
@@ -133,8 +130,8 @@ describe('Performance e Cache - Testes Abrangentes', () => {
   const mockTransactions = TestDataFactory.createTransactionSet(200);
   const mockSalesRecords = TestDataFactory.createSalesSet(150);
   
-  const mockOnOpenComanda = jest.fn();
-  const mockOnDirectOrder = jest.fn();
+  const _mockOnOpenComanda = jest.fn();
+  const _mockOnDirectOrder = jest.fn();
   const renderTracker = new RenderTracker();
 
   // Spies para silenciar console durante todos os testes
@@ -191,7 +188,7 @@ describe('Performance e Cache - Testes Abrangentes', () => {
     it.skip('deve alternar rapidamente entre abas sem travamentos', async () => {
       const user = userEvent.setup();
       
-      const { result: renderResult, duration: renderDuration } = PerformanceMeasurer.measureRender(() => 
+      const { duration: renderDuration } = PerformanceMeasurer.measureRender(() => 
         render(<Dashboard />)
       );
 
@@ -437,7 +434,7 @@ describe('Performance e Cache - Testes Abrangentes', () => {
       // Filtragem deve ser instantânea
       expect(duration).toBeLessThan(2500);
     });    it('deve scrollar listas grandes sem lag', async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       
       render(<Dashboard />);
 
@@ -469,12 +466,12 @@ describe('Performance e Cache - Testes Abrangentes', () => {
       expect(true).toBe(true); // Placeholder - em teste real verificaríamos listeners
     });
 
-    it.skip('deve cancelar requests pendentes ao trocar de aba', async () => {
-      const user = userEvent.setup();
+    it.skip('deve cancelar requests ao navegar rapidamente', async () => {
+      const _user = userEvent.setup();
       
       // Mock de request com cancelamento
       const abortController = new AbortController();
-      const mockFetch = jest.fn().mockImplementation(() => {
+      const _mockFetch = jest.fn().mockImplementation(() => {
         return new Promise((resolve) => {
           abortController.signal.addEventListener('abort', () => {
             resolve({ cancelled: true });
