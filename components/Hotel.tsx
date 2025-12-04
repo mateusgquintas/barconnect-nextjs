@@ -34,6 +34,7 @@ const roomTypeLabels = {
 
 const statusLabels = {
   available: 'Disponível',
+  reserved: 'Reservado',
   occupied: 'Ocupado',
   cleaning: 'Limpeza',
   maintenance: 'Manutenção',
@@ -41,6 +42,7 @@ const statusLabels = {
 
 const statusColors = {
   available: 'bg-green-100 text-green-700 border-green-200',
+  reserved: 'bg-blue-100 text-blue-700 border-blue-200',
   occupied: 'bg-red-100 text-red-700 border-red-200',
   cleaning: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   maintenance: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -91,6 +93,7 @@ export function Hotel() {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]); // Dia atual por padrão
   const [availableRoomIds, setAvailableRoomIds] = useState<Set<string>>(new Set());
   const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
+  const [reservedRoomIds, setReservedRoomIds] = useState<Set<string>>(new Set());
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   const [printWithFilters, setPrintWithFilters] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -100,7 +103,12 @@ export function Hotel() {
   const filteredRooms = rooms.filter(room => {
     const matchesSearch = room.number?.toString().includes(searchQuery) || 
                          room.guest_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || room.status === filterStatus;
+    
+    // Considerar quarto como "reservado" se está na lista de reservas
+    const isReserved = reservedRoomIds.has(room.id);
+    const effectiveStatus = isReserved && room.status === 'available' ? 'reserved' : room.status;
+    
+    const matchesStatus = filterStatus === 'all' || effectiveStatus === filterStatus;
     const matchesPilgrimage = filterPilgrimage === 'all' || room.pilgrimage_id === filterPilgrimage;
     const matchesType = filterType === 'all' || room.type === filterType;
     const matchesBuilding = filterBuilding === 'all' || room.type === filterBuilding;
@@ -243,7 +251,8 @@ export function Hotel() {
 
   const stats = {
     total: rooms.length,
-    available: rooms.filter(r => r.status === 'available').length,
+    available: rooms.filter(r => r.status === 'available' && !reservedRoomIds.has(r.id)).length,
+    reserved: reservedRoomIds.size,
     occupied: rooms.filter(r => r.status === 'occupied').length,
     cleaning: rooms.filter(r => r.status === 'cleaning').length,
     maintenance: rooms.filter(r => r.status === 'maintenance').length,
@@ -331,6 +340,7 @@ export function Hotel() {
       if (!selectedDate) {
         setAvailableRoomIds(new Set());
         setRoomOccupancy({});
+        setReservedRoomIds(new Set());
         return;
       }
 
@@ -356,6 +366,7 @@ export function Hotel() {
         
         // Calculate occupancy for each room (occupied or not on this day)
         const occupancyMap: Record<string, number> = {};
+        const reservedIds = new Set<string>();
         
         rooms.forEach(room => {
           const roomBookings = bookings.filter(b => b.room_id === room.id);
@@ -378,10 +389,15 @@ export function Hotel() {
             return bookingStart < dayEnd && bookingEnd > day;
           });
           
+          if (isOccupied) {
+            reservedIds.add(room.id);
+          }
+          
           occupancyMap[room.id] = isOccupied ? 100 : 0;
         });
         
         setRoomOccupancy(occupancyMap);
+        setReservedRoomIds(reservedIds);
       } catch (error) {
         console.error('Error calculating occupancy:', error);
       }
@@ -553,6 +569,15 @@ export function Hotel() {
               >
                 <Bed className="h-4 w-4 mr-2" />
                 Disponíveis ({stats.available})
+              </Button>
+              <Button
+                variant={filterStatus === 'reserved' ? 'default' : 'outline'}
+                onClick={() => setFilterStatus('reserved')}
+                size="sm"
+                className={filterStatus === 'reserved' ? 'bg-blue-600 hover:bg-blue-700 h-9 px-4 text-sm font-medium min-w-[140px]' : 'h-9 px-4 text-sm font-medium min-w-[140px]'}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Reservados ({stats.reserved})
               </Button>
               <Button
                 variant={filterStatus === 'occupied' ? 'default' : 'outline'}
@@ -926,13 +951,19 @@ export function Hotel() {
 
         {/* Rooms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 rooms-grid">
-          {filteredRooms.map((room) => (
+          {filteredRooms.map((room) => {
+            // Determinar status efetivo (considerar reserva)
+            const isReserved = reservedRoomIds.has(room.id);
+            const effectiveStatus = isReserved && room.status === 'available' ? 'reserved' : room.status;
+            
+            return (
             <Card key={room.id} className="p-0 hover:shadow-lg transition-all duration-200 room-card overflow-hidden border-2 hover:border-slate-300 flex flex-col">
               {/* Header compacto */}
               <div className={`p-2 ${
-                room.status === 'available' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200' :
-                room.status === 'occupied' ? 'bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-200' :
-                room.status === 'cleaning' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200' :
+                effectiveStatus === 'available' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200' :
+                effectiveStatus === 'reserved' ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200' :
+                effectiveStatus === 'occupied' ? 'bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-200' :
+                effectiveStatus === 'cleaning' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200' :
                 'bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200'
               }`}>
                 <div className="flex items-center justify-between gap-2">
@@ -951,8 +982,8 @@ export function Hotel() {
                     </div>
                   </div>
                   <div className="flex flex-col items-center gap-1">
-                    <Badge className={`${statusColors[room.status as keyof typeof statusColors] || ''} border text-xs h-5 px-2`}>
-                      {statusLabels[room.status as keyof typeof statusLabels] || room.status}
+                    <Badge className={`${statusColors[effectiveStatus as keyof typeof statusColors] || ''} border text-xs h-5 px-2`}>
+                      {statusLabels[effectiveStatus as keyof typeof statusLabels] || effectiveStatus}
                     </Badge>
                     <Button
                       size="sm"
@@ -1171,7 +1202,8 @@ export function Hotel() {
                 </Button>
               </div>
             </Card>
-          ))}
+          );
+          })}
         </div>
       </div>
 
