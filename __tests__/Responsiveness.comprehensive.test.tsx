@@ -13,7 +13,6 @@ import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { render, screen, act } from '@testing-library/react';
 import { HomeScreen } from '@/components/HomeScreen';
-import { Dashboard } from '@/components/Dashboard';
 import { LoginScreen } from '@/components/LoginScreen';
 import { 
   TestDataFactory, 
@@ -55,29 +54,6 @@ class ViewportTester {
       this.setViewport(viewport.width, viewport.height);
       testFn(name, viewport);
     });
-  }
-}
-
-// Utilitário para testar CSS media queries
-class MediaQueryTester {
-  static matchesQuery(query: string): boolean {
-    return window.matchMedia(query).matches;
-  }
-
-  static isMobile(): boolean {
-    return this.matchesQuery('(max-width: 768px)');
-  }
-
-  static isTablet(): boolean {
-    return this.matchesQuery('(min-width: 769px) and (max-width: 1024px)');
-  }
-
-  static isDesktop(): boolean {
-    return this.matchesQuery('(min-width: 1025px)');
-  }
-
-  static isTouchDevice(): boolean {
-    return this.matchesQuery('(hover: none) and (pointer: coarse)');
   }
 }
 
@@ -282,7 +258,6 @@ describe('Responsividade - Testes Abrangentes', () => {
     });
 
     it('deve suportar gestos de swipe quando apropriado', async () => {
-      const user = userEvent.setup();
       ViewportTester.setViewport(375, 667);
       
       render(
@@ -578,7 +553,7 @@ describe('Responsividade - Testes Abrangentes', () => {
     });
 
     it('deve evitar layout shifts durante redimensionamento', () => {
-      let layoutShifts = 0;
+      const layoutShifts = 0;
       
       // Mock do observer de layout shift
       const mockObserver = {

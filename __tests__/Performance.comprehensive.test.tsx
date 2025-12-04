@@ -130,8 +130,6 @@ describe('Performance e Cache - Testes Abrangentes', () => {
   const mockTransactions = TestDataFactory.createTransactionSet(200);
   const mockSalesRecords = TestDataFactory.createSalesSet(150);
   
-  const _mockOnOpenComanda = jest.fn();
-  const _mockOnDirectOrder = jest.fn();
   const renderTracker = new RenderTracker();
 
   // Spies para silenciar console durante todos os testes
@@ -434,8 +432,6 @@ describe('Performance e Cache - Testes Abrangentes', () => {
       // Filtragem deve ser instantânea
       expect(duration).toBeLessThan(2500);
     });    it('deve scrollar listas grandes sem lag', async () => {
-      const _user = userEvent.setup();
-      
       render(<Dashboard />);
 
       // Simular scroll rápido em lista grande
@@ -467,11 +463,11 @@ describe('Performance e Cache - Testes Abrangentes', () => {
     });
 
     it.skip('deve cancelar requests ao navegar rapidamente', async () => {
-      const _user = userEvent.setup();
+      const user = userEvent.setup();
       
       // Mock de request com cancelamento
       const abortController = new AbortController();
-      const _mockFetch = jest.fn().mockImplementation(() => {
+      jest.fn().mockImplementation(() => {
         return new Promise((resolve) => {
           abortController.signal.addEventListener('abort', () => {
             resolve({ cancelled: true });
