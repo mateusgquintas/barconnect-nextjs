@@ -18,14 +18,31 @@ jest.mock('@/utils/exportToExcel', () => ({
 
 const mockExportDashboardToExcel = require('@/utils/exportToExcel').exportDashboardToExcel as jest.Mock;
 
-// Mock data fixtures - usando datas de DEZEMBRO (mês atual/padrão do componente)
+// Helper para gerar datas do mês atual dinamicamente
+const getCurrentMonthDate = (day: number): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  return `${dayStr}/${month}/${year}`;
+};
+
+const getCurrentMonthDateISO = (day: number): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  return `${year}-${month}-${dayStr}`;
+};
+
+// Mock data fixtures - usando datas do mês atual (geradas dinamicamente)
 const mockTransactions = [
   {
     id: '1',
     type: 'income' as const,
     amount: 1500,
     description: 'Venda de bebidas',
-    date: '15/12/2025',
+    date: getCurrentMonthDate(15),
     time: '14:30',
     category: 'Vendas',
   },
@@ -34,7 +51,7 @@ const mockTransactions = [
     type: 'expense' as const,
     amount: 500,
     description: 'Compra de estoque',
-    date: '16/12/2025',
+    date: getCurrentMonthDate(16),
     time: '10:15',
     category: 'Estoque',
   },
@@ -43,7 +60,7 @@ const mockTransactions = [
     type: 'income' as const,
     amount: 800,
     description: 'Eventos',
-    date: '20/12/2025',
+    date: getCurrentMonthDate(20),
     time: '18:45',
     category: 'Eventos',
   },
@@ -52,7 +69,7 @@ const mockTransactions = [
     type: 'expense' as const,
     amount: 300,
     description: 'Funcionários',
-    date: '25/12/2025',
+    date: getCurrentMonthDate(25),
     time: '09:00',
     category: 'Pessoal',
   },
@@ -61,7 +78,7 @@ const mockTransactions = [
 const mockSalesRecords = [
   {
     id: 'sale1',
-    date: '18/12/2025',
+    date: getCurrentMonthDate(18),
     time: '14:30',
     total: 250,
     items: [{ product: { id: 'p1', name: 'Cerveja', price: 25, stock: 100 }, quantity: 10 }],
@@ -72,7 +89,7 @@ const mockSalesRecords = [
   },
   {
     id: 'sale2',
-    date: '22/12/2025',
+    date: getCurrentMonthDate(22),
     time: '19:45',
     total: 180,
     items: [{ product: { id: 'p2', name: 'Refrigerante', price: 30, stock: 50 }, quantity: 6 }],
@@ -83,7 +100,7 @@ const mockSalesRecords = [
   },
   {
     id: 'sale3',
-    date: '28/12/2025',
+    date: getCurrentMonthDate(28),
     time: '16:20',
     total: 320,
     items: [{ product: { id: 'p3', name: 'Hambúrguer', price: 80, stock: 20 }, quantity: 4 }],

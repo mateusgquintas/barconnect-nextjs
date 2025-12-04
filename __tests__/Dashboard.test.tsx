@@ -4,6 +4,30 @@ import userEvent from '@testing-library/user-event';
 import { Dashboard } from '../components/Dashboard';
 import { Comanda, Transaction, SaleRecord } from '@/types';
 
+// Helper para gerar datas do mês atual dinamicamente
+const getCurrentMonthDate = (day: number): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  return `${dayStr}/${month}/${year}`;
+};
+
+const getCurrentMonthDateISO = (day: number): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  return `${year}-${month}-${dayStr}`;
+};
+
+const getCurrentMonthYearForRegex = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
 // Mock data para testes
 const mockTransaction: Transaction = {
   id: 'trans-1',
@@ -11,7 +35,7 @@ const mockTransaction: Transaction = {
   description: 'Venda',
   amount: 50.00,
   category: 'vendas',
-  date: '2025-12-08',
+  date: getCurrentMonthDateISO(8),
   time: '14:30'
 };
 
@@ -25,7 +49,7 @@ const mockComanda: Comanda = {
       quantity: 2
     }
   ],
-  createdAt: new Date('2025-12-08T10:00:00Z'),
+  createdAt: new Date(getCurrentMonthDateISO(8) + 'T10:00:00Z'),
   status: 'open'
 };
 
@@ -41,7 +65,7 @@ const mockSaleRecord: SaleRecord = {
   ],
   total: 17.00,
   paymentMethod: 'cash',
-  date: '08/12/2025',
+  date: getCurrentMonthDate(8),
   time: '14:30',
   isDirectSale: false,
   isCourtesy: false
@@ -58,7 +82,7 @@ const mockSaleCourtesy: SaleRecord = {
   ],
   total: 5.00,
   paymentMethod: 'courtesy',
-  date: '08/12/2025',
+  date: getCurrentMonthDate(8),
   time: '15:00',
   isDirectSale: true,
   isCourtesy: true
@@ -155,7 +179,8 @@ describe('Dashboard', () => {
     it('permite alterar data de início', async () => {
       render(<Dashboard {...defaultProps} />);
       
-      const startDateInput = screen.getAllByDisplayValue(/2025-12/)[0]; // Primeiro input de data (dezembro)
+      const currentYearMonth = getCurrentMonthYearForRegex();
+      const startDateInput = screen.getAllByDisplayValue(new RegExp(currentYearMonth))[0]; // Primeiro input de data (mês atual)
       await userEvent.clear(startDateInput);
       await userEvent.type(startDateInput, '2025-09-01');
       
@@ -176,7 +201,7 @@ describe('Dashboard', () => {
       
       // Esperar carregamento e verificar filtro
       await waitFor(() => {
-        // Só deve contar venda de dezembro (mockSaleRecord)
+        // Só deve contar venda do mês atual (mockSaleRecord)
         const receitaCard = screen.getByText('Receita Total').closest('[data-slot="card"]');
         expect(receitaCard).toHaveTextContent('R$ 17.00');
       });
@@ -224,13 +249,14 @@ describe('Dashboard', () => {
     it('inputs de data possuem labels adequados', async () => {
       render(<Dashboard {...defaultProps} />);
       
+      const currentYearMonth = getCurrentMonthYearForRegex();
       // Esperar carregamento dos inputs
       await waitFor(() => {
-        const dateInputs = screen.getAllByDisplayValue(/2025-12/); // Dezembro
+        const dateInputs = screen.getAllByDisplayValue(new RegExp(currentYearMonth)); // Mês atual
         expect(dateInputs.length).toBeGreaterThan(0);
       });
       
-      const dateInputs = screen.getAllByDisplayValue(/2025-12/);
+      const dateInputs = screen.getAllByDisplayValue(new RegExp(currentYearMonth));
       dateInputs.forEach(input => {
         expect(input).toHaveAttribute('type', 'date');
       });
