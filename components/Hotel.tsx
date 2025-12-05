@@ -1175,7 +1175,7 @@ export function Hotel() {
                     Liberar
                   </Button>
                 )}
-                {room.status === 'available' && (
+                {effectiveStatus === 'available' && (
                   <Button
                     size="sm"
                     onClick={() => handleChangeStatus(room.id, 'occupied')}
@@ -1183,6 +1183,28 @@ export function Hotel() {
                   >
                     Check-in
                   </Button>
+                )}
+                {effectiveStatus === 'reserved' && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Reservado ▼
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={() => handleChangeStatus(room.id, 'occupied')}>
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Fazer Check-in
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleChangeStatus(room.id, 'available')}>
+                        <X className="w-4 h-4 mr-2" />
+                        Cancelar Reserva
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
                 {room.status === 'maintenance' && (
                   <Button
