@@ -402,9 +402,14 @@ export function Hotel() {
         setReservedRoomIds(roomsWithReservations);
         
         // Debug log
+        console.log('\n=== HOTEL DEBUG ===');
         console.log('📅 Selected Date:', selectedDate);
+        console.log('💎 Rooms total:', rooms.length);
         console.log('🏨 Reserved Room IDs:', Array.from(roomsWithReservations));
+        console.log('📊 Occupancy Map:', occupancyMap);
         console.log('📊 Total bookings found:', bookings.length);
+        console.log('Bookings:', bookings.map(b => ({ room: b.room_id, start: b.start, end: b.end })));
+        console.log('==================\n');
       } catch (error) {
         console.error('Error calculating occupancy:', error);
       }

@@ -395,14 +395,20 @@ export function CalendarGridWithEvents({
                     selected ? 'ring-2 ring-blue-500 border-blue-500' : '',
                   ].join(' ')}
                 >
-                  <div className={[
-                    'text-sm font-bold mb-1',
-                    inCurrentMonth ? (isWeekend ? 'text-blue-700' : 'text-gray-900') : 'text-gray-400'
-                  ].join(' ')}>
-                    {d.getDate()}
-                  </div>
-                  <div className="text-[10px] space-y-1">
-                    {renderOccupancyBar?.(d)}
+                  {/* Tudo em 1 linha: Dia + Badge + Barra */}
+                  <div className="flex items-center gap-2 w-full">
+                    <div className={[
+                      'text-sm font-bold min-w-[20px]',
+                      inCurrentMonth ? (isWeekend ? 'text-blue-700' : 'text-gray-900') : 'text-gray-400'
+                    ].join(' ')}>
+                      {d.getDate()}
+                    </div>
+                    <div className="shrink-0">
+                      {renderDayBadge?.(d)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {renderOccupancyBar?.(d)}
+                    </div>
                   </div>
                 </button>
               );
