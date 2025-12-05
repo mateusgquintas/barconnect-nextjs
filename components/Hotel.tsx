@@ -346,17 +346,26 @@ export function Hotel() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        // Buscar reservas dos próximos 365 dias
+        // Buscar reservas dos próximos 365 dias (A PARTIR DE HOJE)
         const futureDate = new Date(today);
         futureDate.setDate(futureDate.getDate() + 365);
         
         const bookings = await listBookingsInRange({ start: today, end: futureDate });
         
-        // Criar Set com IDs de quartos que têm reservas futuras
+        // Criar Set com IDs de quartos que têm reservas FUTURAS OU ATIVAS
         const roomsWithReservations = new Set<string>();
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        
         bookings.forEach(booking => {
           if (booking.room_id) {
-            roomsWithReservations.add(booking.room_id);
+            const bookingEnd = new Date(booking.end);
+            bookingEnd.setHours(0, 0, 0, 0);
+            
+            // Só adicionar se a reserva ainda está ativa (end >= hoje)
+            if (bookingEnd >= now) {
+              roomsWithReservations.add(booking.room_id);
+            }
           }
         });
         

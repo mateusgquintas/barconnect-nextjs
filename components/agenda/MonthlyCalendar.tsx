@@ -88,20 +88,21 @@ export function MonthlyCalendar({
           onClick={() => onDayClick?.(d)}
           onDoubleClick={() => onDayDoubleClick?.(d)}
           className={[
-            'h-20 p-1.5 rounded text-left border transition-all flex flex-col',
-            inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
-            selected ? 'ring-2 ring-ring' : '',
-            'hover:bg-blue-50 hover:border-blue-300 hover:shadow-md cursor-pointer active:scale-95'
+            'h-16 p-2 rounded-lg text-left border transition-all',
+            inCurrentMonth ? 'bg-white border-gray-200' : 'bg-gray-50/50 border-gray-100 text-muted-foreground/70',
+            selected ? 'ring-2 ring-blue-500 border-blue-500' : '',
+            'hover:bg-blue-50/50 hover:border-blue-300 hover:shadow-sm cursor-pointer'
           ].join(' ')}
         >
-          <div className="flex items-center gap-1.5 w-full">
-            <div className="text-sm font-bold min-w-[20px]">{d.getDate()}</div>
-            <div className="text-xs shrink-0">
-              {renderDayBadge?.(d)}
-            </div>
-            <div className="flex-1 min-w-0">
-              {renderOccupancyBar?.(d)}
-            </div>
+          {/* Header: Dia + Badge */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-base font-bold text-gray-900">{d.getDate()}</div>
+            {renderDayBadge?.(d)}
+          </div>
+          
+          {/* Barra de ocupação */}
+          <div className="w-full">
+            {renderOccupancyBar?.(d)}
           </div>
         </button>
       );
