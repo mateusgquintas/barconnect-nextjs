@@ -88,10 +88,10 @@ export function MonthlyCalendar({
           onClick={() => onDayClick?.(d)}
           onDoubleClick={() => onDayDoubleClick?.(d)}
           className={[
-            'h-24 p-2 rounded text-left border transition-colors flex flex-col',
+            'h-24 p-2 rounded text-left border transition-all flex flex-col',
             inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
             selected ? 'ring-2 ring-ring' : '',
-            'hover:bg-accent hover:text-accent-foreground cursor-pointer'
+            'hover:bg-blue-50 hover:border-blue-300 hover:shadow-md cursor-pointer active:scale-95'
           ].join(' ')}
         >
           <div className="flex items-start justify-between gap-1 mb-1">
@@ -100,7 +100,7 @@ export function MonthlyCalendar({
               {renderDayBadge?.(d)}
             </div>
           </div>
-          <div className="flex-1 flex items-end">
+          <div className="flex items-start mt-1">
             {renderOccupancyBar?.(d)}
           </div>
         </button>

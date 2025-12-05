@@ -263,6 +263,11 @@ export function Hotel() {
     await updateRoom(roomId, { status: newStatus });
   };
 
+  const handleReserveRoom = (roomId: string) => {
+    // Adiciona o quarto à lista de reservados
+    setReservedRoomIds(prev => new Set(prev).add(roomId));
+  };
+
   const handleCreateRoom = () => {
     setDialogMode('create');
     setSelectedRoom(null);
@@ -1176,13 +1181,22 @@ export function Hotel() {
                   </Button>
                 )}
                 {effectiveStatus === 'available' && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleChangeStatus(room.id, 'occupied')}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    Check-in
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => handleReserveRoom(room.id)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Reservar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleChangeStatus(room.id, 'occupied')}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      Check-in
+                    </Button>
+                  </>
                 )}
                 {effectiveStatus === 'reserved' && (
                   <DropdownMenu>
