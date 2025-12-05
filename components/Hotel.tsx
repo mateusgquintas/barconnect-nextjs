@@ -339,64 +339,21 @@ export function Hotel() {
   // Get unique floors from rooms
   const uniqueFloors = Array.from(new Set(rooms.map(r => r.floor).filter(f => f !== null && f !== undefined))).sort((a, b) => (a || 0) - (b || 0));
 
-  // Effect to load ALL future reservations (for showing reserved rooms regardless of selected date)
+  // Effect to calculate room availability, occupancy AND reservations when date changes
   useEffect(() => {
-    async function loadFutureReservations() {
-      try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        // Para o filtro "Reservados", buscamos apenas reservas ATIVAS HOJE
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const bookings = await listBookingsInRange({ start: today, end: tomorrow });
-        
-        // Criar Set com IDs de quartos que estão reservados HOJE
-        const roomsWithReservations = new Set<string>();
-        
-        bookings.forEach(booking => {
-          if (booking.room_id) {
-            const bookingStart = new Date(booking.start);
-            const bookingEnd = new Date(booking.end);
-            bookingStart.setHours(0, 0, 0, 0);
-            bookingEnd.setHours(0, 0, 0, 0);
-            
-            // Verificar se a reserva está ativa HOJE
-            // A reserva está ativa se: start <= hoje < end
-            if (bookingStart <= today && bookingEnd > today) {
-              roomsWithReservations.add(booking.room_id);
-            }
-          }
-        });
-        
-        setReservedRoomIds(roomsWithReservations);
-      } catch (error) {
-        console.error('Error loading future reservations:', error);
-      }
-    }
-
-    loadFutureReservations();
-  }, [rooms]); // Re-run when rooms change
-
-  // Effect to calculate room availability and occupancy when date changes
-  useEffect(() => {
-    async function calculateOccupancy() {
+    async function calculateOccupancyAndReservations() {
       if (!selectedDate) {
         setAvailableRoomIds(new Set());
         setRoomOccupancy({});
-        // NÃO limpar reservedRoomIds aqui - mantém as reservas futuras
+        setReservedRoomIds(new Set());
         return;
       }
 
       try {
         // Usar strings de data no formato ISO (YYYY-MM-DD) para consistência
-        // Isso garante que o agendaService.ts interprete corretamente
         const startDate = new Date(selectedDate);
         startDate.setHours(0, 0, 0, 0);
         
-        // End date é o início do próximo dia (não 23:59:59)
-        // Isso mantém a semântica [start, end) usada em todo o sistema
         const endDate = new Date(selectedDate);
         endDate.setDate(endDate.getDate() + 1);
         endDate.setHours(0, 0, 0, 0);
@@ -406,11 +363,12 @@ export function Hotel() {
         const availableIds = new Set(availableRooms.map(r => r.id));
         setAvailableRoomIds(availableIds);
 
-        // Get all bookings in the day to check occupancy
+        // Get all bookings in the day to check occupancy AND reservations
         const bookings = await listBookingsInRange({ start: startDate, end: endDate });
         
-        // Calculate occupancy for each room (occupied or not on this day)
+        // Calculate occupancy AND reserved rooms for each room
         const occupancyMap: Record<string, number> = {};
+        const roomsWithReservations = new Set<string>();
         
         rooms.forEach(room => {
           const roomBookings = bookings.filter(b => b.room_id === room.id);
@@ -433,16 +391,26 @@ export function Hotel() {
             return bookingStart < dayEnd && bookingEnd > day;
           });
           
+          if (isOccupied) {
+            roomsWithReservations.add(room.id);
+          }
+          
           occupancyMap[room.id] = isOccupied ? 100 : 0;
         });
         
         setRoomOccupancy(occupancyMap);
+        setReservedRoomIds(roomsWithReservations);
+        
+        // Debug log
+        console.log('📅 Selected Date:', selectedDate);
+        console.log('🏨 Reserved Room IDs:', Array.from(roomsWithReservations));
+        console.log('📊 Total bookings found:', bookings.length);
       } catch (error) {
         console.error('Error calculating occupancy:', error);
       }
     }
 
-    calculateOccupancy();
+    calculateOccupancyAndReservations();
   }, [selectedDate, rooms]);
 
   if (loading) {
