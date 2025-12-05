@@ -346,24 +346,25 @@ export function Hotel() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        // Buscar reservas dos próximos 365 dias (A PARTIR DE HOJE)
-        const futureDate = new Date(today);
-        futureDate.setDate(futureDate.getDate() + 365);
+        // Para o filtro "Reservados", buscamos apenas reservas ATIVAS HOJE
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
         
-        const bookings = await listBookingsInRange({ start: today, end: futureDate });
+        const bookings = await listBookingsInRange({ start: today, end: tomorrow });
         
-        // Criar Set com IDs de quartos que têm reservas FUTURAS OU ATIVAS
+        // Criar Set com IDs de quartos que estão reservados HOJE
         const roomsWithReservations = new Set<string>();
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
         
         bookings.forEach(booking => {
           if (booking.room_id) {
+            const bookingStart = new Date(booking.start);
             const bookingEnd = new Date(booking.end);
+            bookingStart.setHours(0, 0, 0, 0);
             bookingEnd.setHours(0, 0, 0, 0);
             
-            // Só adicionar se a reserva ainda está ativa (end >= hoje)
-            if (bookingEnd >= now) {
+            // Verificar se a reserva está ativa HOJE
+            // A reserva está ativa se: start <= hoje < end
+            if (bookingStart <= today && bookingEnd > today) {
               roomsWithReservations.add(booking.room_id);
             }
           }
