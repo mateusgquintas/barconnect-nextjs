@@ -90,7 +90,27 @@ export function Hotel() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showDateFilter, setShowDateFilter] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]); // Dia atual por padrão
+  
+  // Persistir selectedDate no localStorage para não perder quando o componente remontar
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('hotel-selected-date');
+      if (saved) {
+        console.log('💾 Restaurando data do localStorage:', saved);
+        return saved;
+      }
+    }
+    const today = new Date().toISOString().split('T')[0];
+    console.log('🎉 Inicializando com data de hoje:', today);
+    return today;
+  });
+  
+  // Salvar selectedDate no localStorage quando mudar
+  useEffect(() => {
+    console.log('💾 Salvando selectedDate no localStorage:', selectedDate);
+    localStorage.setItem('hotel-selected-date', selectedDate);
+  }, [selectedDate]);
+  
   const [availableRoomIds, setAvailableRoomIds] = useState<Set<string>>(new Set());
   const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
   const [reservedRoomIds, setReservedRoomIds] = useState<Set<string>>(new Set());
@@ -338,6 +358,14 @@ export function Hotel() {
 
   // Get unique floors from rooms
   const uniqueFloors = Array.from(new Set(rooms.map(r => r.floor).filter(f => f !== null && f !== undefined))).sort((a, b) => (a || 0) - (b || 0));
+
+  // Log de montagem do componente
+  useEffect(() => {
+    console.log('🏚️ HOTEL COMPONENT MOUNTED');
+    return () => {
+      console.log('🚪 HOTEL COMPONENT UNMOUNTED');
+    };
+  }, []);
 
   // Effect to calculate room availability, occupancy AND reservations when date changes
   useEffect(() => {
