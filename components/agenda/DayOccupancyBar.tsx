@@ -17,7 +17,7 @@ export const DayOccupancyBar = React.memo(function DayOccupancyBar({ percent }: 
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 w-full">
       <div className="relative flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
         <div
           className={`${color} h-full rounded-full transition-all duration-300 ease-in-out`}
@@ -25,7 +25,7 @@ export const DayOccupancyBar = React.memo(function DayOccupancyBar({ percent }: 
           aria-label={`Ocupação: ${percent}%`}
         />
       </div>
-      <div className={`text-xs font-bold ${textColor} min-w-[32px] text-right tabular-nums`}>
+      <div className={`text-[10px] font-bold ${textColor} min-w-[26px] text-right tabular-nums`}>
         {percent}%
       </div>
     </div>

@@ -104,9 +104,9 @@ export function Hotel() {
     const matchesSearch = room.number?.toString().includes(searchQuery) || 
                          room.guest_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Considerar quarto como "reservado" se está na lista de reservas
+    // Considerar quarto como "reservado" se está na lista de reservas (independente do status)
     const isReserved = reservedRoomIds.has(room.id);
-    const effectiveStatus = isReserved && room.status === 'available' ? 'reserved' : room.status;
+    const effectiveStatus = isReserved ? 'reserved' : room.status;
     
     const matchesStatus = filterStatus === 'all' || effectiveStatus === filterStatus;
     const matchesPilgrimage = filterPilgrimage === 'all' || room.pilgrimage_id === filterPilgrimage;
