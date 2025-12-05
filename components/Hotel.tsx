@@ -339,13 +339,43 @@ export function Hotel() {
   // Get unique floors from rooms
   const uniqueFloors = Array.from(new Set(rooms.map(r => r.floor).filter(f => f !== null && f !== undefined))).sort((a, b) => (a || 0) - (b || 0));
 
+  // Effect to load ALL future reservations (for showing reserved rooms regardless of selected date)
+  useEffect(() => {
+    async function loadFutureReservations() {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Buscar reservas dos próximos 365 dias
+        const futureDate = new Date(today);
+        futureDate.setDate(futureDate.getDate() + 365);
+        
+        const bookings = await listBookingsInRange({ start: today, end: futureDate });
+        
+        // Criar Set com IDs de quartos que têm reservas futuras
+        const roomsWithReservations = new Set<string>();
+        bookings.forEach(booking => {
+          if (booking.room_id) {
+            roomsWithReservations.add(booking.room_id);
+          }
+        });
+        
+        setReservedRoomIds(roomsWithReservations);
+      } catch (error) {
+        console.error('Error loading future reservations:', error);
+      }
+    }
+
+    loadFutureReservations();
+  }, [rooms]); // Re-run when rooms change
+
   // Effect to calculate room availability and occupancy when date changes
   useEffect(() => {
     async function calculateOccupancy() {
       if (!selectedDate) {
         setAvailableRoomIds(new Set());
         setRoomOccupancy({});
-        setReservedRoomIds(new Set());
+        // NÃO limpar reservedRoomIds aqui - mantém as reservas futuras
         return;
       }
 
@@ -371,7 +401,6 @@ export function Hotel() {
         
         // Calculate occupancy for each room (occupied or not on this day)
         const occupancyMap: Record<string, number> = {};
-        const reservedIds = new Set<string>();
         
         rooms.forEach(room => {
           const roomBookings = bookings.filter(b => b.room_id === room.id);
@@ -394,15 +423,10 @@ export function Hotel() {
             return bookingStart < dayEnd && bookingEnd > day;
           });
           
-          if (isOccupied) {
-            reservedIds.add(room.id);
-          }
-          
           occupancyMap[room.id] = isOccupied ? 100 : 0;
         });
         
         setRoomOccupancy(occupancyMap);
-        setReservedRoomIds(reservedIds);
       } catch (error) {
         console.error('Error calculating occupancy:', error);
       }

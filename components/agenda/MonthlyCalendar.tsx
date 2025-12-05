@@ -88,20 +88,20 @@ export function MonthlyCalendar({
           onClick={() => onDayClick?.(d)}
           onDoubleClick={() => onDayDoubleClick?.(d)}
           className={[
-            'h-24 p-2 rounded text-left border transition-all flex flex-col',
+            'h-20 p-1.5 rounded text-left border transition-all flex flex-col',
             inCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground/70',
             selected ? 'ring-2 ring-ring' : '',
             'hover:bg-blue-50 hover:border-blue-300 hover:shadow-md cursor-pointer active:scale-95'
           ].join(' ')}
         >
-          <div className="flex items-start justify-between gap-1 mb-1">
-            <div className="text-sm font-semibold">{d.getDate()}</div>
-            <div className="text-xs">
+          <div className="flex items-center gap-1.5 w-full">
+            <div className="text-sm font-bold min-w-[20px]">{d.getDate()}</div>
+            <div className="text-xs shrink-0">
               {renderDayBadge?.(d)}
             </div>
-          </div>
-          <div className="flex items-start mt-1">
-            {renderOccupancyBar?.(d)}
+            <div className="flex-1 min-w-0">
+              {renderOccupancyBar?.(d)}
+            </div>
           </div>
         </button>
       );
