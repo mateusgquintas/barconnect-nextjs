@@ -88,21 +88,23 @@ export function MonthlyCalendar({
           onClick={() => onDayClick?.(d)}
           onDoubleClick={() => onDayDoubleClick?.(d)}
           className={[
-            'h-12 p-2 rounded-lg text-left border transition-all',
+            'h-14 p-1.5 rounded-lg text-left border transition-all flex flex-col',
             inCurrentMonth ? 'bg-white border-gray-200' : 'bg-gray-50/50 border-gray-100 text-muted-foreground/70',
             selected ? 'ring-2 ring-blue-500 border-blue-500' : '',
             'hover:bg-blue-50/50 hover:border-blue-300 hover:shadow-sm cursor-pointer'
           ].join(' ')}
         >
-          {/* Tudo em 1 linha: Dia + Badge + Barra + % */}
-          <div className="flex items-center gap-2 w-full">
-            <div className="text-sm font-bold text-gray-900 min-w-[20px]">{d.getDate()}</div>
+          {/* HEADER: Dia + % de Lotação */}
+          <div className="flex items-center justify-between mb-1 px-1">
+            <div className="text-sm font-bold text-gray-900">{d.getDate()}</div>
             <div className="shrink-0">
-              {renderDayBadge?.(d)}
-            </div>
-            <div className="flex-1 min-w-0">
               {renderOccupancyBar?.(d)}
             </div>
+          </div>
+          
+          {/* BODY: Badge de reservas (abaixo do header, sem conflito) */}
+          <div className="px-1">
+            {renderDayBadge?.(d)}
           </div>
         </button>
       );

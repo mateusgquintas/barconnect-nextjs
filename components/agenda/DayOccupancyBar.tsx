@@ -4,30 +4,24 @@ interface DayOccupancyBarProps {
   percent: number;
 }
 
-// Barra visual de ocupação: verde (<50%), amarelo (50-80%), vermelho (>80%)
+// Componente compacto de ocupação: mostra apenas % com cor
 export const DayOccupancyBar = React.memo(function DayOccupancyBar({ percent }: DayOccupancyBarProps) {
-  let color = 'bg-green-500';
-  let textColor = 'text-green-700';
+  let textColor = 'text-green-600';
+  let bgColor = 'bg-green-50';
   if (percent >= 80) {
-    color = 'bg-red-500';
-    textColor = 'text-red-700';
+    textColor = 'text-red-600';
+    bgColor = 'bg-red-50';
   } else if (percent >= 50) {
-    color = 'bg-yellow-400';
-    textColor = 'text-yellow-700';
+    textColor = 'text-yellow-600';
+    bgColor = 'bg-yellow-50';
   }
 
+  // Versão compacta para header do calendário: só mostra % se > 0
+  if (percent === 0) return null;
+  
   return (
-    <div className="flex items-center gap-1.5 w-full">
-      <div className="relative flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-        <div
-          className={`${color} h-full rounded-full transition-all duration-300 ease-in-out`}
-          style={{ width: `${percent}%` }}
-          aria-label={`Ocupação: ${percent}%`}
-        />
-      </div>
-      <div className={`text-[10px] font-bold ${textColor} min-w-[26px] text-right tabular-nums`}>
-        {percent}%
-      </div>
+    <div className={`${bgColor} ${textColor} px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums`}>
+      {percent}%
     </div>
   );
 });

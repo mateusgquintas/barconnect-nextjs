@@ -29,7 +29,8 @@ export async function getOccupancyByDay(month: number, year: number) {
   const occupancy: Record<string, number> = {};
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    // Conta reservas que incluem este dia
+    // Conta reservas que incluem este dia (check_in <= dia < check_out)
+    // CORRIGIDO: agora inclui o dia do check-in imediatamente
     const reservedRooms = (reservations as Reservation[]).filter((r: Reservation) => {
       return r.check_in_date <= dateStr && r.check_out_date > dateStr;
     }).map((r: Reservation) => r.room_id);

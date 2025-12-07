@@ -388,27 +388,29 @@ export function CalendarGridWithEvents({
                   onClick={() => onDayClick?.(d)}
                   onDoubleClick={() => onDayDoubleClick?.(d)}
                   className={[
-                    `${cellHeightClass} p-2 rounded-lg text-left border-2 transition-all relative`,
+                    `${cellHeightClass} p-1.5 rounded-lg text-left border-2 transition-all relative flex flex-col`,
                     inCurrentMonth 
                       ? (isWeekend ? 'bg-blue-50/30 border-blue-200 hover:border-blue-400 hover:shadow-sm' : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm')
                       : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100',
                     selected ? 'ring-2 ring-blue-500 border-blue-500' : '',
                   ].join(' ')}
                 >
-                  {/* Tudo em 1 linha: Dia + Badge + Barra */}
-                  <div className="flex items-center gap-2 w-full">
+                  {/* HEADER: Dia + % de Lotação */}
+                  <div className="flex items-center justify-between mb-1 px-1 z-20 relative">
                     <div className={[
-                      'text-sm font-bold min-w-[20px]',
+                      'text-sm font-bold',
                       inCurrentMonth ? (isWeekend ? 'text-blue-700' : 'text-gray-900') : 'text-gray-400'
                     ].join(' ')}>
                       {d.getDate()}
                     </div>
                     <div className="shrink-0">
-                      {renderDayBadge?.(d)}
-                    </div>
-                    <div className="flex-1 min-w-0">
                       {renderOccupancyBar?.(d)}
                     </div>
+                  </div>
+                  
+                  {/* BODY: Badge (abaixo, sem conflito com barras de eventos) */}
+                  <div className="px-1 z-20 relative">
+                    {renderDayBadge?.(d)}
                   </div>
                 </button>
               );
