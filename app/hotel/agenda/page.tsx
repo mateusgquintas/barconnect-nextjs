@@ -78,19 +78,15 @@ export default function AgendaPage() {
   }
 
   const renderBadge = React.useCallback((d: Date) => {
-    // Conta quartos reservados neste dia
-    const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
-    const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-    
-    // Pega dados de ocupação do dia
+    // Mostra X/Y de forma compacta no header
     const key = d.toISOString().slice(0,10);
     const data = occupancy[key];
     
     if (!data || data.occupied === 0) return null;
     
     return (
-      <span className="inline-flex items-center rounded-md bg-blue-50 text-blue-700 px-2 py-1 text-[10px] font-semibold border border-blue-200" aria-label={`${data.occupied} de ${data.total} quartos reservados`}>
-        {data.occupied}/{data.total} Reservados
+      <span className="inline-flex items-center text-blue-700 text-[9px] font-bold tabular-nums whitespace-nowrap" aria-label={`${data.occupied} de ${data.total} quartos reservados`}>
+        {data.occupied}/{data.total}
       </span>
     );
   }, [occupancy]);

@@ -366,9 +366,9 @@ export function CalendarGridWithEvents({
   const rows = Math.min(4, activeThisWeek);
   const paddingBottomRem = 0;
         
-  // Compactar semanas vazias (sem eventos) para economizar espaço
+  // Altura dinâmica: células crescem conforme necessário (min-h + auto)
   const isEmpty = activeThisWeek === 0;
-        const cellHeightClass = isEmpty ? 'h-20' : 'h-28'; // 80px vs 112px
+        const cellHeightClass = isEmpty ? 'min-h-[3.5rem]' : `min-h-[${5 + (rows * 1.5)}rem]`; // Dinâmico baseado em eventos
 
         return (
           <div key={weekIndex} className="relative grid grid-cols-7 gap-1 mb-1" style={{ paddingBottom: `${paddingBottomRem}rem` }}>
@@ -388,29 +388,27 @@ export function CalendarGridWithEvents({
                   onClick={() => onDayClick?.(d)}
                   onDoubleClick={() => onDayDoubleClick?.(d)}
                   className={[
-                    `${cellHeightClass} p-1.5 rounded-lg text-left border-2 transition-all relative flex flex-col`,
+                    `${cellHeightClass} p-1.5 rounded-lg text-left border-2 transition-all relative`,
                     inCurrentMonth 
                       ? (isWeekend ? 'bg-blue-50/30 border-blue-200 hover:border-blue-400 hover:shadow-sm' : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm')
                       : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100',
                     selected ? 'ring-2 ring-blue-500 border-blue-500' : '',
                   ].join(' ')}
                 >
-                  {/* HEADER: Dia + % de Lotação */}
-                  <div className="flex items-center justify-between mb-1 px-1 z-20 relative">
+                  {/* HEADER EM LINHA ÚNICA: Dia + Barra + % + X/Y Reservados */}
+                  <div className="flex items-center gap-1.5 w-full z-20 relative">
                     <div className={[
-                      'text-sm font-bold',
+                      'text-sm font-bold min-w-[18px]',
                       inCurrentMonth ? (isWeekend ? 'text-blue-700' : 'text-gray-900') : 'text-gray-400'
                     ].join(' ')}>
                       {d.getDate()}
                     </div>
-                    <div className="shrink-0">
+                    <div className="flex-1 min-w-0">
                       {renderOccupancyBar?.(d)}
                     </div>
-                  </div>
-                  
-                  {/* BODY: Badge (abaixo, sem conflito com barras de eventos) */}
-                  <div className="px-1 z-20 relative">
-                    {renderDayBadge?.(d)}
+                    <div className="shrink-0 text-[9px]">
+                      {renderDayBadge?.(d)}
+                    </div>
                   </div>
                 </button>
               );
