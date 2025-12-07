@@ -149,12 +149,8 @@ export function Hotel() {
       (!filterAmenities.hasBalcony || room.has_balcony)
     );
     
-    // Date availability filter - não aplicar para quartos em manutenção
-    const matchesDateAvailability = !selectedDate || room.status === 'maintenance' || availableRoomIds.has(room.id);
-    
     return matchesSearch && matchesStatus && matchesPilgrimage && matchesType && 
-           matchesBuilding && matchesFloor && matchesMinCapacity && matchesMaxCapacity && matchesAmenities &&
-           matchesDateAvailability;
+           matchesBuilding && matchesFloor && matchesMinCapacity && matchesMaxCapacity && matchesAmenities;
   }).sort((a, b) => {
     // Aplicar ordenação
     let comparison = 0;
@@ -169,6 +165,17 @@ export function Hotel() {
     
     return sortOrder === 'asc' ? comparison : -comparison;
   });
+
+  // Log do resultado do filtro
+  useEffect(() => {
+    console.log('\n🎯 FILTER RESULTS:');
+    console.log('Total rooms:', rooms.length);
+    console.log('Reserved room IDs:', Array.from(reservedRoomIds));
+    console.log('Filter status:', filterStatus);
+    console.log('Filtered rooms count:', filteredRooms.length);
+    console.log('Filtered room IDs:', filteredRooms.map(r => r.id));
+    console.log('Filtered room numbers:', filteredRooms.map(r => r.number));
+  }, [filteredRooms, filterStatus, reservedRoomIds, rooms]);
 
   // Função para formatar descrição das camas
   const formatBedsDescription = (room: Room): string => {
@@ -437,6 +444,7 @@ export function Hotel() {
         console.log('📊 Occupancy Map:', occupancyMap);
         console.log('📊 Total bookings found:', bookings.length);
         console.log('Bookings:', bookings.map(b => ({ room: b.room_id, start: b.start, end: b.end })));
+        console.log('🔍 Filter Status:', filterStatus);
         console.log('==================\n');
       } catch (error) {
         console.error('Error calculating occupancy:', error);
