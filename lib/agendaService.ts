@@ -39,6 +39,52 @@ export async function getOccupancyByDay(month: number, year: number) {
   }
   return occupancy;
 }
+
+// Versão detalhada que retorna % e contagem de quartos
+export async function getDetailedOccupancyByDay(month: number, year: number) {
+  const monthStart = new Date(year, month - 1, 1);
+  const monthEndExclusive = new Date(year, month, 1);
+  const startISO = monthStart.toISOString().slice(0, 10);
+  const endISO = monthEndExclusive.toISOString().slice(0, 10);
+
+  type Reservation = { room_id: string; check_in_date: string; check_out_date: string };
+  const { data: reservations, error: resError } = await (supabase as any)
+    .from('room_reservations')
+    .select('room_id, check_in_date, check_out_date')
+    .lt('check_in_date', endISO)
+    .gt('check_out_date', startISO);
+  if (resError) throw resError;
+
+  const { data: rooms, error: roomsError } = await (supabase as any)
+    .from('rooms')
+    .select('id');
+  if (roomsError) throw roomsError;
+  const totalRooms = rooms.length;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const occupancy: Record<string, { percent: number; occupied: number; total: number }> = {};
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // CRÍTICO: check_in_date <= dateStr inclui o DIA DO CHECK-IN
+    // Exemplo: check_in = 2025-12-20, dateStr = 2025-12-20 → INCLUI ✅
+    const reservedRooms = (reservations as Reservation[]).filter((r: Reservation) => {
+      const includes = r.check_in_date <= dateStr && r.check_out_date > dateStr;
+      // Debug para primeira reserva do mês
+      if (day <= 3 && includes) {
+        console.log(`📅 Dia ${dateStr}: Reserva ${r.room_id} (${r.check_in_date} até ${r.check_out_date})`);
+      }
+      return includes;
+    }).map((r: Reservation) => r.room_id);
+    const uniqueRooms = Array.from(new Set(reservedRooms));
+    const occupied = uniqueRooms.length;
+    const percent = totalRooms ? Math.round((occupied / totalRooms) * 100) : 0;
+    
+    occupancy[dateStr] = { percent, occupied, total: totalRooms };
+  }
+  
+  return occupancy;
+}
 import { Booking, Room, DateRange } from '@/types/agenda';
 import { supabase } from '@/lib/supabase';
 import { hasOverlap } from '@/utils/agenda';

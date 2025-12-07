@@ -28,10 +28,10 @@ export default function AgendaPage() {
   const { reservations, loading, error, refetch } = useAgendaDB(month.getMonth() + 1, month.getFullYear());
   const { pilgrimages } = usePilgrimagesDB();
   const { rooms } = useRoomsDB();
-  const [occupancy, setOccupancy] = React.useState<Record<string, number>>({});
+  const [occupancy, setOccupancy] = React.useState<Record<string, { percent: number; occupied: number; total: number }>>({});
   
   React.useEffect(() => {
-    const fn = (agendaService as any)?.getOccupancyByDay;
+    const fn = (agendaService as any)?.getDetailedOccupancyByDay;
     if (typeof fn === 'function') {
       fn(month.getMonth() + 1, month.getFullYear()).then(setOccupancy).catch(() => {});
     }
@@ -78,22 +78,28 @@ export default function AgendaPage() {
   }
 
   const renderBadge = React.useCallback((d: Date) => {
-    // Conta reservas que incluem este dia
+    // Conta quartos reservados neste dia
     const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
     const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-    const count = filteredReservations.filter(b => {
-      const bStart = new Date(b.check_in_date);
-      const bEnd = new Date(b.check_out_date);
-      return bStart < dayEnd && bEnd > dayStart;
-    }).length;
-    if (!count) return null;
-    return <span className="inline-flex items-center rounded bg-primary/10 text-primary px-1 py-0.5 text-[10px]" aria-label={`${count} reservas`}>{count} res.</span>;
-  }, [filteredReservations]);
+    
+    // Pega dados de ocupação do dia
+    const key = d.toISOString().slice(0,10);
+    const data = occupancy[key];
+    
+    if (!data || data.occupied === 0) return null;
+    
+    return (
+      <span className="inline-flex items-center rounded-md bg-blue-50 text-blue-700 px-2 py-1 text-[10px] font-semibold border border-blue-200" aria-label={`${data.occupied} de ${data.total} quartos reservados`}>
+        {data.occupied}/{data.total} Reservados
+      </span>
+    );
+  }, [occupancy]);
 
   const renderOccupancyBar = React.useCallback((d: Date) => {
     const key = d.toISOString().slice(0,10);
-    const percent = occupancy[key] ?? 0;
-    return percent > 0 ? <DayOccupancyBar percent={percent} /> : null;
+    const data = occupancy[key];
+    if (!data || data.percent === 0) return null;
+    return <DayOccupancyBar percent={data.percent} occupied={data.occupied} total={data.total} />;
   }, [occupancy]);
 
   function handleOpenDialog(date: Date) {
@@ -104,7 +110,7 @@ export default function AgendaPage() {
   function handleSuccess() {
     // Recarrega dados após criar reserva
     refetch?.();
-    const fn = (agendaService as any)?.getOccupancyByDay;
+    const fn = (agendaService as any)?.getDetailedOccupancyByDay;
     if (typeof fn === 'function') {
       fn(month.getMonth() + 1, month.getFullYear()).then(setOccupancy).catch(() => {});
     }
@@ -182,7 +188,9 @@ export default function AgendaPage() {
           reservations={filteredReservations}
           pilgrimages={pilgrimages}
           rooms={rooms as any}
-          occupancy={occupancy}
+          occupancy={Object.fromEntries(
+            Object.entries(occupancy).map(([date, data]) => [date, data.percent])
+          )}
         />
       </div>
       
