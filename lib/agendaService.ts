@@ -402,6 +402,18 @@ export async function cancelRoomReservation(id: string): Promise<boolean> {
   return true;
 }
 
+export async function updateRoomReservation(id: string, updates: Partial<{
+  check_in_date: string;
+  check_out_date: string;
+  notes: string | undefined;
+  status: string;
+}>): Promise<boolean> {
+  const tbl = await resolveFirstAvailableTable(TABLES.bookings);
+  const { error } = await (supabase as any).from(tbl).update(updates).eq('id', id);
+  if (error) throw error;
+  return true;
+}
+
 export async function createRoomReservation(payload: Omit<Booking,'id'|'created_at'|'status'> & { status?: Booking['status'] }): Promise<string> {
   const tbl = await resolveFirstAvailableTable(TABLES.bookings);
   

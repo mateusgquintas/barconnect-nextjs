@@ -1,10 +1,11 @@
 import React from 'react';
-import { X, Calendar, Users, Hotel, Bus, ChevronsRight, ChevronsLeft, Bed, Building2, DollarSign, Wifi, Tv, Wind, Coffee } from 'lucide-react';
+import { X, Calendar, Users, Hotel, Bus, ChevronsRight, ChevronsLeft, Bed, Building2, DollarSign, Wifi, Tv, Wind, Coffee, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { cancelRoomReservation } from '@/lib/agendaService';
 import { Pilgrimage as PilgrimageType } from '@/types';
+import { EditRomariaDialog } from './EditRomariaDialog';
 
 interface RoomReservation {
   id: string;
@@ -60,6 +61,7 @@ interface DaySidebarProps {
 export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, onCreateReservation, onReservationChanged }: DaySidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false);
   const [cancellingId, setCancellingId] = React.useState<string | null>(null);
+  const [editingPilgrimage, setEditingPilgrimage] = React.useState<{ pilgrimage: PilgrimageType; reservations: RoomReservation[] } | null>(null);
   if (!date) return null;
 
   const dateStr = date.toISOString().slice(0, 10);
@@ -281,6 +283,19 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
                         </div>
                       </div>
                     </div>
+
+                    {/* Ações */}
+                    <div className="flex gap-2 pt-2 border-t border-purple-200">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-100"
+                        onClick={() => setEditingPilgrimage({ pilgrimage, reservations: reserves })}
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        Editar
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -443,8 +458,25 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
             </div>
           )}
         </div>
+        </div>
       </div>
-      </div>
+
+      {/* Dialog de Edição de Romaria */}
+      {editingPilgrimage && (
+        <EditRomariaDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingPilgrimage(null);
+          }}
+          pilgrimage={editingPilgrimage.pilgrimage}
+          reservations={editingPilgrimage.reservations}
+          allRooms={rooms}
+          onSuccess={() => {
+            setEditingPilgrimage(null);
+            onReservationChanged?.();
+          }}
+        />
+      )}
     </div>
   );
 }
