@@ -31,10 +31,11 @@ export const DayOccupancyBar = React.memo(function DayOccupancyBar({ percent, oc
   return (
     <div className="flex items-center gap-1.5 flex-1 min-w-0">
       {/* Barra de progresso VIBRANTE */}
-      <div className={`relative h-1.5 flex-1 rounded-full ${bgColor} overflow-hidden border border-white/50 ${shadowColor}`}>
+      <div className={`relative h-2.5 flex-1 rounded-full ${bgColor} overflow-hidden border-2 border-white/80 ${shadowColor}`}>
         <div
           className={`absolute inset-y-0 left-0 ${barColor} rounded-full transition-all duration-700 ease-out`}
           style={{ width: `${percent}%` }}
+          title={`Ocupação: ${percent}%`}
         >
           {/* Efeito de brilho 3D superior */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/20 to-transparent" />
@@ -43,8 +44,8 @@ export const DayOccupancyBar = React.memo(function DayOccupancyBar({ percent, oc
         </div>
       </div>
       
-      {/* Porcentagem inline */}
-      <div className={`text-[9px] font-bold ${textColor} tabular-nums whitespace-nowrap`}>
+      {/* Porcentagem após a barra */}
+      <div className={`text-[10px] font-extrabold ${textColor} tabular-nums whitespace-nowrap`}>
         {percent}%
       </div>
     </div>

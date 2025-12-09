@@ -40,47 +40,85 @@ export async function getOccupancyByDay(month: number, year: number) {
   return occupancy;
 }
 
-// Versão detalhada que retorna % e contagem de quartos
+// Versão detalhada que retorna % e contagem de quartos E pessoas
 export async function getDetailedOccupancyByDay(month: number, year: number) {
   const monthStart = new Date(year, month - 1, 1);
   const monthEndExclusive = new Date(year, month, 1);
   const startISO = monthStart.toISOString().slice(0, 10);
   const endISO = monthEndExclusive.toISOString().slice(0, 10);
 
-  type Reservation = { room_id: string; check_in_date: string; check_out_date: string };
+  type Reservation = { room_id: string; check_in_date: string; check_out_date: string; notes?: string | null };
   const { data: reservations, error: resError } = await (supabase as any)
     .from('room_reservations')
-    .select('room_id, check_in_date, check_out_date')
+    .select('room_id, check_in_date, check_out_date, notes')
     .lt('check_in_date', endISO)
     .gt('check_out_date', startISO);
   if (resError) throw resError;
 
   const { data: rooms, error: roomsError } = await (supabase as any)
     .from('rooms')
-    .select('id');
+    .select('id, capacity');
   if (roomsError) throw roomsError;
+  
   const totalRooms = rooms.length;
+  const totalCapacity = rooms.reduce((sum: number, r: any) => sum + (r.capacity || 0), 0);
+
+  // Helper para extrair número de pessoas das notas
+  const extractPeopleCount = (notes: string | null | undefined): number | null => {
+    if (!notes) return null;
+    const match = notes.match(/(\d+)\s+pessoas/i);
+    return match ? parseInt(match[1]) : null;
+  };
 
   const daysInMonth = new Date(year, month, 0).getDate();
-  const occupancy: Record<string, { percent: number; occupied: number; total: number }> = {};
+  const occupancy: Record<string, { 
+    percent: number; 
+    occupied: number; 
+    total: number;
+    occupiedPeople: number;
+    totalPeople: number;
+    peoplePercent: number;
+  }> = {};
   
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    // CRÍTICO: check_in_date <= dateStr inclui o DIA DO CHECK-IN
-    // Exemplo: check_in = 2025-12-20, dateStr = 2025-12-20 → INCLUI ✅
-    const reservedRooms = (reservations as Reservation[]).filter((r: Reservation) => {
-      const includes = r.check_in_date <= dateStr && r.check_out_date > dateStr;
-      // Debug para primeira reserva do mês
-      if (day <= 3 && includes) {
-        console.log(`📅 Dia ${dateStr}: Reserva ${r.room_id} (${r.check_in_date} até ${r.check_out_date})`);
-      }
-      return includes;
-    }).map((r: Reservation) => r.room_id);
-    const uniqueRooms = Array.from(new Set(reservedRooms));
-    const occupied = uniqueRooms.length;
-    const percent = totalRooms ? Math.round((occupied / totalRooms) * 100) : 0;
     
-    occupancy[dateStr] = { percent, occupied, total: totalRooms };
+    const activeReservations = (reservations as Reservation[]).filter((r: Reservation) => {
+      const checkIn = r.check_in_date.slice(0, 10);
+      const checkOut = r.check_out_date.slice(0, 10);
+      return checkIn <= dateStr && checkOut > dateStr;
+    });
+    
+    const uniqueRoomIds = Array.from(new Set(activeReservations.map((r: Reservation) => r.room_id)));
+    const occupiedRooms = uniqueRoomIds.length;
+    
+    // Calcula ocupação de pessoas
+    let occupiedPeople = 0;
+    activeReservations.forEach((r: Reservation) => {
+      const peopleInReservation = extractPeopleCount(r.notes);
+      if (peopleInReservation) {
+        occupiedPeople += peopleInReservation;
+      } else {
+        // Se não informado, usa capacity do quarto como fallback
+        const room = rooms.find((rm: any) => rm.id === r.room_id);
+        occupiedPeople += room?.capacity || 1;
+      }
+    });
+    
+    const roomPercent = totalRooms ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+    const peoplePercent = totalCapacity ? Math.round((occupiedPeople / totalCapacity) * 100) : 0;
+    
+    // Usa a MAIOR porcentagem para a barra de ocupação
+    const percent = Math.max(roomPercent, peoplePercent);
+    
+    occupancy[dateStr] = { 
+      percent, 
+      occupied: occupiedRooms, 
+      total: totalRooms,
+      occupiedPeople,
+      totalPeople: totalCapacity,
+      peoplePercent
+    };
   }
   
   return occupancy;

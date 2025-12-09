@@ -40,6 +40,13 @@ const getPilgrimageDates = (p: PilgrimageType) => {
   return { arrivalDate, departureDate };
 };
 
+// Helper para extrair número de pessoas das notas
+const extractPeopleCount = (notes: string | null | undefined): number | null => {
+  if (!notes) return null;
+  const match = notes.match(/(\d+)\s+pessoas/i);
+  return match ? parseInt(match[1]) : null;
+};
+
 interface DaySidebarProps {
   date: Date | null;
   reservations: RoomReservation[];
@@ -60,6 +67,21 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
   // Filtra reservas que incluem este dia
   const dayReservations = reservations.filter(r => {
     return r.check_in_date <= dateStr && r.check_out_date > dateStr;
+  });
+
+  // Agrupa reservas por romaria
+  const pilgrimageGroups = new Map<string, RoomReservation[]>();
+  const individualReservations: RoomReservation[] = [];
+
+  dayReservations.forEach(r => {
+    if (r.pilgrimage_id) {
+      if (!pilgrimageGroups.has(r.pilgrimage_id)) {
+        pilgrimageGroups.set(r.pilgrimage_id, []);
+      }
+      pilgrimageGroups.get(r.pilgrimage_id)!.push(r);
+    } else {
+      individualReservations.push(r);
+    }
   });
 
   // Filtra romarias ativas neste dia
@@ -148,7 +170,7 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
               {date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              {dayReservations.length} reserva{dayReservations.length !== 1 ? 's' : ''} • {activePilgrimages.length} romaria{activePilgrimages.length !== 1 ? 's' : ''}
+              {pilgrimageGroups.size} romaria{pilgrimageGroups.size !== 1 ? 's' : ''} • {individualReservations.length} individual{individualReservations.length !== 1 ? 'is' : ''}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -206,8 +228,65 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
           {dayReservations.length === 0 ? (
             <p className="text-sm text-slate-500 italic">Nenhuma reserva para este dia.</p>
           ) : (
-            <div className="space-y-3">
-              {dayReservations.map(reservation => {
+            <div className="space-y-4">
+              {/* ROMARIAS AGRUPADAS */}
+              {Array.from(pilgrimageGroups.entries()).map(([pilgrimageId, reserves]) => {
+                const pilgrimage = getPilgrimageById(pilgrimageId);
+                if (!pilgrimage) return null;
+                
+                const roomNumbers = reserves.map(r => {
+                  const room = getRoomById(r.room_id);
+                  return room?.number || r.room_id;
+                }).join(', ');
+                
+                // Calcular total de pessoas baseado nas notas das reservas
+                const totalPeople = reserves.reduce((sum, r) => {
+                  const count = extractPeopleCount(r.notes);
+                  return sum + (count || 0);
+                }, 0);
+
+                return (
+                  <div key={pilgrimageId} className="p-4 bg-purple-50 rounded-lg border-2 border-purple-300 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Bus className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                          <h4 className="font-semibold text-purple-900">{pilgrimage.name}</h4>
+                        </div>
+                        <p className="text-sm text-purple-700 ml-7">
+                          {reserves.length} quarto{reserves.length > 1 ? 's' : ''} • {totalPeople > 0 ? totalPeople : pilgrimage.numberOfPeople || 0} pessoas
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs border whitespace-nowrap ${statusColors[reserves[0].status] || 'bg-gray-100 text-gray-700'}`}>
+                        {statusLabels[reserves[0].status] || reserves[0].status}
+                      </span>
+                    </div>
+
+                    {/* Lista de quartos */}
+                    <div className="pt-2 border-t border-purple-200">
+                      <p className="text-xs font-medium text-purple-700 mb-1">Quartos:</p>
+                      <p className="text-sm text-purple-900">{roomNumbers}</p>
+                    </div>
+
+                    {/* Datas */}
+                    <div className="pt-2 border-t border-purple-200">
+                      <div className="grid grid-cols-2 gap-2 text-xs text-purple-700">
+                        <div>
+                          <span className="font-medium">Check-in:</span>
+                          <p className="text-purple-900">{formatDateMaybeTime(reserves[0].check_in_date)}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Check-out:</span>
+                          <p className="text-purple-900">{formatDateMaybeTime(reserves[0].check_out_date)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* RESERVAS INDIVIDUAIS */}
+              {individualReservations.map(reservation => {
                 const room = getRoomById(reservation.room_id);
                 const pilgrimage = reservation.pilgrimage_id ? getPilgrimageById(reservation.pilgrimage_id) : null;
                 const duration = calculateDuration(reservation.check_in_date, reservation.check_out_date);
@@ -300,6 +379,16 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
                       <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
                         <Bus className="w-4 h-4 text-purple-600" />
                         <p className="text-sm text-purple-700 font-medium">{pilgrimage.name}</p>
+                      </div>
+                    )}
+                    
+                    {/* Número de pessoas (se informado nas notas) */}
+                    {!reservation.pilgrimage_id && extractPeopleCount(reservation.notes) && (
+                      <div className="pt-2 border-t border-slate-200">
+                        <p className="text-sm text-slate-700 flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          <span className="font-medium">{extractPeopleCount(reservation.notes)} pessoas</span>
+                        </p>
                       </div>
                     )}
 

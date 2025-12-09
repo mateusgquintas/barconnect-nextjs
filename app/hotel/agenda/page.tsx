@@ -28,7 +28,14 @@ export default function AgendaPage() {
   const { reservations, loading, error, refetch } = useAgendaDB(month.getMonth() + 1, month.getFullYear());
   const { pilgrimages } = usePilgrimagesDB();
   const { rooms } = useRoomsDB();
-  const [occupancy, setOccupancy] = React.useState<Record<string, { percent: number; occupied: number; total: number }>>({});
+  const [occupancy, setOccupancy] = React.useState<Record<string, { 
+    percent: number; 
+    occupied: number; 
+    total: number;
+    occupiedPeople: number;
+    totalPeople: number;
+    peoplePercent: number;
+  }>>({});
   
   React.useEffect(() => {
     const fn = (agendaService as any)?.getDetailedOccupancyByDay;
@@ -78,16 +85,24 @@ export default function AgendaPage() {
   }
 
   const renderBadge = React.useCallback((d: Date) => {
-    // Mostra X/Y de forma compacta no header
+    // Mostra contadores de quartos e pessoas na segunda linha com legendas
     const key = d.toISOString().slice(0,10);
     const data = occupancy[key];
     
-    if (!data || data.occupied === 0) return null;
+    if (!data || (data.occupied === 0 && data.occupiedPeople === 0)) return null;
     
     return (
-      <span className="inline-flex items-center text-blue-700 text-[9px] font-bold tabular-nums whitespace-nowrap" aria-label={`${data.occupied} de ${data.total} quartos reservados`}>
-        {data.occupied}/{data.total}
-      </span>
+      <div className="flex items-center justify-between gap-2 w-full text-[10px] font-semibold">
+        {/* Quartos - alinhado à esquerda */}
+        <span className="text-blue-700 tabular-nums" aria-label={`${data.occupied} de ${data.total} quartos reservados`}>
+          {data.occupied}/{data.total} <span className="text-slate-500 font-normal">Quartos</span>
+        </span>
+        
+        {/* Pessoas - alinhado à direita */}
+        <span className="text-purple-700 tabular-nums" aria-label={`${data.occupiedPeople} de ${data.totalPeople} pessoas`}>
+          {data.occupiedPeople}/{data.totalPeople} <span className="text-slate-500 font-normal">Pessoas</span>
+        </span>
+      </div>
     );
   }, [occupancy]);
 

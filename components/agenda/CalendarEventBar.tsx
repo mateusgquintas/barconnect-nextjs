@@ -2,6 +2,7 @@
 import React from 'react';
 import { Hotel, Users, Bus } from 'lucide-react';
 import { Pilgrimage as PilgrimageType } from '@/types';
+import { parseLocalDate, formatLocalDate, subtractDays } from '@/utils/dateHelpers';
 
 interface Room {
   id: string;
@@ -55,18 +56,15 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
 };
 
 // Layout constants
-const CELL_HEIGHT_FULL_REM = 7;      // h-28 = 7rem (112px) - células com eventos
-const CELL_HEIGHT_COMPACT_REM = 5;   // h-20 = 5rem (80px) - células vazias
-const BAR_ROW_REM = 1.2;             // Altura + espaçamento por linha (mais compacto para caber dentro da célula)
-const BAR_TOP_MARGIN_REM = 0.1;      // Margem sutil
-const LANE_TOP_RATIO = 0.55;         // Posição vertical base (55% da altura da célula)
+const BAR_HEIGHT_REM = 1.4;          // Altura de cada barra de evento
+const BAR_SPACING_REM = 0.2;         // Espaçamento entre barras
+const HEADER_HEIGHT_REM = 2.2;       // Altura do header (DUAS linhas: barra + contadores)
 
 export function CalendarEventBar({ event, gridStartCol, gridEndCol, weekIndex, eventIndex, isCompactWeek, onClick }: CalendarEventBarProps) {
   const colors = statusColors[event.status] || statusColors.confirmed;
   
-  // Calcula posição vertical para desenhar as barras DENTRO das células do dia (com leve sombreamento)
-  const baseCellRem = isCompactWeek ? CELL_HEIGHT_COMPACT_REM : CELL_HEIGHT_FULL_REM;
-  const topOffset = (baseCellRem * LANE_TOP_RATIO) + BAR_TOP_MARGIN_REM + (eventIndex * BAR_ROW_REM); // em rem
+  // Posiciona as barras logo ABAIXO do header
+  const topOffset = HEADER_HEIGHT_REM + (eventIndex * (BAR_HEIGHT_REM + BAR_SPACING_REM));
   
   // Calcula se é o primeiro ou último dia do evento para bordas arredondadas
   const isStart = gridStartCol > 1;
@@ -80,17 +78,17 @@ export function CalendarEventBar({ event, gridStartCol, gridEndCol, weekIndex, e
         e.stopPropagation();
         onClick?.();
       }}
-      className={`absolute z-10 ${colors.bg} ${colors.text} px-2.5 py-1 text-xs font-semibold 
+      className={`absolute z-20 ${colors.bg} ${colors.text} px-2.5 py-1 text-xs font-semibold 
         cursor-pointer transition-all duration-200 ease-out
-        hover:shadow-md hover:z-20 hover:brightness-95
+        hover:shadow-md hover:z-[25] hover:brightness-95
         border-l-3 ${colors.border}
         overflow-hidden whitespace-nowrap text-ellipsis shadow-sm/50 ring-1 ring-black/5 bg-opacity-70`}
       style={{
         gridColumn: `${gridStartCol} / ${gridEndCol}`,
         top: `${topOffset}rem`,
-        height: '1.2rem',
-        left: '0.25rem',
-        right: '0.25rem',
+        height: `${BAR_HEIGHT_REM}rem`,
+        left: '0.125rem',
+        right: '0.125rem',
         borderRadius,
         borderLeftWidth: '3px',
       }}
@@ -187,8 +185,9 @@ export function CalendarGridWithEvents({
         ? pilgrimages.find(p => p.id === firstReservation.pilgrimage_id) 
         : undefined;
       
-      const startDate = new Date(firstReservation.check_in_date);
-      const endDate = new Date(firstReservation.check_out_date);
+      // USA parseLocalDate para evitar problemas de timezone
+      const startDate = parseLocalDate(firstReservation.check_in_date);
+      const endDate = parseLocalDate(firstReservation.check_out_date);
       
       let title = '';
       let tooltip = '';
@@ -366,60 +365,130 @@ export function CalendarGridWithEvents({
   const rows = Math.min(4, activeThisWeek);
   const paddingBottomRem = 0;
         
-  // Altura dinâmica: células crescem conforme necessário (min-h + auto)
+  // Altura dinâmica baseada no número de eventos
   const isEmpty = activeThisWeek === 0;
-        const cellHeightClass = isEmpty ? 'min-h-[3.5rem]' : `min-h-[${5 + (rows * 1.5)}rem]`; // Dinâmico baseado em eventos
+        const minHeight = isEmpty ? '4rem' : `${4 + (rows * 1.2)}rem`;
 
         return (
-          <div key={weekIndex} className="relative grid grid-cols-7 gap-1 mb-1" style={{ paddingBottom: `${paddingBottomRem}rem` }}>
-            {/* Células de fundo */}
+          <div key={weekIndex} className="grid grid-cols-7 gap-1 mb-1">
+            {/* Células com eventos renderizados DENTRO */}
             {weekDays.map((d, dayIdx) => {
               const inCurrentMonth = d.getMonth() === monthIdx && d.getFullYear() === year;
               const selected = isSameDay(d, selectedDate || null);
               const key = dateKey(d);
-              const isWeekend = d.getDay() === 0 || d.getDay() === 6; // Domingo ou Sábado
+              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+              
+              // Encontra eventos que estão ativos neste dia
+              const dayStart = new Date(d);
+              dayStart.setHours(0, 0, 0, 0);
+              const dayEnd = new Date(dayStart);
+              dayEnd.setDate(dayEnd.getDate() + 1);
+              
+              const dayEvents = events.filter(event => {
+                const eventStart = new Date(event.startDate);
+                eventStart.setHours(0, 0, 0, 0);
+                const eventEnd = new Date(event.endDate);
+                eventEnd.setHours(0, 0, 0, 0);
+                return eventStart < dayEnd && eventEnd > dayStart;
+              });
               
               return (
-                <button
+                <div
                   key={key}
-                  role="gridcell"
-                  aria-selected={selected}
-                  data-date={key}
-                  onClick={() => onDayClick?.(d)}
-                  onDoubleClick={() => onDayDoubleClick?.(d)}
-                  className={[
-                    `${cellHeightClass} p-1.5 rounded-lg text-left border-2 transition-all relative`,
-                    inCurrentMonth 
-                      ? (isWeekend ? 'bg-blue-50/30 border-blue-200 hover:border-blue-400 hover:shadow-sm' : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm')
-                      : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100',
-                    selected ? 'ring-2 ring-blue-500 border-blue-500' : '',
-                  ].join(' ')}
+                  className="relative"
+                  style={{ minHeight }}
                 >
-                  {/* HEADER EM LINHA ÚNICA: Dia + Barra + % + X/Y Reservados */}
-                  <div className="flex items-center gap-1.5 w-full z-20 relative">
-                    <div className={[
-                      'text-sm font-bold min-w-[18px]',
-                      inCurrentMonth ? (isWeekend ? 'text-blue-700' : 'text-gray-900') : 'text-gray-400'
-                    ].join(' ')}>
-                      {d.getDate()}
+                  <button
+                    role="gridcell"
+                    aria-selected={selected}
+                    data-date={key}
+                    onClick={() => onDayClick?.(d)}
+                    onDoubleClick={() => onDayDoubleClick?.(d)}
+                    className={[
+                      'w-full h-full p-1 rounded-lg text-left border transition-all relative flex flex-col items-start',
+                      inCurrentMonth 
+                        ? (isWeekend ? 'bg-blue-50/30 border-blue-200 hover:border-blue-400 hover:shadow' : 'bg-white border-gray-200 hover:border-blue-400 hover:shadow')
+                        : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100',
+                      selected ? 'ring-2 ring-blue-500 border-blue-500 shadow-md' : '',
+                    ].join(' ')}
+                  >
+                    {/* HEADER EM DUAS LINHAS: 1ª) Dia + Barra  2ª) Contadores */}
+                    <div className="w-full relative z-10 space-y-0.5">
+                      {/* Primeira linha: Dia + Barra de ocupação */}
+                      <div className="flex items-center gap-1.5 w-full">
+                        <div className={[
+                          'text-sm font-bold min-w-[18px]',
+                          inCurrentMonth ? (isWeekend ? 'text-blue-700' : 'text-gray-900') : 'text-gray-400'
+                        ].join(' ')}>
+                          {d.getDate()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {renderOccupancyBar?.(d)}
+                        </div>
+                      </div>
+                      
+                      {/* Segunda linha: Contadores de quartos e pessoas */}
+                      <div className="ml-[22px]">
+                        {renderDayBadge?.(d)}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      {renderOccupancyBar?.(d)}
-                    </div>
-                    <div className="shrink-0 text-[9px]">
-                      {renderDayBadge?.(d)}
-                    </div>
+                  </button>
+                  
+                  {/* Indicadores de CHECK-IN e CHECK-OUT - FORA DO BUTTON, ABSOLUTE ao container */}
+                  <div className="absolute left-2 right-2 bottom-2 flex flex-col gap-1 pointer-events-none z-50">
+                    {dayEvents.map((event, idx) => {
+                      // Usa formatLocalDate para garantir formato YYYY-MM-DD sem timezone issues
+                      const checkInStr = formatLocalDate(event.startDate);
+                      const currentDayStr = formatLocalDate(d);
+                      
+                      // CHECK-OUT: Badge aparece na ÚLTIMA NOITE de estadia (endDate - 1 dia)
+                      // subtractDays garante cálculo correto sem problemas de timezone
+                      const endDateStr = formatLocalDate(event.endDate);
+                      const checkOutStr = subtractDays(endDateStr, 1);
+                      
+                      const isCheckIn = checkInStr === currentDayStr;
+                      const isCheckOut = checkOutStr === currentDayStr;
+                      
+                      // SÓ renderiza se for check-in OU check-out
+                      if (!isCheckIn && !isCheckOut) return null;
+                      
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEventClick?.(event.reservation);
+                          }}
+                          className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-extrabold shadow-lg cursor-pointer transition-all hover:shadow-xl border-2 border-white/50 pointer-events-auto"
+                          style={{
+                            backgroundColor: isCheckIn ? '#10b981' : '#f97316',
+                            color: 'white',
+                            minHeight: '28px',
+                          }}
+                          title={`${isCheckIn ? 'Check-in' : 'Check-out'}: ${event.title}`}
+                        >
+                          {isCheckIn ? (
+                            <>
+                              <span className="text-sm font-black">↓</span>
+                              <span className="truncate font-bold">
+                                {event.pilgrimage ? `🚌 ${event.title}` : `🏨 ${event.title}`}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm font-black">↑</span>
+                              <span className="truncate font-bold">
+                                {event.pilgrimage ? `🚌 ${event.title}` : `🏨 ${event.title}`}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </button>
+                </div>
               );
             })}
-            
-            {/* Barras de eventos sobrepostas (dentro das células, com leve sombreamento) */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="relative grid grid-cols-7 gap-1 h-full pointer-events-auto">
-                {renderEventBars(weekIndex, isEmpty)}
-              </div>
-            </div>
           </div>
         );
       })}

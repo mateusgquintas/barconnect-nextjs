@@ -532,7 +532,7 @@ export function Hotel() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-5 stats-grid">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-5 stats-grid">
           <Card className="p-4 stats-card">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -553,6 +553,18 @@ export function Hotel() {
               <div>
                 <p className="text-sm text-slate-600">Disponíveis</p>
                 <p className="text-2xl text-green-600">{stats.available}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 stats-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Reservados</p>
+                <p className="text-2xl text-blue-600">{stats.reserved}</p>
               </div>
             </div>
           </Card>

@@ -31,6 +31,7 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
   const [reservationType, setReservationType] = useState<'individual' | 'pilgrimage'>('individual');
   const [guestName, setGuestName] = useState('');
   const [guestDocument, setGuestDocument] = useState('');
+  const [numberOfPeople, setNumberOfPeople] = useState('1'); // Número de pessoas
   const [selectedPilgrimage, setSelectedPilgrimage] = useState('');
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
@@ -52,9 +53,9 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
       const nextDay = new Date(date);
       nextDay.setDate(nextDay.getDate() + 1);
       setCheckOutDate(nextDay.toISOString().split('T')[0]);
-      // não aplicar horários padrão
-      setCheckInTime('');
-      setCheckOutTime('');
+      // Horários padrão: 12:00
+      setCheckInTime('12:00');
+      setCheckOutTime('12:00');
       setShowRoomSelector(false);
     }
   }, [open, date]);
@@ -69,8 +70,8 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
 
       try {
         setLoadingRooms(true);
-        const start = checkInTime ? `${checkInDate}T${checkInTime}` : checkInDate;
-        const end = checkOutTime ? `${checkOutDate}T${checkOutTime}` : checkOutDate;
+        const start = checkInTime ? `${checkInDate}T${checkInTime}:00` : `${checkInDate}T00:00:00`;
+        const end = checkOutTime ? `${checkOutDate}T${checkOutTime}:00` : `${checkOutDate}T00:00:00`;
         
         const available = await getAvailableRooms(start, end);
         setAvailableRooms(available);
@@ -160,8 +161,14 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
       setSubmitting(true);
 
       // Criar reserva para cada quarto selecionado
-      const start = checkInTime ? `${checkInDate}T${checkInTime}` : checkInDate;
-      const end = checkOutTime ? `${checkOutDate}T${checkOutTime}` : checkOutDate;
+      // Adiciona :00 para segundos e garante formato completo
+      const start = checkInTime ? `${checkInDate}T${checkInTime}:00` : `${checkInDate}T00:00:00`;
+      const end = checkOutTime ? `${checkOutDate}T${checkOutTime}:00` : `${checkOutDate}T00:00:00`;
+      
+      // Monta as notas incluindo número de pessoas
+      const peopleNote = numberOfPeople && numberOfPeople !== '1' ? `${numberOfPeople} pessoas` : '';
+      const finalNotes = [peopleNote, notes].filter(Boolean).join(' | ');
+      
       const promises = selectedRooms.map(roomId => 
         createRoomReservation({
           room_id: roomId,
@@ -171,7 +178,7 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
           customer_name: reservationType === 'individual' ? guestName : null,
           pilgrimage_id: reservationType === 'pilgrimage' ? selectedPilgrimage : null,
           status: 'confirmed',
-          notes: notes || undefined
+          notes: finalNotes || undefined
         } as any)
       );
 
@@ -300,20 +307,47 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
                     placeholder="000.000.000-00"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numberOfPeopleIndividual">Número de Pessoas</Label>
+                  <Input 
+                    id="numberOfPeopleIndividual" 
+                    type="number"
+                    min="1"
+                    value={numberOfPeople} 
+                    onChange={(e) => setNumberOfPeople(e.target.value)} 
+                    placeholder="Quantidade de pessoas"
+                  />
+                  <p className="text-xs text-slate-500">Quantas pessoas ficarão neste quarto</p>
+                </div>
               </>
             )}
 
             {/* Campos para Romaria */}
             {reservationType === 'pilgrimage' && (
-              <div className="space-y-2">
-                <Label>Romaria *</Label>
-                <PilgrimageCombobox
-                  pilgrimages={pilgrimages}
-                  value={selectedPilgrimage}
-                  onValueChange={setSelectedPilgrimage}
-                  placeholder="Busque pelo nome, data ou clique para ver todas..."
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label>Romaria *</Label>
+                  <PilgrimageCombobox
+                    pilgrimages={pilgrimages}
+                    value={selectedPilgrimage}
+                    onValueChange={setSelectedPilgrimage}
+                    placeholder="Busque pelo nome, data ou clique para ver todas..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numberOfPeople">Número de Pessoas *</Label>
+                  <Input 
+                    id="numberOfPeople" 
+                    type="number"
+                    min="1"
+                    value={numberOfPeople} 
+                    onChange={(e) => setNumberOfPeople(e.target.value)} 
+                    placeholder="Quantidade de pessoas"
+                    required
+                  />
+                  <p className="text-xs text-slate-500">Informe quantas pessoas farão parte desta reserva</p>
+                </div>
+              </>
             )}
 
             {/* Datas */}
@@ -448,15 +482,20 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
             </div>
 
             {/* Botões */}
-            <div className="flex gap-2 justify-end pt-4">
+            <div className="flex gap-3 justify-end pt-4 border-t mt-6 pt-6">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
+                className="min-w-[120px] hover:bg-slate-100 transition-colors"
               >
                 Cancelar
               </Button>
-              <Button type="submit">
+              <Button 
+                type="submit"
+                className="min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
                 Avançar para Confirmação
               </Button>
             </div>
@@ -584,12 +623,13 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
             </div>
 
             {/* Botões */}
-            <div className="flex gap-2 justify-end pt-4">
+            <div className="flex gap-3 justify-end pt-4 border-t mt-6 pt-6">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => setStep(1)}
                 disabled={submitting}
+                className="min-w-[120px] hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
@@ -597,9 +637,19 @@ export function NewReservationDialog({ open, onOpenChange, date, pilgrimages, ro
               <Button 
                 onClick={handleSubmit} 
                 disabled={submitting}
-                className="min-w-[160px]"
+                className="min-w-[180px] bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md"
               >
-                {submitting ? 'Criando...' : 'Confirmar Reserva'}
+                {submitting ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Confirmar Reserva
+                  </>
+                )}
               </Button>
             </div>
           </div>
