@@ -14,6 +14,7 @@ import { Label } from './ui/label';
 import { usePilgrimagesDB } from '../hooks/usePilgrimagesDB';
 import { RoomEditDialog } from './rooms/RoomEditDialog';
 import { getAvailableRooms, listBookingsInRange } from '@/lib/agendaService';
+import { isRoomOccupiedOnDate } from '@/utils/agenda';
 import { Booking } from '@/types/agenda';
 import { exportRoomsToExcel } from '@/lib/exportRoomsToExcel';
 
@@ -405,6 +406,9 @@ export function Hotel() {
         const occupancyMap: Record<string, number> = {};
         const roomsWithReservations = new Set<string>();
         
+        // Normalizar selectedDate para string YYYY-MM-DD
+        const targetDateStr = selectedDate; // Já está em formato YYYY-MM-DD
+        
         rooms.forEach(room => {
           const roomBookings = bookings.filter(b => b.room_id === room.id);
           
@@ -413,17 +417,9 @@ export function Hotel() {
             return;
           }
 
-          // Check if room is occupied on this specific day
-          const day = new Date(selectedDate);
-          day.setHours(0, 0, 0, 0);
-          const dayEnd = new Date(day);
-          dayEnd.setDate(dayEnd.getDate() + 1);
-          
+          // Check if room is occupied on this specific day using standardized logic
           const isOccupied = roomBookings.some(booking => {
-            const bookingStart = new Date(booking.start);
-            const bookingEnd = new Date(booking.end);
-            // Overlap: booking.start < dayEnd && booking.end > day
-            return bookingStart < dayEnd && bookingEnd > day;
+            return isRoomOccupiedOnDate(booking.start, booking.end, targetDateStr);
           });
           
           if (isOccupied) {

@@ -29,10 +29,9 @@ export async function getOccupancyByDay(month: number, year: number) {
   const occupancy: Record<string, number> = {};
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    // Conta reservas que incluem este dia (check_in <= dia < check_out)
-    // CORRIGIDO: agora inclui o dia do check-in imediatamente
+    // Conta reservas que incluem este dia usando lógica padronizada [start, end)
     const reservedRooms = (reservations as Reservation[]).filter((r: Reservation) => {
-      return r.check_in_date <= dateStr && r.check_out_date > dateStr;
+      return isRoomOccupiedOnDate(r.check_in_date, r.check_out_date, dateStr);
     }).map((r: Reservation) => r.room_id);
     const uniqueRooms = Array.from(new Set(reservedRooms));
     occupancy[dateStr] = totalRooms ? Math.round((uniqueRooms.length / totalRooms) * 100) : 0;
@@ -84,9 +83,7 @@ export async function getDetailedOccupancyByDay(month: number, year: number) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     
     const activeReservations = (reservations as Reservation[]).filter((r: Reservation) => {
-      const checkIn = r.check_in_date.slice(0, 10);
-      const checkOut = r.check_out_date.slice(0, 10);
-      return checkIn <= dateStr && checkOut > dateStr;
+      return isRoomOccupiedOnDate(r.check_in_date, r.check_out_date, dateStr);
     });
     
     const uniqueRoomIds = Array.from(new Set(activeReservations.map((r: Reservation) => r.room_id)));
@@ -125,7 +122,7 @@ export async function getDetailedOccupancyByDay(month: number, year: number) {
 }
 import { Booking, Room, DateRange } from '@/types/agenda';
 import { supabase } from '@/lib/supabase';
-import { hasOverlap } from '@/utils/agenda';
+import { hasOverlap, isRoomOccupiedOnDate } from '@/utils/agenda';
 
 const TABLES = {
   rooms: ['rooms', 'hotel_rooms'],
