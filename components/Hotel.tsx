@@ -386,6 +386,11 @@ export function Hotel() {
       }
 
       try {
+        // IMPORTANTE: Limpar estados antes de recalcular para evitar exibição de dados antigos
+        setAvailableRoomIds(new Set());
+        setRoomOccupancy({});
+        setReservedRoomIds(new Set());
+
         // Usar strings de data no formato ISO (YYYY-MM-DD) para consistência
         const startDate = new Date(selectedDate);
         startDate.setHours(0, 0, 0, 0);
@@ -394,10 +399,12 @@ export function Hotel() {
         endDate.setDate(endDate.getDate() + 1);
         endDate.setHours(0, 0, 0, 0);
 
+        // Normalizar selectedDate para string YYYY-MM-DD
+        const targetDateStr = selectedDate; // Já está em formato YYYY-MM-DD
+
         // Get available rooms for the selected day
         const availableRooms = await getAvailableRooms(startDate, endDate);
         const availableIds = new Set(availableRooms.map(r => r.id));
-        setAvailableRoomIds(availableIds);
 
         // Get all bookings in the day to check occupancy AND reservations
         const bookings = await listBookingsInRange({ start: startDate, end: endDate });
@@ -406,20 +413,21 @@ export function Hotel() {
         const occupancyMap: Record<string, number> = {};
         const roomsWithReservations = new Set<string>();
         
-        // Normalizar selectedDate para string YYYY-MM-DD
-        const targetDateStr = selectedDate; // Já está em formato YYYY-MM-DD
-        
         rooms.forEach(room => {
+          // Para cada quarto, verificar se está ocupado na data alvo
           const roomBookings = bookings.filter(b => b.room_id === room.id);
           
           if (roomBookings.length === 0) {
+            // Sem reservas para este quarto neste range
             occupancyMap[room.id] = 0;
             return;
           }
 
-          // Check if room is occupied on this specific day using standardized logic
+          // Verificar se alguma reserva deste quarto cobre a data alvo
           const isOccupied = roomBookings.some(booking => {
-            return isRoomOccupiedOnDate(booking.start, booking.end, targetDateStr);
+            const occupied = isRoomOccupiedOnDate(booking.start, booking.end, targetDateStr);
+            console.log(`  Room ${room.number}: booking ${booking.start.slice(0,10)} to ${booking.end.slice(0,10)} on ${targetDateStr} = ${occupied}`);
+            return occupied;
           });
           
           if (isOccupied) {
@@ -429,21 +437,27 @@ export function Hotel() {
           occupancyMap[room.id] = isOccupied ? 100 : 0;
         });
         
+        // Atualizar todos os estados juntos para evitar renderizações inconsistentes
+        setAvailableRoomIds(availableIds);
         setRoomOccupancy(occupancyMap);
         setReservedRoomIds(roomsWithReservations);
         
-        // Debug log
-        console.log('\n=== HOTEL DEBUG ===');
-        console.log('📅 Selected Date:', selectedDate);
-        console.log('💎 Rooms total:', rooms.length);
-        console.log('🏨 Reserved Room IDs:', Array.from(roomsWithReservations));
-        console.log('📊 Occupancy Map:', occupancyMap);
-        console.log('📊 Total bookings found:', bookings.length);
-        console.log('Bookings:', bookings.map(b => ({ room: b.room_id, start: b.start, end: b.end })));
-        console.log('🔍 Filter Status:', filterStatus);
+        // Debug log DETALHADO
+        console.log('\n=== 🏨 HOTEL OCCUPANCY CALCULATION ===');
+        console.log('📅 Target Date:', targetDateStr);
+        console.log('📊 Total bookings in range:', bookings.length);
+        console.log('📋 Bookings details:');
+        bookings.forEach(b => {
+          const occupied = isRoomOccupiedOnDate(b.start, b.end, targetDateStr);
+          console.log(`  - Room ${b.room_id}: ${b.start.slice(0,10)} to ${b.end.slice(0,10)} → ${occupied ? '🔴 OCCUPIED' : '🟢 FREE'} on ${targetDateStr}`);
+        });
+        console.log('💎 Total rooms:', rooms.length);
+        console.log('🏨 Occupied rooms:', Array.from(roomsWithReservations).length);
+        console.log('✅ Available rooms:', availableIds.size);
+        console.log('📊 Occupancy summary:', Object.entries(occupancyMap).filter(([_, v]) => v === 100).length, 'occupied out of', Object.keys(occupancyMap).length);
         console.log('==================\n');
       } catch (error) {
-        console.error('Error calculating occupancy:', error);
+        console.error('❌ Error calculating occupancy:', error);
       }
     }
 
