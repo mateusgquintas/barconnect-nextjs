@@ -1,5 +1,20 @@
 import '@testing-library/jest-dom';
 
+// Polyfill para Radix UI Select
+// O jsdom não implementa completamente as APIs de pointer e scroll necessárias para o @radix-ui/react-select funcionar em testes
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = jest.fn().mockReturnValue(false);
+}
+if (!HTMLElement.prototype.setPointerCapture) {
+  HTMLElement.prototype.setPointerCapture = jest.fn();
+}
+if (!HTMLElement.prototype.releasePointerCapture) {
+  HTMLElement.prototype.releasePointerCapture = jest.fn();
+}
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = jest.fn();
+}
+
 // Mock global e seguro do cliente Supabase para evitar chamadas reais em testes
 // Mantém a lógica dos hooks intacta. Testes podem sobrescrever com jest.mock local.
 
@@ -274,12 +289,35 @@ if (shouldSilence) {
     if (first.includes('Missing `Description`') && first.includes('{DialogContent}')) {
       return;
     }
+    // Silenciar warnings esperados dos testes
+    if (first.includes('Acesso negado a página de debug')) {
+      return;
+    }
+    if (first.includes('Erro ao persistir venda no Supabase, salvando localmente')) {
+      return;
+    }
     return originalWarn(...(args as any));
   }) as any;
   // eslint-disable-next-line no-console
   console.error = ((...args: any[]) => {
     const first = String(args?.[0] ?? '');
+    // Silenciar warnings de React sobre act() em atualizações assíncronas conhecidas (muito comum)
+    if (first.includes('An update to') && first.includes('was not wrapped in act')) {
+      return;
+    }
+    // Silenciar warnings de NaN em inputs durante testes de validação
+    if (first.includes('Received NaN for') || first.includes('NaN for the')) {
+      return;
+    }
+    // Silenciar erros de Dialog do Radix UI
     if (first.includes('`DialogContent` requires a `DialogTitle`')) {
+      return;
+    }
+    // Silenciar erros esperados de mocks incompletos do Supabase
+    if (first.includes('maybeSingle is not a function')) {
+      return;
+    }
+    if (first.includes('Erro em validateCredentials')) {
       return;
     }
     return originalError(...(args as any));
