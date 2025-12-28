@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BarConnect - Sistema de Gestão",
-  description: "Sistema completo para gestão de bares e restaurantes",
+  title: "HotelConnect - Sistema de Gestão",
+  description: "Sistema completo para gestão hoteleira",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -32,16 +33,16 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BarConnect",
+    title: "HotelConnect",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "BarConnect",
-    title: "BarConnect - Sistema de Gestão",
-    description: "Sistema completo para gestão de bares e restaurantes",
+    siteName: "HotelConnect",
+    title: "HotelConnect - Sistema de Gestão",
+    description: "Sistema completo para gestão hoteleira",
   },
 };
 
@@ -63,7 +64,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="BarConnect" />
+        <meta name="apple-mobile-web-app-title" content="HotelConnect" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#667eea" />
         <meta name="msapplication-tap-highlight" content="no" />
@@ -76,6 +77,17 @@ export default function RootLayout({
             {children}
           </DateFilterProvider>
         </AuthProvider>
+        <Toaster 
+          position="top-right" 
+          richColors 
+          closeButton 
+          duration={4000}
+          toastOptions={{
+            style: {
+              fontFamily: 'var(--font-geist-sans)',
+            },
+          }}
+        />
         <SpeedInsights />
         <Analytics />
       </body>
