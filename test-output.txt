@@ -1,0 +1,2719 @@
+﻿
+> barconnect-nextjs@0.1.0 test
+> jest --passWithNoTests CreateUserDialog.comprehensive.test.tsx
+
+node.exe : FAIL __tests__/CreateUserDialog.comprehensive.test.tsx (75.204 s)
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL __tests__/....tsx (75.204 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  CreateUserDialog - Comprehensive Tests
+    Rendering & Structure
+      ÔêÜ should not render dialog when open is false (70 ms)
+      ÔêÜ should render dialog when open is true (253 ms)
+      ├ù should render dialog description (62 ms)
+      ÔêÜ should render two main sections (63 ms)
+      ÔêÜ should render all required icons (65 ms)
+    User Data Fields
+      ÔêÜ should render name input field with label and placeholder (76 ms)
+      ÔêÜ should render username input field with label, placeholder and helper text (81 ms)
+      ÔêÜ should render email input field with label, placeholder and helper text (132 ms)
+      ÔêÜ should render password input field with label and placeholder (91 ms)
+      ÔêÜ should allow typing in name field (538 ms)
+      ÔêÜ should allow typing in username field (459 ms)
+      ÔêÜ should allow typing in email field (556 ms)
+      ÔêÜ should allow typing in password field (332 ms)
+    Role Selection
+      ÔêÜ should render role selection field with label (68 ms)
+      ├ù should display "Operador" option when role selector is opened (1153 ms)
+      ├ù should display "Administrador" option when role selector is opened (1308 ms)
+      ├ù should allow selecting "Operador" role (1207 ms)
+      ├ù should allow selecting "Administrador" role (1176 ms)
+    Admin Credentials Section
+      ÔêÜ should render admin section with shield icon (45 ms)
+      ÔêÜ should render admin username field with label and placeholder (41 ms)
+      ÔêÜ should render admin password field with label and placeholder (46 ms)
+      ÔêÜ should allow typing in admin username field (410 ms)
+      ÔêÜ should allow typing in admin password field (529 ms)
+    Form Submission
+      ÔêÜ should show loading state when submitting form (2887 ms)
+      ÔêÜ should call onCreateUser with correct parameters when form is valid (3496 ms)
+      ├ù should close dialog after successful submission (4163 ms)
+      ├ù should reset form fields after successful submission (3915 ms)
+      ├ù should submit form with selected admin role (2896 ms)
+    Email Validation
+      ├ù should show error toast for invalid email format (missing @) (3977 ms)
+      ├ù should show error toast for invalid email format (missing domain) (3747 ms)
+      ÔêÜ should accept valid email format (2791 ms)
+    Required Fields Validation
+      ├ù should show error toast when name is empty (3424 ms)
+      ├ù should show error toast when username is empty (3690 ms)
+      ├ù should show error toast when admin username is empty (3690 ms)
+      ├ù should show error toast when admin password is empty (3525 ms)
+    Cancel Button
+      ÔêÜ should render cancel button (61 ms)
+      ÔêÜ should close dialog when cancel button is clicked (104 ms)
+      ÔêÜ should not call onCreateUser when cancel button is clicked (981 ms)
+    Loading State
+      ÔêÜ should disable submit button during submission (2890 ms)
+      ÔêÜ should disable cancel button during submission (2973 ms)
+    Accessibility
+      ÔêÜ should have proper labels for all form inputs (62 ms)
+      ÔêÜ should have required attributes on mandatory fields (46 ms)
+      ÔêÜ should have proper input types for security (48 ms)
+      ÔêÜ should support keyboard navigation to all interactive elements (123 ms)
+    Edge Cases
+      ÔêÜ should handle very long input values (4206 ms)
+      ÔêÜ should handle special characters in input fields (1017 ms)
+      ├ù should handle rapid button clicks (3949 ms)
+      ÔêÜ should handle empty spaces in fields (202 ms)
+    Data Integrity
+      ÔêÜ should not mutate props when form is submitted (2939 ms)
+      ÔêÜ should pass user data with correct role type (3365 ms)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Rendering & Structure ÔÇ║ should render dialog description
+
+    TestingLibraryElementError: Unable to find an element with the text: Preencha os dados do novo usu├írio e confirme com suas credenciais de administrador. 
+This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more 
+flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body[39m
+      [33mdata-scroll-locked[39m=[32m"1"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-radix-focus-guard[39m=[32m""[39m
+        [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-overlay"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-describedby[39m=[32m"radix-┬½rb┬╗"[39m
+        [33maria-labelledby[39m=[32m"radix-┬½ra┬╗"[39m
+        [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+        [33mdata-slot[39m=[32m"dialog-content"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mid[39m=[32m"radix-┬½r9┬╗"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+          [33mdata-slot[39m=[32m"dialog-header"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+            [33mdata-slot[39m=[32m"dialog-title"[39m
+            [33mid[39m=[32m"radix-┬½ra┬╗"[39m
+          [36m>[39m
+            [0mCriar Novo Usu├írio[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+            [33mdata-slot[39m=[32m"dialog-description"[39m
+            [33mid[39m=[32m"radix-┬½rb┬╗"[39m
+          [36m>[39m
+            [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+            [36m>[39m
+              [0mDados do Novo Usu├írio[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"name"[39m
+              [36m>[39m
+                [0mNome Completo[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"name"[39m
+                  [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"username"[39m
+              [36m>[39m
+                [0mNome de Usu├írio[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"username"[39m
+                  [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-slate-500"[39m
+              [36m>[39m
+                [0mIdentificador ├║nico para login (sem espa├ºos ou caracteres especiais)...
+
+    [0m [90m 86 |[39m       )[33m;[39m
+     [90m 87 |[39m
+    [31m[1m>[22m[39m[90m 88 |[39m       expect(screen[33m.[39mgetByText([32m'Preencha os dados do novo usu├írio e confirme com suas credenciais de 
+administrador'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m    |[39m                     [31m[1m^[22m[39m
+     [90m 89 |[39m     })[33m;[39m
+     [90m 90 |[39m
+     [90m 91 |[39m     it([32m'should render two main sections'[39m[33m,[39m () [33m=>[39m {[0m
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByText (__tests__/CreateUserDialog.comprehensive.test.tsx:88:21)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Role Selection ÔÇ║ should display "Operador" option when role selector is opened
+
+    Found multiple elements with the text: Operador
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mdata-slot[39m=[32m"select-value"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [0mOperador[0m
+    [36m</span>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<option[39m
+      [33mselected[39m=[32m""[39m
+      [33mvalue[39m=[32m"operator"[39m
+    [36m>[39m
+      [0mOperador[0m
+    [36m</option>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mid[39m=[32m"radix-┬½r2n┬╗"[39m
+    [36m>[39m
+      [0mOperador[0m
+    [36m</span>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body[39m
+      [33mdata-scroll-locked[39m=[32m"2"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-radix-focus-guard[39m=[32m""[39m
+        [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-overlay"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-describedby[39m=[32m"radix-┬½r2j┬╗"[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33maria-labelledby[39m=[32m"radix-┬½r2i┬╗"[39m
+        [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-content"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mid[39m=[32m"radix-┬½r2h┬╗"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+          [33mdata-slot[39m=[32m"dialog-header"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+            [33mdata-slot[39m=[32m"dialog-title"[39m
+            [33mid[39m=[32m"radix-┬½r2i┬╗"[39m
+          [36m>[39m
+            [0mCriar Novo Usu├írio[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+            [33mdata-slot[39m=[32m"dialog-description"[39m
+            [33mid[39m=[32m"radix-┬½r2j┬╗"[39m
+          [36m>[39m
+            [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+            [36m>[39m
+              [0mDados do Novo Usu├írio[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"name"[39m
+              [36m>[39m
+                [0mNome Completo[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"name"[39m
+                  [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"username"[39m
+              [36m>[39m
+                [0mNome de Usu├írio[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"username"[39m
+                  [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-slate-500"[39m
+              ...
+
+    [0m [90m 289 |[39m       [36mawait[39m user[33m.[39mclick(roleSelector)[33m;[39m
+     [90m 290 |[39m
+    [31m[1m>[22m[39m[90m 291 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 292 |[39m         expect(screen[33m.[39mgetByText([32m'Operador'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 293 |[39m       })[33m;[39m
+     [90m 294 |[39m     })[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (__tests__/CreateUserDialog.comprehensive.test.tsx:291:20)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Role Selection ÔÇ║ should display "Administrador" option when role selector is opened
+
+    Found multiple elements with the text: Administrador
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<option[39m
+      [33mvalue[39m=[32m"admin"[39m
+    [36m>[39m
+      [0mAdministrador[0m
+    [36m</option>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mid[39m=[32m"radix-┬½r30┬╗"[39m
+    [36m>[39m
+      [0mAdministrador[0m
+    [36m</span>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body[39m
+      [33mdata-scroll-locked[39m=[32m"2"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-radix-focus-guard[39m=[32m""[39m
+        [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-overlay"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-describedby[39m=[32m"radix-┬½r2r┬╗"[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33maria-labelledby[39m=[32m"radix-┬½r2q┬╗"[39m
+        [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-content"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mid[39m=[32m"radix-┬½r2p┬╗"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+          [33mdata-slot[39m=[32m"dialog-header"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+            [33mdata-slot[39m=[32m"dialog-title"[39m
+            [33mid[39m=[32m"radix-┬½r2q┬╗"[39m
+          [36m>[39m
+            [0mCriar Novo Usu├írio[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+            [33mdata-slot[39m=[32m"dialog-description"[39m
+            [33mid[39m=[32m"radix-┬½r2r┬╗"[39m
+          [36m>[39m
+            [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+            [36m>[39m
+              [0mDados do Novo Usu├írio[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"name"[39m
+              [36m>[39m
+                [0mNome Completo[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"name"[39m
+                  [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"username"[39m
+              [36m>[39m
+                [0mNome de Usu├írio[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"username"[39m
+                  [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-slate-500"[39m
+              ...
+
+    [0m [90m 306 |[39m       [36mawait[39m user[33m.[39mclick(roleSelector)[33m;[39m
+     [90m 307 |[39m
+    [31m[1m>[22m[39m[90m 308 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 309 |[39m         expect(screen[33m.[39mgetByText([32m'Administrador'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 310 |[39m       })[33m;[39m
+     [90m 311 |[39m     })[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (__tests__/CreateUserDialog.comprehensive.test.tsx:308:20)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Role Selection ÔÇ║ should allow selecting "Operador" role
+
+    Found multiple elements with the text: Operador
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mdata-slot[39m=[32m"select-value"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [0mOperador[0m
+    [36m</span>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<option[39m
+      [33mselected[39m=[32m""[39m
+      [33mvalue[39m=[32m"operator"[39m
+    [36m>[39m
+      [0mOperador[0m
+    [36m</option>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mid[39m=[32m"radix-┬½r37┬╗"[39m
+    [36m>[39m
+      [0mOperador[0m
+    [36m</span>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body[39m
+      [33mdata-scroll-locked[39m=[32m"2"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-radix-focus-guard[39m=[32m""[39m
+        [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-overlay"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-describedby[39m=[32m"radix-┬½r33┬╗"[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33maria-labelledby[39m=[32m"radix-┬½r32┬╗"[39m
+        [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-content"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mid[39m=[32m"radix-┬½r31┬╗"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+          [33mdata-slot[39m=[32m"dialog-header"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+            [33mdata-slot[39m=[32m"dialog-title"[39m
+            [33mid[39m=[32m"radix-┬½r32┬╗"[39m
+          [36m>[39m
+            [0mCriar Novo Usu├írio[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+            [33mdata-slot[39m=[32m"dialog-description"[39m
+            [33mid[39m=[32m"radix-┬½r33┬╗"[39m
+          [36m>[39m
+            [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+            [36m>[39m
+              [0mDados do Novo Usu├írio[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"name"[39m
+              [36m>[39m
+                [0mNome Completo[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"name"[39m
+                  [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"username"[39m
+              [36m>[39m
+                [0mNome de Usu├írio[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"username"[39m
+                  [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-slate-500"[39m
+              ...
+
+    [0m [90m 323 |[39m       [36mawait[39m user[33m.[39mclick(roleSelector)[33m;[39m
+     [90m 324 |[39m
+    [31m[1m>[22m[39m[90m 325 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 326 |[39m         expect(screen[33m.[39mgetByText([32m'Operador'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 327 |[39m       })[33m;[39m
+     [90m 328 |[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (__tests__/CreateUserDialog.comprehensive.test.tsx:325:20)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Role Selection ÔÇ║ should allow selecting "Administrador" role
+
+    Found multiple elements with the text: Administrador
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<option[39m
+      [33mvalue[39m=[32m"admin"[39m
+    [36m>[39m
+      [0mAdministrador[0m
+    [36m</option>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mid[39m=[32m"radix-┬½r3g┬╗"[39m
+    [36m>[39m
+      [0mAdministrador[0m
+    [36m</span>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body[39m
+      [33mdata-scroll-locked[39m=[32m"2"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-radix-focus-guard[39m=[32m""[39m
+        [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-overlay"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-describedby[39m=[32m"radix-┬½r3b┬╗"[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33maria-labelledby[39m=[32m"radix-┬½r3a┬╗"[39m
+        [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-content"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mid[39m=[32m"radix-┬½r39┬╗"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+          [33mdata-slot[39m=[32m"dialog-header"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+            [33mdata-slot[39m=[32m"dialog-title"[39m
+            [33mid[39m=[32m"radix-┬½r3a┬╗"[39m
+          [36m>[39m
+            [0mCriar Novo Usu├írio[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+            [33mdata-slot[39m=[32m"dialog-description"[39m
+            [33mid[39m=[32m"radix-┬½r3b┬╗"[39m
+          [36m>[39m
+            [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+            [36m>[39m
+              [0mDados do Novo Usu├írio[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"name"[39m
+              [36m>[39m
+                [0mNome Completo[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"name"[39m
+                  [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"username"[39m
+              [36m>[39m
+                [0mNome de Usu├írio[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"username"[39m
+                  [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-slate-500"[39m
+              ...
+
+    [0m [90m 348 |[39m       [36mawait[39m user[33m.[39mclick(roleSelector)[33m;[39m
+     [90m 349 |[39m
+    [31m[1m>[22m[39m[90m 350 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 351 |[39m         expect(screen[33m.[39mgetByText([32m'Administrador'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 352 |[39m       })[33m;[39m
+     [90m 353 |[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (__tests__/CreateUserDialog.comprehensive.test.tsx:350:20)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Form Submission ÔÇ║ should close dialog after successful submission
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: false
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r4t┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r4s┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r4r┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r4s┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r4t┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Maria Santos"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"tex...
+
+    [0m [90m 532 |[39m
+     [90m 533 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 534 |[39m         expect(mockOnOpenChange)[33m.[39mtoHaveBeenCalledWith([36mfalse[39m)[33m;[39m
+     [90m     |[39m                                  [31m[1m^[22m[39m
+     [90m 535 |[39m       })[33m;[39m
+     [90m 536 |[39m     })[33m;[39m
+     [90m 537 |[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:534:34)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Form Submission ÔÇ║ should reset form fields after successful submission
+
+    expect(element).toHaveValue()
+
+    Expected the element to have value:
+
+    Received:
+      Maria Santos
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r53┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r52┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r51┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r52┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r53┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Maria Santos"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"tex...
+
+    [0m [90m 559 |[39m
+     [90m 560 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 561 |[39m         expect(nameInput)[33m.[39mtoHaveValue([32m''[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 562 |[39m         expect(usernameInput)[33m.[39mtoHaveValue([32m''[39m)[33m;[39m
+     [90m 563 |[39m       })[33m;[39m
+     [90m 564 |[39m     })[33m;[39m[0m
+
+      at toHaveValue (__tests__/CreateUserDialog.comprehensive.test.tsx:561:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Form Submission ÔÇ║ should submit form with selected admin role
+
+    Found multiple elements with the text: Administrador
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<option[39m
+      [33mvalue[39m=[32m"admin"[39m
+    [36m>[39m
+      [0mAdministrador[0m
+    [36m</option>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<span[39m
+      [33mid[39m=[32m"radix-┬½r5e┬╗"[39m
+    [36m>[39m
+      [0mAdministrador[0m
+    [36m</span>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body[39m
+      [33mdata-scroll-locked[39m=[32m"2"[39m
+      [33mstyle[39m=[32m"pointer-events: none;"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-radix-focus-guard[39m=[32m""[39m
+        [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-overlay"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mstyle[39m=[32m"pointer-events: auto;"[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33maria-describedby[39m=[32m"radix-┬½r59┬╗"[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33maria-labelledby[39m=[32m"radix-┬½r58┬╗"[39m
+        [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+        [33mdata-aria-hidden[39m=[32m"true"[39m
+        [33mdata-slot[39m=[32m"dialog-content"[39m
+        [33mdata-state[39m=[32m"open"[39m
+        [33mid[39m=[32m"radix-┬½r57┬╗"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+          [33mdata-slot[39m=[32m"dialog-header"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+            [33mdata-slot[39m=[32m"dialog-title"[39m
+            [33mid[39m=[32m"radix-┬½r58┬╗"[39m
+          [36m>[39m
+            [0mCriar Novo Usu├írio[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+            [33mdata-slot[39m=[32m"dialog-description"[39m
+            [33mid[39m=[32m"radix-┬½r59┬╗"[39m
+          [36m>[39m
+            [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<form[39m
+          [33mclass[39m=[32m"space-y-6"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+            [36m>[39m
+              [0mDados do Novo Usu├írio[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"name"[39m
+              [36m>[39m
+                [0mNome Completo[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"name"[39m
+                  [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m"Admin User"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<label[39m
+                [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                [33mdata-slot[39m=[32m"label"[39m
+                [33mfor[39m=[32m"username"[39m
+              [36m>[39m
+                [0mNome de Usu├írio[0m
+              [36m</label>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mdata-testid[39m=[32m"user-icon"[39m
+                [36m>[39m
+                  [0mUser[0m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                  [33mdata-slot[39m=[32m"input"[39m
+                  [33mid[39m=[32m"username"[39m
+                  [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mstyle[39m=[32m"height: 40px;"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m"admin.user"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-slate-...
+
+    [0m [90m 582 |[39m       [36mconst[39m roleSelector [33m=[39m screen[33m.[39mgetByRole([32m'combobox'[39m)[33m;[39m
+     [90m 583 |[39m       [36mawait[39m user[33m.[39mclick(roleSelector)[33m;[39m
+    [31m[1m>[22m[39m[90m 584 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 585 |[39m         expect(screen[33m.[39mgetByText([32m'Administrador'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 586 |[39m       })[33m;[39m
+     [90m 587 |[39m       [36mawait[39m user[33m.[39mclick(screen[33m.[39mgetByText([32m'Administrador'[39m))[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (__tests__/CreateUserDialog.comprehensive.test.tsx:584:20)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Email Validation ÔÇ║ should show error toast for invalid email format (missing @)
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Email inv├ílido"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r5h┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r5g┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r5f┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r5g┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r5h┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Test User"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"...
+
+    [0m [90m 629 |[39m
+     [90m 630 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 631 |[39m         expect(mockError)[33m.[39mtoHaveBeenCalledWith([32m'Email inv├ílido'[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 632 |[39m       })[33m;[39m
+     [90m 633 |[39m
+     [90m 634 |[39m       expect(mockOnCreateUser)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:631:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Email Validation ÔÇ║ should show error toast for invalid email format (missing domain)
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Email inv├ílido"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r5n┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r5m┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r5l┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r5m┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r5n┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Test User"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"...
+
+    [0m [90m 655 |[39m
+     [90m 656 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 657 |[39m         expect(mockError)[33m.[39mtoHaveBeenCalledWith([32m'Email inv├ílido'[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 658 |[39m       })[33m;[39m
+     [90m 659 |[39m     })[33m;[39m
+     [90m 660 |[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:657:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Required Fields Validation ÔÇ║ should show error toast when name is empty
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Preencha todos os campos do novo usu├írio"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r63┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r62┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r61┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r62┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r63┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+        ...
+
+    [0m [90m 706 |[39m
+     [90m 707 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 708 |[39m         expect(mockError)[33m.[39mtoHaveBeenCalledWith([32m'Preencha todos os campos do novo 
+usu├írio'[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 709 |[39m       })[33m;[39m
+     [90m 710 |[39m
+     [90m 711 |[39m       expect(mockOnCreateUser)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:708:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Required Fields Validation ÔÇ║ should show error toast when username is empty
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Preencha todos os campos do novo usu├írio"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r69┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r68┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r67┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r68┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r69┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Test User"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"...
+
+    [0m [90m 732 |[39m
+     [90m 733 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 734 |[39m         expect(mockError)[33m.[39mtoHaveBeenCalledWith([32m'Preencha todos os campos do novo 
+usu├írio'[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 735 |[39m       })[33m;[39m
+     [90m 736 |[39m     })[33m;[39m
+     [90m 737 |[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:734:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Required Fields Validation ÔÇ║ should show error toast when admin username is empty
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Informe suas credenciais de administrador para confirmar"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r6f┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r6e┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r6d┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r6e┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r6f┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Test User"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"...
+
+    [0m [90m 756 |[39m
+     [90m 757 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 758 |[39m         expect(mockError)[33m.[39mtoHaveBeenCalledWith([32m'Informe suas credenciais de administrador para 
+confirmar'[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 759 |[39m       })[33m;[39m
+     [90m 760 |[39m     })[33m;[39m
+     [90m 761 |[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:758:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Required Fields Validation ÔÇ║ should show error toast when admin password is empty
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Informe suas credenciais de administrador para confirmar"
+
+    Number of calls: 0
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r6l┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r6k┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r6j┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r6k┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r6l┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Test User"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"...
+
+    [0m [90m 780 |[39m
+     [90m 781 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 782 |[39m         expect(mockError)[33m.[39mtoHaveBeenCalledWith([32m'Informe suas credenciais de administrador para 
+confirmar'[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 783 |[39m       })[33m;[39m
+     [90m 784 |[39m     })[33m;[39m
+     [90m 785 |[39m   })[33m;[39m[0m
+
+      at toHaveBeenCalledWith (__tests__/CreateUserDialog.comprehensive.test.tsx:782:27)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  ÔùÅ CreateUserDialog - Comprehensive Tests ÔÇ║ Edge Cases ÔÇ║ should handle rapid button clicks
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 2
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body[39m
+        [33mdata-scroll-locked[39m=[32m"1"[39m
+        [33mstyle[39m=[32m"pointer-events: none;"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-radix-focus-guard[39m=[32m""[39m
+          [33mstyle[39m=[32m"outline: none; opacity: 0; position: fixed; pointer-events: none;"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed 
+inset-0 z-50 bg-black/50"[39m
+          [33mdata-aria-hidden[39m=[32m"true"[39m
+          [33mdata-slot[39m=[32m"dialog-overlay"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33maria-describedby[39m=[32m"radix-┬½r8t┬╗"[39m
+          [33maria-labelledby[39m=[32m"radix-┬½r8s┬╗"[39m
+          [33mclass[39m=[32m"bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] 
+translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-[500px]"[39m
+          [33mdata-slot[39m=[32m"dialog-content"[39m
+          [33mdata-state[39m=[32m"open"[39m
+          [33mid[39m=[32m"radix-┬½r8r┬╗"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mstyle[39m=[32m"pointer-events: auto;"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col gap-2 text-center sm:text-left"[39m
+            [33mdata-slot[39m=[32m"dialog-header"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-lg leading-none font-semibold"[39m
+              [33mdata-slot[39m=[32m"dialog-title"[39m
+              [33mid[39m=[32m"radix-┬½r8s┬╗"[39m
+            [36m>[39m
+              [0mCriar Novo Usu├írio[0m
+            [36m</h2>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-muted-foreground text-sm"[39m
+              [33mdata-slot[39m=[32m"dialog-description"[39m
+              [33mid[39m=[32m"radix-┬½r8t┬╗"[39m
+            [36m>[39m
+              [0mPreencha os dados do novo usu├írio e confirme com suas credenciais de administrador.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<form[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4 border-b pb-4"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-sm font-semibold text-slate-700"[39m
+              [36m>[39m
+                [0mDados do Novo Usu├írio[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"name"[39m
+                [36m>[39m
+                  [0mNome Completo[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"name"[39m
+                    [33mplaceholder[39m=[32m"Ex: Jo├úo Silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m"Test User"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-2"[39m
+              [36m>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none 
+group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"[39m
+                  [33mdata-slot[39m=[32m"label"[39m
+                  [33mfor[39m=[32m"username"[39m
+                [36m>[39m
+                  [0mNome de Usu├írio[0m
+                [36m</label>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"relative"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mdata-testid[39m=[32m"user-icon"[39m
+                  [36m>[39m
+                    [0mUser[0m
+                  [36m</div>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none 
+file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed 
+disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 
+dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10"[39m
+                    [33mdata-slot[39m=[32m"input"[39m
+                    [33mid[39m=[32m"username"[39m
+                    [33mplaceholder[39m=[32m"Ex: joao.silva"[39m
+                    [33mrequired[39m=[32m""[39m
+                    [33mstyle[39m=[32m"height: 40px;"[39m
+                    [33mtype[39m=[32m"text"...
+
+    [0m [90m 1030 |[39m       [90m// Should only be called once due to loading state[39m
+     [90m 1031 |[39m       [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 1032 |[39m         expect(slowMockOnCreateUser)[33m.[39mtoHaveBeenCalledTimes([35m1[39m)[33m;[39m
+     [90m      |[39m                                      [31m[1m^[22m[39m
+     [90m 1033 |[39m       })[33m;[39m
+     [90m 1034 |[39m     })[33m;[39m
+     [90m 1035 |[39m[0m
+
+      at toHaveBeenCalledTimes (__tests__/CreateUserDialog.comprehensive.test.tsx:1032:38)
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+-----------------------------|---------|----------|---------|---------|-----------------------------
+File                         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s           
+-----------------------------|---------|----------|---------|---------|-----------------------------
+All files                    |    1.69 |     0.91 |    2.25 |    1.82 |                             
+ app                         |       0 |        0 |       0 |       0 |                             
+  error.tsx                  |       0 |        0 |       0 |       0 | 3-22                        
+  not-found.tsx              |       0 |      100 |       0 |       0 | 1-3                         
+ app/admin/pilgrimages       |       0 |        0 |       0 |       0 |                             
+  management.tsx             |       0 |        0 |       0 |       0 | 1-155                       
+ app/api/create-user         |       0 |        0 |       0 |       0 |                             
+  route.ts                   |       0 |        0 |       0 |       0 | 1-175                       
+ components                  |    2.21 |     1.18 |    1.81 |    2.43 |                             
+  AddItemDialog.tsx          |       0 |        0 |       0 |       0 | 2-108                       
+  ComandaDetail.tsx          |       0 |        0 |       0 |       0 | 3-79                        
+  ComandaSidebar.tsx         |       0 |        0 |       0 |       0 | 3-86                        
+  ComandasList.tsx           |       0 |        0 |       0 |       0 | 3-60                        
+  CreateUserDialog.tsx       |   63.63 |       75 |      90 |   68.62 | 34-35,41-42,46-47,58-67,161 
+  Dashboard.tsx              |       0 |        0 |       0 |       0 | 3-49                        
+  DashboardBar.tsx           |       0 |        0 |       0 |       0 | 3-441                       
+  DashboardControladoria.tsx |       0 |        0 |       0 |       0 | 3-385                       
+  DebugPageWrapper.tsx       |       0 |        0 |       0 |       0 | 3-35                        
+  EditStockDialog.tsx        |       0 |        0 |       0 |       0 | 1-87                        
+  Header.tsx                 |       0 |        0 |       0 |       0 | 3-175                       
+  HomeScreen.tsx             |       0 |        0 |       0 |       0 | 3-101                       
+  Hotel.tsx                  |       0 |        0 |       0 |       0 | 2-1300                      
+  HotelPilgrimages.tsx       |       0 |        0 |       0 |       0 | 2-769                       
+  HoverZone.tsx              |       0 |        0 |       0 |       0 | 3-93                        
+  Inventory.tsx              |       0 |        0 |       0 |       0 | 3-335                       
+  LoginScreen.tsx            |       0 |        0 |       0 |       0 | 2-117                       
+  MobileTrigger.tsx          |       0 |        0 |       0 |       0 | 3-25                        
+  NewComandaDialog.tsx       |       0 |        0 |       0 |       0 | 2-83                        
+  NewTransactionDialog.tsx   |       0 |        0 |       0 |       0 | 2-200                       
+  OrderScreen.tsx            |       0 |        0 |       0 |       0 | 2-129                       
+  PDVLayout.tsx              |       0 |        0 |       0 |       0 | 3-244                       
+  PWAStatusCard.tsx          |       0 |        0 |       0 |       0 | 3-171                       
+  PanelIndicator.tsx         |       0 |        0 |       0 |       0 | 9-10                        
+  PaymentScreen.tsx          |       0 |        0 |       0 |       0 | 3-107                       
+  ProductCatalog.tsx         |       0 |        0 |       0 |       0 | 2-681                       
+  ProductFormDialog.tsx      |       0 |        0 |       0 |       0 | 1-125                       
+  ProductInfoDialog.tsx      |       0 |        0 |       0 |       0 | 1-133                       
+  ProtectedRoute.tsx         |       0 |        0 |       0 |       0 | 1-15                        
+  ResponsiveDrawer.tsx       |       0 |        0 |       0 |       0 | 3-87                        
+  Transactions.tsx           |       0 |        0 |       0 |       0 | 2-309                       
+ components/agenda           |       0 |        0 |       0 |       0 |                             
+  CalendarEventBar.tsx       |       0 |        0 |       0 |       0 | 2-460                       
+  CalendarLegend.tsx         |       0 |      100 |       0 |       0 | 2-21                        
+  DashboardRomarias.tsx      |       0 |        0 |       0 |       0 | 2-78                        
+  DayOccupancyBar.tsx        |       0 |        0 |       0 |       0 | 1-29                        
+  DaySidebar.tsx             |       0 |        0 |       0 |       0 | 1-476                       
+  EditRomariaDialog.tsx      |       0 |        0 |       0 |       0 | 2-287                       
+  ExportAgendaPDF.tsx        |       0 |        0 |       0 |       0 | 2-234                       
+  MonthlyCalendar.tsx        |       0 |        0 |       0 |       0 | 2-185                       
+  NewBookingDialog.tsx       |       0 |        0 |       0 |       0 | 2-62                        
+  NewReservationDialog.tsx   |       0 |        0 |       0 |       0 | 2-662                       
+  PilgrimageCombobox.tsx     |       0 |        0 |       0 |       0 | 2-191                       
+  RoomSelector.tsx           |       0 |        0 |       0 |       0 | 3-166                       
+ components/figma            |       0 |        0 |       0 |       0 |                             
+  ImageWithFallback.tsx      |       0 |        0 |       0 |       0 | 3-17                        
+ components/rooms            |       0 |        0 |       0 |       0 |                             
+  RoomEditDialog.tsx         |       0 |        0 |       0 |       0 | 3-673                       
+ components/ui               |    6.92 |     5.57 |    7.52 |    7.22 |                             
+  accordion.tsx              |       0 |      100 |       0 |       0 | 3-74                        
+  alert.tsx                  |       0 |      100 |       0 |       0 | 1-73                        
+  avatar.tsx                 |       0 |      100 |       0 |       0 | 3-53                        
+  badge.tsx                  |       0 |        0 |       0 |       0 | 1-49                        
+  breadcrumb.tsx             |       0 |        0 |       0 |       0 | 1-135                       
+  button.tsx                 |    90.9 |    88.88 |     100 |     100 | 51                          
+  calendar.tsx               |       0 |        0 |       0 |       0 | 3-72                        
+  card.tsx                   |       0 |        0 |       0 |       0 | 1-117                       
+  carousel.tsx               |       0 |        0 |       0 |       0 | 3-258                       
+  chart.tsx                  |       0 |        0 |       0 |       0 | 3-405                       
+  checkbox.tsx               |       0 |      100 |       0 |       0 | 3-32                        
+  collapsible.tsx            |       0 |      100 |       0 |       0 | 3-42                        
+  command.tsx                |       0 |        0 |       0 |       0 | 3-176                       
+  dialog.tsx                 |   68.75 |      100 |      70 |   68.75 | 155,158,160-161,163         
+  drawer.tsx                 |       0 |      100 |       0 |       0 | 3-155                       
+  dropdown-menu.tsx          |       0 |        0 |       0 |       0 | 3-288                       
+  form.tsx                   |       0 |        0 |       0 |       0 | 3-196                       
+  input.tsx                  |     100 |      100 |     100 |     100 |                             
+  label.tsx                  |     100 |      100 |     100 |     100 |                             
+  menubar.tsx                |       0 |        0 |       0 |       0 | 3-299                       
+  pagination.tsx             |       0 |        0 |       0 |       0 | 1-140                       
+  popover.tsx                |       0 |        0 |       0 |       0 | 3-64                        
+  progress.tsx               |       0 |        0 |       0 |       0 | 3-33                        
+  resizable.tsx              |       0 |        0 |       0 |       0 | 3-63                        
+  scroll-area.tsx            |       0 |        0 |       0 |       0 | 3-60                        
+  select.tsx                 |   64.28 |      100 |      70 |   64.28 | 203,205-208                 
+  separator.tsx              |       0 |        0 |       0 |       0 | 3-28                        
+  sheet.tsx                  |       0 |        0 |       0 |       0 | 3-161                       
+  sidebar.tsx                |       0 |        0 |       0 |       0 | 3-799                       
+  skeleton.tsx               |       0 |      100 |       0 |       0 | 1-19                        
+  slider.tsx                 |       0 |        0 |       0 |       0 | 3-63                        
+  sonner.tsx                 |       0 |        0 |       0 |       0 | 3-25                        
+  switch.tsx                 |       0 |      100 |       0 |       0 | 3-31                        
+  table.tsx                  |       0 |      100 |       0 |       0 | 3-115                       
+  tabs.tsx                   |       0 |      100 |       0 |       0 | 3-66                        
+  textarea.tsx               |       0 |      100 |       0 |       0 | 1-18                        
+  toggle.tsx                 |       0 |      100 |       0 |       0 | 3-47                        
+  tooltip.tsx                |       0 |        0 |       0 |       0 | 3-61                        
+  use-mobile.ts              |       0 |      100 |       0 |       0 | 1-20                        
+  utils.ts                   |       0 |      100 |       0 |       0 | 1-5                         
+ hooks                       |       0 |        0 |       0 |       0 |                             
+  useAgendaDB.ts             |       0 |        0 |       0 |       0 | 1-66                        
+  useAuthProfile.ts          |       0 |        0 |       0 |       0 | 11-176                      
+  useComandasDB.ts           |       0 |        0 |       0 |       0 | 3-324                       
+  useDateFilter.ts           |       0 |        0 |       0 |       0 | 1-22                        
+  useLocalStorage.ts         |       0 |        0 |       0 |       0 | 1-44                        
+  usePWA.ts                  |       0 |        0 |       0 |       0 | 1-192                       
+  usePermissions.ts          |       0 |        0 |       0 |       0 | 3-85                        
+  usePilgrimagesDB.ts        |       0 |        0 |       0 |       0 | 1-294                       
+  useProductsDB.ts           |       0 |        0 |       0 |       0 | 3-120                       
+  useRoomsDB.ts              |       0 |        0 |       0 |       0 | 1-164                       
+  useSalesDB.ts              |       0 |        0 |       0 |       0 | 1-195                       
+  useSalesProcessor.ts       |       0 |        0 |       0 |       0 | 3-211                       
+  useStockManager.ts         |       0 |        0 |       0 |       0 | 1-28                        
+  useTransactionsDB.ts       |       0 |        0 |       0 |       0 | 3-97                        
+  useUsersDB.ts              |       0 |        0 |       0 |       0 | 1-155                       
+ lib                         |    1.65 |      0.2 |    2.67 |    1.66 |                             
+  agendaService.ts           |       0 |        0 |       0 |       0 | 2-478                       
+  authService.ts             |       0 |        0 |       0 |       0 | 16-393                      
+  cache.ts                   |   24.13 |     7.14 |   28.57 |      24 | 12-23,31-32,40-52           
+  env.ts                     |       0 |        0 |       0 |       0 | 11-44                       
+  exportRoomsToExcel.ts      |       0 |        0 |       0 |       0 | 1-205                       
+  localComandaItems.ts       |       0 |        0 |       0 |       0 | 3-25                        
+  localComandas.ts           |       0 |        0 |       0 |       0 | 4-36                        
+  salesService.ts            |       0 |        0 |       0 |       0 | 2-192                       
+  supabase-mock.ts           |       0 |        0 |       0 |       0 | 3-182                       
+  supabase.ts                |       0 |        0 |     100 |       0 | 1-43                        
+  utils.ts                   |     100 |      100 |     100 |     100 |                             
+ utils                       |       0 |        0 |       0 |       0 |                             
+  agenda.ts                  |       0 |        0 |       0 |       0 | 7-48                        
+  calculations.ts            |       0 |      100 |       0 |       0 | 2-26                        
+  constants.ts               |       0 |      100 |     100 |       0 | 3-29                        
+  dateHelpers.ts             |       0 |        0 |       0 |       0 | 10-79                       
+  exportToExcel.ts           |       0 |        0 |       0 |       0 | 2-77                        
+  format.ts                  |       0 |        0 |       0 |       0 | 3-49                        
+  logger.ts                  |       0 |        0 |       0 |       0 | 1-15                        
+  notify.ts                  |       0 |        0 |       0 |       0 | 2-72                        
+-----------------------------|---------|----------|---------|---------|-----------------------------
+Jest: "global" coverage threshold for statements (30%) not met: 1.69%
+Jest: "global" coverage threshold for branches (20%) not met: 0.91%
+Jest: "global" coverage threshold for lines (30%) not met: 1.82%
+Jest: "global" coverage threshold for functions (25%) not met: 2.25%
+Test Suites: 1 failed, 1 total
+Tests:       15 failed, 35 passed, 50 total
+Snapshots:   0 total
+Time:        83.419 s
+Ran all test suites matching CreateUserDialog.comprehensive.test.tsx.
