@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Product } from '../types';
 import { useState, useEffect, useId } from 'react';
+import { Package, DollarSign, Box, Tag, Tags, CheckCircle2 } from 'lucide-react';
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -68,34 +69,79 @@ export function ProductFormDialog({ open, onOpenChange, product, onSave, title }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-label={dialogTitleText} aria-labelledby={titleId} aria-describedby={descriptionId}>
-        <DialogHeader>
-          <DialogTitle id={titleId}>{dialogTitleText}</DialogTitle>
-          <DialogDescription id={descriptionId}>
-            Preencha os campos abaixo e clique em Salvar para {product ? 'atualizar' : 'cadastrar'} o produto.
-          </DialogDescription>
+      <DialogContent aria-label={dialogTitleText} aria-labelledby={titleId} aria-describedby={descriptionId} className="sm:max-w-lg">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+              <Package className="w-6 h-6 text-white" aria-hidden="true" />
+            </div>
+            <div>
+              <DialogTitle id={titleId} className="text-xl font-bold text-slate-900">{dialogTitleText}</DialogTitle>
+              <DialogDescription id={descriptionId} className="text-sm text-slate-600 mt-0.5">
+                Preencha os dados do produto
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
-        <form className="space-y-4 py-2" onSubmit={handleSubmit}>
+        <form className="space-y-5 pt-2" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="product-name">Nome</Label>
-            <Input id="product-name" value={form.name || ''} onChange={e => handleChange('name', e.target.value)} placeholder="Ex: Suco de Laranja" required />
+            <Label htmlFor="product-name" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-blue-600" aria-hidden="true" />
+              Nome do Produto <span className="text-red-600">*</span>
+            </Label>
+            <Input 
+              id="product-name" 
+              value={form.name || ''} 
+              onChange={e => handleChange('name', e.target.value)} 
+              placeholder="Ex: Suco de Laranja" 
+              required 
+              className="h-11 mt-2 text-base border-2 border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="product-price">Preço (R$)</Label>
-              <Input id="product-price" type="number" min="0" step="0.01" value={form.price ?? ''} onChange={e => handleChange('price', parseFloat(e.target.value))} required />
+              <Label htmlFor="product-price" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-green-600" aria-hidden="true" />
+                Preço <span className="text-red-600">*</span>
+              </Label>
+              <Input 
+                id="product-price" 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                value={form.price ?? ''} 
+                onChange={e => handleChange('price', parseFloat(e.target.value))} 
+                placeholder="0,00"
+                required 
+                className="h-11 mt-2 text-base border-2 border-slate-300 focus:border-green-500 focus:ring-green-500 transition-all font-semibold"
+              />
             </div>
             <div>
-              <Label htmlFor="product-stock">Estoque</Label>
-              <Input id="product-stock" type="number" min="0" value={form.stock ?? ''} onChange={e => handleChange('stock', parseInt(e.target.value))} required />
+              <Label htmlFor="product-stock" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Box className="w-4 h-4 text-orange-600" aria-hidden="true" />
+                Estoque <span className="text-red-600">*</span>
+              </Label>
+              <Input 
+                id="product-stock" 
+                type="number" 
+                min="0" 
+                value={form.stock ?? ''} 
+                onChange={e => handleChange('stock', parseInt(e.target.value))} 
+                placeholder="0"
+                required 
+                className="h-11 mt-2 text-base border-2 border-slate-300 focus:border-orange-500 focus:ring-orange-500 transition-all font-semibold"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="product-category">Categoria Principal</Label>
+              <Label htmlFor="product-category" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Tags className="w-4 h-4 text-purple-600" aria-hidden="true" />
+                Categoria
+              </Label>
               <select
                 id="product-category"
-                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                className="mt-2 h-11 file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex w-full min-w-0 rounded-md border-2 border-slate-300 px-3 py-1 text-base bg-white transition-all outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-purple-500 focus-visible:ring-purple-500 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive font-semibold"
                 value={form.category ?? ''}
                 onChange={e => handleChange('category', e.target.value)}
               >
@@ -106,10 +152,13 @@ export function ProductFormDialog({ open, onOpenChange, product, onSave, title }
               </select>
             </div>
             <div>
-              <Label htmlFor="product-subcategory">Subcategoria</Label>
+              <Label htmlFor="product-subcategory" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Tags className="w-4 h-4 text-purple-600" aria-hidden="true" />
+                Subcategoria
+              </Label>
               <select
                 id="product-subcategory"
-                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                className="mt-2 h-11 file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex w-full min-w-0 rounded-md border-2 border-slate-300 px-3 py-1 text-base bg-white transition-all outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-purple-500 focus-visible:ring-purple-500 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive font-semibold"
                 value={form.subcategory ?? ''}
                 onChange={e => handleChange('subcategory', e.target.value)}
                 disabled={!form.category}
@@ -121,9 +170,22 @@ export function ProductFormDialog({ open, onOpenChange, product, onSave, title }
               </select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Salvar</Button>
+          <DialogFooter className="gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={() => onOpenChange(false)}
+              className="flex-1 h-11 text-base font-bold border-2 hover:bg-slate-50 transition-all"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              className="flex-1 h-11 text-base font-bold bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+              Salvar Produto
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
