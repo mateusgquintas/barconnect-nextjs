@@ -1,10 +1,9 @@
 'use client'
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Search, Pencil, ShoppingCart, Loader2, Package } from 'lucide-react';
+import { Plus, Search, Pencil, ShoppingCart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Skeleton } from './ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
@@ -13,33 +12,6 @@ import { Textarea } from './ui/textarea';
 import { Product } from '@/types';
 
 import { useProductsDB } from '@/hooks/useProductsDB';
-
-// Helper para formatação de moeda
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-};
-
-// Skeleton para loading de products
-function ProductCardSkeleton() {
-  return (
-    <Card className="p-4 flex flex-col">
-      <div className="flex-1 mb-3">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <Skeleton className="h-5 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-16" />
-          </div>
-          <Skeleton className="h-6 w-14" />
-        </div>
-        <Skeleton className="h-4 w-20" />
-      </div>
-      <Skeleton className="h-10 w-full" />
-    </Card>
-  );
-}
 
 interface ProductCatalogProps {
   onAddProduct: (product: Product) => void;
@@ -315,74 +287,55 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
 
       {isSearching ? (
         <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4 min-h-0">
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
-              <ProductCardSkeleton />
-            </div>
-          ) : searchResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                <Search className="w-10 h-10 text-slate-400" aria-hidden="true" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Nenhum produto encontrado</h3>
-              <p className="text-sm text-slate-500 max-w-sm">
-                Tente buscar com outro termo ou navegue pelas categorias
-              </p>
+          {searchResults.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <p>Nenhum produto encontrado</p>
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-medium text-slate-600">
-                  <span className="text-lg font-bold text-slate-900">{searchResults.length}</span> {searchResults.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
-                </p>
-              </div>
+              <p className="text-sm text-slate-500 mb-4">{searchResults.length} produto(s) encontrado(s)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {searchResults.map((product: Product) => (
-                  <Card key={product.id} className={`p-4 flex flex-col shadow-sm hover:shadow-md transition-all ${getProductBorderColor(product)} bg-white`}>
+                  <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
                     <div className="flex-1 mb-3">
                       <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold text-slate-900 mb-1 truncate">{product.name}</h4>
+                        <div>
+                          <h4 className="text-slate-900">{product.name}</h4>
                           {getSubcategoryLabel(product.subcategory) && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSubcategoryColor(product.subcategory)} inline-block`}>
+                            <span className={`text-xs px-2 py-1 rounded-full ${getSubcategoryColor(product.subcategory)} mt-1 inline-block`}>
                               {getSubcategoryLabel(product.subcategory)}
                             </span>
                           )}
                         </div>
-                        <span className={`text-xs font-bold px-2 py-1 rounded-md ml-2 flex-shrink-0 ${
-                          product.stock === 0 ? 'bg-red-100 text-red-700 border border-red-200' :
-                          product.stock <= 20 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                          product.stock <= 50 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                          'bg-green-100 text-green-700 border border-green-200'
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          product.stock <= 20 ? 'bg-red-100 text-red-600' :
+                          product.stock <= 50 ? 'bg-orange-100 text-orange-600' :
+                          'bg-green-100 text-green-600'
                         }`}>
-                          {product.stock}
+                          {product.stock} un.
                         </span>
                       </div>
-                      <p className="text-lg font-bold text-slate-900 mt-2">{formatCurrency(product.price)}</p>
+                      <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        className="flex-1 gap-2 font-semibold"
-                        variant={product.stock === 0 ? 'outline' : 'default'}
+                        className="flex-1 gap-2"
+                        variant="default"
                         onClick={() => onAddProduct(product)}
                         disabled={product.stock === 0}
-                        aria-label={`Adicionar ${product.name} ao pedido`}
                       >
-                        <Plus className="w-4 h-4" aria-hidden="true" />
+                        <Plus className="w-4 h-4" />
                         {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
                       </Button>
                       {user?.role === 'admin' && currentView === 'inventory' && (
                         <Button
                           size="icon"
                           variant="outline"
-                          className="border-slate-300 hover:bg-slate-50"
+                          className="border-slate-300"
                           onClick={() => openEditProductDialog(product)}
-                          aria-label={`Editar ${product.name}`}
+                          aria-label="Editar produto"
                         >
-                          <Pencil className="w-4 h-4 text-slate-500" aria-hidden="true" />
+                          <Pencil className="w-4 h-4 text-slate-500" />
                         </Button>
                       )}
                     </div>
@@ -442,61 +395,52 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                         return (
                           <div key={group.subcategory}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                              {loading ? (
-                                <>
-                                  <ProductCardSkeleton />
-                                  <ProductCardSkeleton />
-                                </> 
-                              ) : (
-                                filtered.map((product: Product) => (
-                                  <Card key={product.id} className={`p-4 flex flex-col shadow-sm hover:shadow-md transition-all ${getProductBorderColor(product)} bg-white`}>
-                                    <div className="flex-1 mb-3">
-                                      <div className="flex items-start justify-between mb-2">
-                                        <div className="flex-1 min-w-0">
-                                          <h4 className="text-sm font-bold text-slate-900 mb-1 truncate">{product.name}</h4>
-                                          {getSubcategoryLabel(product.subcategory) && (
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSubcategoryColor(product.subcategory)} inline-block`}>
-                                              {getSubcategoryLabel(product.subcategory)}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-md ml-2 flex-shrink-0 ${
-                                          product.stock === 0 ? 'bg-red-100 text-red-700 border border-red-200' :
-                                          product.stock <= 20 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                          product.stock <= 50 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                                          'bg-green-100 text-green-700 border border-green-200'
-                                        }`}>
-                                          {product.stock}
-                                        </span>
+                              {filtered.map((product: Product) => (
+                                <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
+                                  <div className="flex-1 mb-3">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div>
+                                        <h4 className="text-slate-900">{product.name}</h4>
+                                        {getSubcategoryLabel(product.subcategory) && (
+                                          <span className={`text-xs px-2 py-1 rounded-full ${getSubcategoryColor(product.subcategory)} mt-1 inline-block`}>
+                                            {getSubcategoryLabel(product.subcategory)}
+                                          </span>
+                                        )}
                                       </div>
-                                      <p className="text-lg font-bold text-slate-900 mt-2">{formatCurrency(product.price)}</p>
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        product.stock <= 20 ? 'bg-red-100 text-red-600' :
+                                        product.stock <= 50 ? 'bg-orange-100 text-orange-600' :
+                                        'bg-green-100 text-green-600'
+                                      }`}>
+                                        {product.stock} un.
+                                      </span>
                                     </div>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        className="flex-1 gap-2 font-semibold"
-                                        variant={product.stock === 0 ? 'outline' : 'default'}
-                                        onClick={() => onAddProduct(product)}
-                                        disabled={product.stock === 0}
-                                        aria-label={`Adicionar ${product.name} ao pedido`}
+                                    <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      className="flex-1 gap-2"
+                                      variant="default"
+                                      onClick={() => onAddProduct(product)}
+                                      disabled={product.stock === 0}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
+                                    </Button>
+                                    {user?.role === 'admin' && currentView === 'inventory' && (
+                                      <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="border-slate-300"
+                                        onClick={() => openEditProductDialog(product)}
+                                        aria-label="Editar produto"
                                       >
-                                        <Plus className="w-4 h-4" aria-hidden="true" />
-                                        {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
+                                        <Pencil className="w-4 h-4 text-slate-500" />
                                       </Button>
-                                      {user?.role === 'admin' && currentView === 'inventory' && (
-                                        <Button
-                                          size="icon"
-                                          variant="outline"
-                                          className="border-slate-300 hover:bg-slate-50"
-                                          onClick={() => openEditProductDialog(product)}
-                                          aria-label={`Editar ${product.name}`}
-                                        >
-                                          <Pencil className="w-4 h-4 text-slate-500" aria-hidden="true" />
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </Card>
-                                ))
-                              )}
+                                    )}
+                                  </div>
+                                </Card>
+                              ))}
                             </div>
                           </div>
                         );
@@ -504,15 +448,12 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                     
                     {/* Se não houver produtos cadastrados como "outros", mostrar aviso */}
                     {productsByCategory[cat].length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 text-center bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-                        <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4">
-                          <Package className="w-8 h-8 text-slate-400" aria-hidden="true" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                          Nenhum produto cadastrado
-                        </h3>
-                        <p className="text-sm text-slate-600 mb-4 max-w-md">
-                          Não há produtos cadastrados na categoria "Outros". Use o botão acima para adicionar itens com preço personalizado.
+                      <div className="text-center py-8">
+                        <p className="text-slate-500 mb-4">
+                          Nenhum produto cadastrado na categoria "Outros".
+                        </p>
+                        <p className="text-slate-400 text-sm">
+                          Use o botão acima para adicionar itens com preço personalizado.
                         </p>
                       </div>
                     )}
@@ -527,63 +468,52 @@ export default function ProductCatalog({ onAddProduct, currentView }: ProductCat
                           <div key={group.subcategory}>
                             {/* Cabeçalho de subgrupo removido; manter apenas badges nos cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                              {loading ? (
-                                <>
-                                  <ProductCardSkeleton />
-                                  <ProductCardSkeleton />
-                                  <ProductCardSkeleton />
-                                  <ProductCardSkeleton />
-                                </>
-                              ) : (
-                                filtered.map((product: Product) => (
-                                  <Card key={product.id} className={`p-4 flex flex-col shadow-sm hover:shadow-md transition-all ${getProductBorderColor(product)} bg-white`}>
-                                    <div className="flex-1 mb-3">
-                                      <div className="flex items-start justify-between mb-2">
-                                        <div className="flex-1 min-w-0">
-                                          <h4 className="text-sm font-bold text-slate-900 mb-1 truncate">{product.name}</h4>
-                                          {getSubcategoryLabel(product.subcategory) && (
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSubcategoryColor(product.subcategory)} inline-block`}>
-                                              {getSubcategoryLabel(product.subcategory)}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-md ml-2 flex-shrink-0 ${
-                                          product.stock === 0 ? 'bg-red-100 text-red-700 border border-red-200' :
-                                          product.stock <= 20 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                          product.stock <= 50 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                                          'bg-green-100 text-green-700 border border-green-200'
-                                        }`}>
-                                          {product.stock}
-                                        </span>
+                              {filtered.map((product: Product) => (
+                                <Card key={product.id} className={`p-4 flex flex-col ${getProductBorderColor(product)}`}>
+                                  <div className="flex-1 mb-3">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div>
+                                        <h4 className="text-slate-900">{product.name}</h4>
+                                        {getSubcategoryLabel(product.subcategory) && (
+                                          <span className={`text-xs px-2 py-1 rounded-full ${getSubcategoryColor(product.subcategory)} mt-1 inline-block`}>
+                                            {getSubcategoryLabel(product.subcategory)}
+                                          </span>
+                                        )}
                                       </div>
-                                      <p className="text-lg font-bold text-slate-900 mt-2">{formatCurrency(product.price)}</p>
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        product.stock <= 20 ? 'bg-red-100 text-red-600' :
+                                        product.stock <= 50 ? 'bg-orange-100 text-orange-600' :
+                                        'bg-green-100 text-green-600'
+                                      }`}>
+                                        {product.stock} un.
+                                      </span>
                                     </div>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        className="flex-1 gap-2 font-semibold"
-                                        variant={product.stock === 0 ? 'outline' : 'default'}
-                                        onClick={() => onAddProduct(product)}
-                                        disabled={product.stock === 0}
-                                        aria-label={`Adicionar ${product.name} ao pedido`}
+                                    <p className="text-slate-600">R$ {product.price.toFixed(2)}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      className="flex-1 gap-2"
+                                      variant="default"
+                                      onClick={() => onAddProduct(product)}
+                                      disabled={product.stock === 0}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
+                                    </Button>
+                                    {user?.role === 'admin' && currentView === 'inventory' && (
+                                      <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="border-slate-300"
+                                        onClick={() => openEditProductDialog(product)}
+                                        aria-label="Editar produto"
                                       >
-                                        <Plus className="w-4 h-4" aria-hidden="true" />
-                                        {product.stock === 0 ? 'Sem Estoque' : 'Adicionar'}
+                                        <Pencil className="w-4 h-4 text-slate-500" />
                                       </Button>
-                                      {user?.role === 'admin' && currentView === 'inventory' && (
-                                        <Button
-                                          size="icon"
-                                          variant="outline"
-                                          className="border-slate-300 hover:bg-slate-50"
-                                          onClick={() => openEditProductDialog(product)}
-                                          aria-label={`Editar ${product.name}`}
-                                        >
-                                          <Pencil className="w-4 h-4 text-slate-500" aria-hidden="true" />
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </Card>
-                                ))
-                              )}
+                                    )}
+                                  </div>
+                                </Card>
+                              ))}
                             </div>
                           </div>
                         );
