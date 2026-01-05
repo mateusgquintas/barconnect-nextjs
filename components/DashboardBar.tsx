@@ -5,7 +5,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { logger } from '@/utils/logger';
-import { TrendingUp, ShoppingCart, DollarSign, Calendar, Search, Gift, Eye, ArrowUpRight, Loader2 } from 'lucide-react';
+import { TrendingUp, ShoppingCart, DollarSign, Calendar, Search, Gift, Eye, ArrowUpRight, Loader2, CreditCard, Smartphone } from 'lucide-react';
 import { Comanda, Transaction, SaleRecord, PaymentMethod } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Skeleton } from './ui/skeleton';
@@ -533,10 +533,6 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
                         {formatCurrency(item.product.price * item.quantity)}
                       </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
                   ))}
                 </div>
               </div>
