@@ -5,14 +5,39 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { logger } from '@/utils/logger';
-import { TrendingUp, ShoppingCart, DollarSign, Calendar, Search, Gift, Eye } from 'lucide-react';
+import { TrendingUp, ShoppingCart, DollarSign, Calendar, Search, Gift, Eye, ArrowUpRight, Loader2 } from 'lucide-react';
 import { Comanda, Transaction, SaleRecord, PaymentMethod } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Skeleton } from './ui/skeleton';
 
 interface DashboardBarProps {
   transactions: Transaction[];
   comandas: Comanda[];
   salesRecords: SaleRecord[];
+}
+
+// Formatador de moeda brasileira
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+};
+
+// Skeleton Loading para cards
+function CardSkeleton() {
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-3 mb-3">
+        <Skeleton className="w-14 h-14 rounded-xl" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-32" />
+        </div>
+      </div>
+      <Skeleton className="h-4 w-28" />
+    </Card>
+  );
 }
 
 export function DashboardBar({ transactions, comandas, salesRecords }: DashboardBarProps) {
@@ -24,6 +49,7 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
   const [endDate, setEndDate] = useState(lastDayOfMonth.toISOString().split('T')[0]);
   const [searchComanda, setSearchComanda] = useState('');
   const [selectedSale, setSelectedSale] = useState<SaleRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Debug logs para verificar dados
   logger.debug('📊 DashboardBar - Dados recebidos:', {
@@ -180,155 +206,197 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
     <>
       {/* Placeholder de loading para testes */}
       <div data-testid="placeholder-loading" className="hidden" />
-  <div className="flex-1 overflow-y-auto p-8 transition-all">
-        {/* Filtros de Data */}
-  <div className="mb-6 flex items-center gap-4">
+      
+      <div className="flex-1 overflow-y-auto p-6 md:p-8 transition-all bg-slate-50">
+        {/* Filtros de Data - Responsivo */}
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-slate-600" />
-            <span className="text-sm text-slate-600">Período:</span>
+            <Calendar className="w-5 h-5 text-slate-600" aria-hidden="true" />
+            <span className="text-sm font-medium text-slate-700">Período:</span>
           </div>
-          <div className="flex flex-col">
-            <label htmlFor="bar-start-date" className="sr-only">Data de início do período</label>
-            <Input
-              id="bar-start-date"
-              type="date"
-              value={startDate}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
-              className="w-40"
-              aria-label="Data de início do período"
-            />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1">
+            <div className="flex flex-col w-full sm:w-auto">
+              <label htmlFor="bar-start-date" className="sr-only">Data de início do período</label>
+              <Input
+                id="bar-start-date"
+                type="date"
+                value={startDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+                className="w-full sm:w-40 h-10"
+                aria-label="Data de início do período"
+              />
+            </div>
+            <span className="text-slate-600 hidden sm:inline">até</span>
+            <div className="flex flex-col w-full sm:w-auto">
+              <label htmlFor="bar-end-date" className="sr-only">Data de fim do período</label>
+              <Input
+                id="bar-end-date"
+                type="date"
+                value={endDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+                className="w-full sm:w-40 h-10"
+                aria-label="Data de fim do período"
+              />
+            </div>
           </div>
-          <span className="text-slate-600">até</span>
-          <div className="flex flex-col">
-            <label htmlFor="bar-end-date" className="sr-only">Data de fim do período</label>
-            <Input
-              id="bar-end-date"
-              type="date"
-              value={endDate}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
-              className="w-40"
-              aria-label="Data de fim do período"
-            />
-          </div>
-          <Button type="button" className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white">Aplicar</Button>
         </div>
 
-        {/* Cards de Resumo */}
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Receita Total</p>
-                <p className="text-2xl text-slate-900">R$ {totalRevenue.toFixed(2)}</p>
-              </div>
-            </div>
-            <p className="text-sm text-green-600">Vendas do período</p>
-          </Card>
+        {/* Cards de Resumo - Responsivo com Loading */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+          {isLoading ? (
+            <>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </>
+          ) : (
+            <>
+              {/* Card Receita Total - Destaque */}
+              <Card className="p-6 border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-green-50/30">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                      <DollarSign className="w-7 h-7 text-white" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Receita Total</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">{formatCurrency(totalRevenue)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                  <p className="text-sm font-medium text-green-700">Vendas confirmadas</p>
+                  <ArrowUpRight className="w-4 h-4 text-green-600" aria-hidden="true" />
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                <ShoppingCart className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Comandas</p>
-                <p className="text-2xl text-slate-900">{totalSales}</p>
-              </div>
-            </div>
-            <p className="text-sm text-blue-600">{comandasAbertas.length} comandas abertas</p>
-          </Card>
+              {/* Card Comandas */}
+              <Card className="p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                      <ShoppingCart className="w-7 h-7 text-white" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Vendas</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">{totalSales}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                  <p className="text-sm font-medium text-blue-700">{comandasAbertas.length} comandas abertas</p>
+                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold">
+                    {comandasAbertas.length}
+                  </span>
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Ticket Médio</p>
-                <p className="text-2xl text-slate-900">R$ {ticketMedio.toFixed(2)}</p>
-              </div>
-            </div>
-            <p className="text-sm text-purple-600">Por venda</p>
-          </Card>
+              {/* Card Ticket Médio */}
+              <Card className="p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                      <TrendingUp className="w-7 h-7 text-white" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Ticket Médio</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">{formatCurrency(ticketMedio)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                  <p className="text-sm font-medium text-purple-700">Por venda</p>
+                  <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-semibold">
+                    Média
+                  </span>
+                </div>
+              </Card>
+            </>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Últimas Vendas */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-900">Últimas vendas</h3>
-              <div className="relative flex-1 max-w-xs ml-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Card className="p-6 shadow-md">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              <h3 className="text-lg font-bold text-slate-900">Últimas Vendas</h3>
+              <div className="relative w-full sm:flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
                 <Input
                   placeholder="Buscar por número ou nome..."
                   value={searchComanda}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchComanda(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-10"
+                  aria-label="Buscar vendas"
                 />
               </div>
             </div>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {filteredComandas.map((comanda) => (
-                <div
-                  key={comanda.id}
-                  className="p-3 rounded-lg border bg-white border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
-                  onClick={() => comanda.saleRecord && setSelectedSale(comanda.saleRecord)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-900">
-                          {comanda.number > 0 ? `#${comanda.number}` : 'Venda Direta'}
-                        </span>
-                        {comanda.customer && (
-                          <span className="text-sm text-slate-600">- {comanda.customer}</span>
-                        )}
-                        {comanda.saleRecord && (
-                          <Eye className="w-4 h-4 text-slate-400 ml-auto" />
-                        )}
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+              {filteredComandas.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-8">Nenhuma venda encontrada</p>
+              ) : (
+                filteredComandas.map((comanda) => (
+                  <div
+                    key={comanda.id}
+                    className="p-3 rounded-lg border bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all"
+                    onClick={() => comanda.saleRecord && setSelectedSale(comanda.saleRecord)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver detalhes da ${comanda.number > 0 ? `comanda ${comanda.number}` : 'venda direta'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-slate-900">
+                            {comanda.number > 0 ? `#${comanda.number}` : 'Venda Direta'}
+                          </span>
+                          {comanda.customer && (
+                            <span className="text-sm text-slate-600 truncate">- {comanda.customer}</span>
+                          )}
+                          {comanda.saleRecord && (
+                            <Eye className="w-4 h-4 text-slate-400 ml-auto flex-shrink-0" aria-hidden="true" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <span className="text-xs text-slate-500">
+                            {comanda.saleRecord && comanda.saleRecord.date
+                              ? `${comanda.saleRecord.date} ${comanda.time}`
+                              : comanda.time}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                            Fechada
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm text-slate-500">
-                          {comanda.saleRecord && comanda.saleRecord.date
-                            ? `${comanda.saleRecord.date} ${comanda.time}`
-                            : comanda.time}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                          Fechada
-                        </span>
+                      <div className="text-right ml-3 flex-shrink-0">
+                        <p className="font-bold text-slate-900">{formatCurrency(comanda.total)}</p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-slate-900">R$ {comanda.total.toFixed(2)}</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
 
           {/* Produtos Mais Vendidos */}
-          <Card className="p-6">
-            <h3 className="mb-4 text-slate-900">Produtos Mais Vendidos</h3>
+          <Card className="p-6 shadow-md">
+            <h3 className="mb-4 text-lg font-bold text-slate-900">Produtos Mais Vendidos</h3>
             <div className="space-y-3">
               {topProducts.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">Nenhuma venda no período</p>
+                <p className="text-sm text-slate-400 text-center py-8">Nenhuma venda no período</p>
               ) : (
                 topProducts.map((product, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-sm text-slate-600">
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
                         {index + 1}
                       </div>
-                      <div>
-                        <p className="text-sm text-slate-900">{product.name}</p>
-                        <p className="text-xs text-slate-500">{product.quantity} vendidos</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{product.name}</p>
+                        <p className="text-xs text-slate-600 font-medium">{product.quantity} vendidos</p>
                       </div>
                     </div>
-                    <p className="text-sm text-slate-900">R$ {product.revenue.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-slate-900 ml-3 flex-shrink-0">{formatCurrency(product.revenue)}</p>
                   </div>
                 ))
               )}
@@ -336,64 +404,80 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
           </Card>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Métodos de Pagamento */}
-          <Card className="p-6">
-            <h3 className="mb-4 text-slate-900">Métodos de Pagamento</h3>
+          <Card className="p-6 shadow-md">
+            <h3 className="mb-4 text-lg font-bold text-slate-900">Métodos de Pagamento</h3>
             <div className="space-y-3">
               {Object.entries(paymentMethods)
                 .filter(([_, data]) => data.count > 0)
                 .sort(([, a], [, b]) => b.total - a.total)
                 .map(([method, data]) => (
-                  <div key={method} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-900">{methodNames[method as PaymentMethod]}</p>
-                      <p className="text-xs text-slate-500">{data.count} transações</p>
+                  <div key={method} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        method === 'cash' ? 'bg-green-100' :
+                        method === 'card' ? 'bg-blue-100' :
+                        method === 'pix' ? 'bg-purple-100' : 'bg-slate-100'
+                      }`}>
+                        {method === 'cash' && <DollarSign className="w-5 h-5 text-green-600" aria-hidden="true" />}
+                        {method === 'card' && <CreditCard className="w-5 h-5 text-blue-600" aria-hidden="true" />}
+                        {method === 'pix' && <Smartphone className="w-5 h-5 text-purple-600" aria-hidden="true" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{methodNames[method as PaymentMethod]}</p>
+                        <p className="text-xs text-slate-600 font-medium">{data.count} transações</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-900">R$ {data.total.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-slate-900 flex-shrink-0">{formatCurrency(data.total)}</p>
                   </div>
                 ))
               }
               {Object.values(paymentMethods).every(m => m.count === 0) && (
-                <p className="text-sm text-slate-400 text-center py-4">Nenhuma venda no período</p>
+                <p className="text-sm text-slate-400 text-center py-8">Nenhuma venda no período</p>
               )}
             </div>
           </Card>
 
           {/* Cortesias */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Gift className="w-5 h-5 text-purple-600" />
-              <h3 className="text-slate-900">Cortesias</h3>
+          <Card className="p-6 border-l-4 border-l-purple-500 bg-gradient-to-br from-white to-purple-50/30 shadow-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                <Gift className="w-6 h-6 text-white" aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Cortesias</h3>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-purple-100/50 rounded-lg border border-purple-200">
                 <div>
-                  <p className="text-sm text-slate-600">Total em Cortesias</p>
-                  <p className="text-2xl text-purple-600">R$ {totalCourtesy.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-slate-600">Total em Cortesias</p>
+                  <p className="text-3xl font-bold text-purple-700">{formatCurrency(totalCourtesy)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-slate-600">Quantidade</p>
-                  <p className="text-xl text-slate-900">{courtesiesInPeriod.length}</p>
+                  <p className="text-sm font-medium text-slate-600">Quantidade</p>
+                  <p className="text-2xl font-bold text-slate-900">{courtesiesInPeriod.length}</p>
                 </div>
               </div>
-              <div className="max-h-40 overflow-y-auto space-y-2">
+              <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
                 {courtesiesInPeriod.length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-4">Nenhuma cortesia no período</p>
+                  <p className="text-sm text-slate-400 text-center py-8">Nenhuma cortesia no período</p>
                 ) : (
                   courtesiesInPeriod.map(courtesy => (
                     <div
                       key={courtesy.id}
-                      className="flex items-center justify-between p-2 bg-white rounded border border-purple-100 cursor-pointer hover:bg-purple-50"
+                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-purple-100 cursor-pointer hover:bg-purple-50 hover:border-purple-200 transition-all"
                       onClick={() => setSelectedSale(courtesy)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ver detalhes da cortesia ${courtesy.isDirectSale ? 'venda direta' : `comanda ${courtesy.comandaNumber}`}`}
                     >
-                      <div className="flex-1">
-                        <p className="text-sm text-slate-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900">
                           {courtesy.isDirectSale ? 'Venda Direta' : `#${courtesy.comandaNumber}`}
                         </p>
-                        <p className="text-xs text-slate-500">{courtesy.time}</p>
+                        <p className="text-xs text-slate-600 font-medium">{courtesy.time}</p>
                       </div>
-                      <p className="text-sm text-slate-900">R$ {courtesy.total.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-slate-900 flex-shrink-0">{formatCurrency(courtesy.total)}</p>
                     </div>
                   ))
                 )}
@@ -405,57 +489,61 @@ export function DashboardBar({ transactions, comandas, salesRecords }: Dashboard
 
       {/* Dialog de Detalhes */}
       <Dialog open={selectedSale !== null} onOpenChange={() => setSelectedSale(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-bold text-slate-900">
               {selectedSale?.isDirectSale ? 'Venda Direta' : `Comanda #${selectedSale?.comandaNumber}`}
             </DialogTitle>
           </DialogHeader>
           {selectedSale && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-lg border border-slate-200">
                 <div>
-                  <p className="text-sm text-slate-600">Data</p>
-                  <p className="text-slate-900">{selectedSale.date}</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Data</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedSale.date}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">Horário</p>
-                  <p className="text-slate-900">{selectedSale.time}</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Horário</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedSale.time}</p>
                 </div>
                 {selectedSale.customerName && (
                   <div>
-                    <p className="text-sm text-slate-600">Cliente</p>
-                    <p className="text-slate-900">{selectedSale.customerName}</p>
+                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Cliente</p>
+                    <p className="text-sm font-medium text-slate-900">{selectedSale.customerName}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-slate-600">Pagamento</p>
-                  <p className="text-slate-900">{methodNames[selectedSale.paymentMethod]}</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Pagamento</p>
+                  <p className="text-sm font-medium text-slate-900">{methodNames[selectedSale.paymentMethod]}</p>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-slate-900 mb-3">Itens do Pedido</h4>
+                <h4 className="text-lg font-bold text-slate-900 mb-4">Itens do Pedido</h4>
                 <div className="space-y-2">
                   {selectedSale.items.map((item, index) => (
-                    <div key={index} className="flex justify-between p-3 bg-white border border-slate-200 rounded-lg">
-                      <div>
-                        <p className="text-slate-900">{item.product.name}</p>
-                        <p className="text-sm text-slate-500">
-                          {item.quantity}x R$ {item.product.price.toFixed(2)}
+                    <div key={index} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-900">{item.product.name}</p>
+                        <p className="text-xs text-slate-600 mt-1 font-medium">
+                          {item.quantity}x {formatCurrency(item.product.price)}
                         </p>
                       </div>
-                      <p className="text-slate-900">
-                        R$ {(item.product.price * item.quantity).toFixed(2)}
+                      <p className="text-sm font-bold text-slate-900">
+                        {formatCurrency(item.product.price * item.quantity)}
                       </p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="pt-4 border-t flex justify-between items-center">
-                <h3 className="text-slate-900">Total</h3>
-                <p className="text-2xl text-slate-900">R$ {selectedSale.total.toFixed(2)}</p>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-5 border-t-2 border-slate-200 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900">Total da Venda</h3>
+                <p className="text-3xl font-bold text-slate-900">{formatCurrency(selectedSale.total)}</p>
               </div>
             </div>
           )}
