@@ -19,6 +19,15 @@ import {
   SelectValue,
 } from "./ui/select";
 import { toast } from "sonner";
+import { ArrowDownCircle, ArrowUpCircle, DollarSign, FileText, Tag, CheckCircle2 } from 'lucide-react';
+
+// Helper para formatação de moeda
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+};
 
 interface NewTransactionDialogProps {
   open: boolean;
@@ -135,38 +144,59 @@ export function NewTransactionDialog({
 
   return (
   <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {type === "income" ? "Nova Entrada" : "Nova Saída"}
-          </DialogTitle>
-          <DialogDescription>
-            {type === "income"
-              ? "Registre uma nova entrada financeira"
-              : "Registre uma nova saída financeira"}
-          </DialogDescription>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg ${
+              type === 'income' 
+                ? 'bg-gradient-to-br from-green-600 to-green-700' 
+                : 'bg-gradient-to-br from-red-600 to-red-700'
+            }`}>
+              {type === 'income' ? (
+                <ArrowDownCircle className="w-6 h-6 text-white" aria-hidden="true" />
+              ) : (
+                <ArrowUpCircle className="w-6 h-6 text-white" aria-hidden="true" />
+              )}
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-bold text-slate-900">
+                {type === "income" ? "Nova Entrada" : "Nova Saída"}
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-600 mt-0.5">
+                {type === "income"
+                  ? "Registre uma receita"
+                  : "Registre uma despesa"}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-  <form onSubmit={handleSubmit} noValidate>
+  <form onSubmit={handleSubmit} noValidate className="space-y-5 pt-2">
           {formError && (
             <div role="alert" className="sr-only">{formError}</div>
           )}
-          <div className="space-y-4 py-4">
+          <div className="space-y-5">
             <div>
-              <Label htmlFor="description">Descrição</Label>
+              <Label htmlFor="description" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600" aria-hidden="true" />
+                Descrição <span className="text-red-600">*</span>
+              </Label>
               <Input
                 id="description"
                 value={description}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
-                placeholder="Digite a descrição"
-                className="mt-2"
+                placeholder="Ex: Venda de produtos"
+                className="mt-2 h-11 text-base border-2 border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
                 disabled={isSubmitting}
                 required
               />
             </div>
 
             <div>
-              <Label id="category-label" htmlFor="category-select-trigger">Categoria</Label>
+              <Label id="category-label" htmlFor="category-select-trigger" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-purple-600" aria-hidden="true" />
+                Categoria
+              </Label>
               <Select
                 value={category}
                 onValueChange={setCategory}
@@ -174,14 +204,14 @@ export function NewTransactionDialog({
               >
                 <SelectTrigger
                   id="category-select-trigger"
-                  className="mt-2"
+                  className="mt-2 h-11 text-base border-2 border-slate-300 focus:border-purple-500 transition-all"
                   aria-labelledby="category-label"
                 >
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+                    <SelectItem key={cat} value={cat} className="text-base">
                       {cat}
                     </SelectItem>
                   ))}
@@ -190,7 +220,12 @@ export function NewTransactionDialog({
             </div>
 
             <div>
-              <Label htmlFor="amount">Valor (R$)</Label>
+              <Label htmlFor="amount" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <DollarSign className={`w-4 h-4 ${
+                  type === 'income' ? 'text-green-600' : 'text-red-600'
+                }`} aria-hidden="true" />
+                Valor <span className="text-red-600">*</span>
+              </Label>
               <Input
                 id="amount"
                 type="number"
@@ -198,8 +233,12 @@ export function NewTransactionDialog({
                 min="0"
                 value={amount === null || amount === undefined ? '' : amount}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="mt-2"
+                placeholder="0,00"
+                className={`mt-2 h-11 text-base font-semibold border-2 transition-all ${
+                  type === 'income' 
+                    ? 'border-slate-300 focus:border-green-500 focus:ring-green-500' 
+                    : 'border-slate-300 focus:border-red-500 focus:ring-red-500'
+                }`}
                 aria-describedby="amount-help"
                 disabled={isSubmitting}
                 role="textbox"
@@ -210,25 +249,27 @@ export function NewTransactionDialog({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isSubmitting}
+              className="flex-1 h-11 text-base font-bold border-2 hover:bg-slate-50 transition-all"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className={
+              className={`flex-1 h-11 text-base font-bold text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 ${
                 type === "income"
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
-              }
+              }`}
               aria-label="Salvar"
               disabled={isSubmitting}
             >
+              <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
               {type === "income"
                 ? "Registrar Entrada"
                 : "Registrar Saída"}
