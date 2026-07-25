@@ -19,30 +19,22 @@ interface Props {
   totalRooms: number;
 }
 
-// Helper para pegar datas de uma romaria (compatível com occurrences)
-const getPilgrimageDates = (p: PilgrimageType) => {
-  const arrivalDate = p.arrivalDate || p.occurrences?.[0]?.arrivalDate;
-  const departureDate = p.departureDate || p.occurrences?.[0]?.departureDate;
-  return { arrivalDate, departureDate };
-};
-
 export function DashboardRomarias({ month, reservations, pilgrimages, totalRooms }: Props) {
-  // Filtrar romarias ativas no mês
+  // Filtrar ocorrências (vindas) de romarias ativas no mês — cada ocorrência tem seu próprio
+  // número de pessoas, já que o mesmo grupo pode voltar com tamanhos diferentes.
   const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
   const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59);
-  
-  const activePilgrimages = pilgrimages.filter(p => {
-    const { arrivalDate, departureDate } = getPilgrimageDates(p);
-    if (!arrivalDate || !departureDate) return false;
-    if (p.status === 'cancelled') return false;
-    const arrival = new Date(arrivalDate);
-    const departure = new Date(departureDate);
-    return arrival <= monthEnd && departure >= monthStart;
-  });
+
+  const monthOccurrences = pilgrimages.flatMap(p =>
+    (p.occurrences || [])
+      .filter(o => o.status !== 'cancelled')
+      .filter(o => new Date(o.arrivalDate) <= monthEnd && new Date(o.departureDate) >= monthStart)
+      .map(o => ({ pilgrimage: p, occurrence: o }))
+  );
 
   // Calcular estatísticas
-  const totalPilgrimages = activePilgrimages.length;
-  const totalPeople = activePilgrimages.reduce((sum, p) => sum + (p.numberOfPeople || 0), 0);
+  const totalPilgrimages = new Set(monthOccurrences.map(x => x.pilgrimage.id)).size;
+  const totalPeople = monthOccurrences.reduce((sum, x) => sum + (x.occurrence.numberOfPeople || 0), 0);
   
   // Contar quartos ocupados por romarias
   const pilgrimageRoomIds = new Set(
@@ -60,7 +52,7 @@ export function DashboardRomarias({ month, reservations, pilgrimages, totalRooms
     const occupied = reservations.filter(r => {
       return r.status !== 'cancelled' && r.check_in_date <= dateStr && r.check_out_date > dateStr;
     }).length;
-    totalOccupancy += (occupied / totalRooms) * 100;
+    totalOccupancy += totalRooms > 0 ? (occupied / totalRooms) * 100 : 0;
   }
   const avgOccupancy = Math.round(totalOccupancy / daysInMonth);
 
@@ -72,7 +64,7 @@ export function DashboardRomarias({ month, reservations, pilgrimages, totalRooms
     const occupied = reservations.filter(r => {
       return r.status !== 'cancelled' && r.check_in_date <= dateStr && r.check_out_date > dateStr;
     }).length;
-    const occupancyPercent = (occupied / totalRooms) * 100;
+    const occupancyPercent = totalRooms > 0 ? (occupied / totalRooms) * 100 : 0;
     if (occupancyPercent > peakOccupancy) {
       peakOccupancy = occupancyPercent;
       peakDay = new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });

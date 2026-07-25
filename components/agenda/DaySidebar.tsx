@@ -16,6 +16,9 @@ interface RoomReservation {
   customer_name?: string;
   pilgrimage_id?: string;
   notes?: string | null;
+  number_of_people?: number | null;
+  total_value?: number | null;
+  occurrence_id?: string | null;
 }
 
 interface Room {
@@ -71,16 +74,19 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
     return r.check_in_date <= dateStr && r.check_out_date > dateStr;
   });
 
-  // Agrupa reservas por romaria
-  const pilgrimageGroups = new Map<string, RoomReservation[]>();
+  // Agrupa reservas por romaria. Usa occurrence_id (a vinda específica) quando disponível —
+  // agrupar só por pilgrimage_id misturaria quartos de vindas diferentes da mesma romaria caso
+  // elas coincidissem no mesmo dia (ex: check-out de uma vinda e check-in de outra).
+  const pilgrimageGroups = new Map<string, { pilgrimageId: string; reservations: RoomReservation[] }>();
   const individualReservations: RoomReservation[] = [];
 
   dayReservations.forEach(r => {
     if (r.pilgrimage_id) {
-      if (!pilgrimageGroups.has(r.pilgrimage_id)) {
-        pilgrimageGroups.set(r.pilgrimage_id, []);
+      const key = r.occurrence_id ? `occurrence-${r.occurrence_id}` : `pilgrimage-${r.pilgrimage_id}`;
+      if (!pilgrimageGroups.has(key)) {
+        pilgrimageGroups.set(key, { pilgrimageId: r.pilgrimage_id, reservations: [] });
       }
-      pilgrimageGroups.get(r.pilgrimage_id)!.push(r);
+      pilgrimageGroups.get(key)!.reservations.push(r);
     } else {
       individualReservations.push(r);
     }
@@ -232,7 +238,7 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
           ) : (
             <div className="space-y-4">
               {/* ROMARIAS AGRUPADAS */}
-              {Array.from(pilgrimageGroups.entries()).map(([pilgrimageId, reserves]) => {
+              {Array.from(pilgrimageGroups.entries()).map(([groupKey, { pilgrimageId, reservations: reserves }]) => {
                 const pilgrimage = getPilgrimageById(pilgrimageId);
                 if (!pilgrimage) return null;
                 
@@ -241,14 +247,12 @@ export function DaySidebar({ date, reservations, rooms, pilgrimages, onClose, on
                   return room?.number || r.room_id;
                 }).join(', ');
                 
-                // Calcular total de pessoas baseado nas notas das reservas
-                const totalPeople = reserves.reduce((sum, r) => {
-                  const count = extractPeopleCount(r.notes);
-                  return sum + (count || 0);
-                }, 0);
+                // Soma o número de pessoas gravado em cada linha (mesma fonte que a Agenda e o
+                // card de detalhe usam), em vez de tentar extrair um número do texto de notas.
+                const totalPeople = reserves.reduce((sum, r) => sum + (r.number_of_people || 0), 0);
 
                 return (
-                  <div key={pilgrimageId} className="p-4 bg-purple-50 rounded-lg border-2 border-purple-300 space-y-3">
+                  <div key={groupKey} className="p-4 bg-purple-50 rounded-lg border-2 border-purple-300 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">

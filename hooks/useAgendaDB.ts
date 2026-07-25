@@ -9,7 +9,10 @@ export interface RoomReservation {
   check_out_date: string;
   customer_name?: string;
   pilgrimage_id?: string;
+  occurrence_id?: string | null;
   notes?: string | null;
+  total_value?: number | null;
+  number_of_people?: number | null;
 }
 
 export function useAgendaDB(month: number, year: number) {

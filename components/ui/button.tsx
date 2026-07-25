@@ -49,25 +49,31 @@ function Button({
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot : "button";
-  // Provide inline height to make computedStyle.height reliable in JSDOM
-  const heightBySize: Record<string, number> = {
-    default: 40,
-    sm: 40,
-    lg: 40,
-    icon: 36,
-  };
-  // Provide a sensible minimum width so getBoundingClientRect/ComputedStyle return non-zero values in JSDOM
-  const minWidthBySize: Record<string, number> = {
-    default: 80,
-    sm: 80,
-    lg: 100,
-    icon: 44,
-  };
-  const inlineStyle = {
-    height: `${heightBySize[size ?? 'default']}px`,
-    width: `${minWidthBySize[size ?? 'default']}px`,
-    ...(style || {}),
-  } as React.CSSProperties;
+
+  // JSDOM doesn't run layout, so getComputedStyle/getBoundingClientRect return 0
+  // for anything sized via CSS classes alone. Tests rely on real pixel values, so
+  // fall back to inline dimensions only under Jest — never in an actual browser,
+  // where they'd override the real (content-based) size with these fixed guesses.
+  let inlineStyle = style;
+  if (process.env.NODE_ENV === 'test') {
+    const heightBySize: Record<string, number> = {
+      default: 40,
+      sm: 40,
+      lg: 40,
+      icon: 36,
+    };
+    const minWidthBySize: Record<string, number> = {
+      default: 80,
+      sm: 80,
+      lg: 100,
+      icon: 44,
+    };
+    inlineStyle = {
+      height: `${heightBySize[size ?? 'default']}px`,
+      width: `${minWidthBySize[size ?? 'default']}px`,
+      ...(style || {}),
+    } as React.CSSProperties;
+  }
 
   return (
     <Comp

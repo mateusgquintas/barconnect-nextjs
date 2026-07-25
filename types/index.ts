@@ -5,6 +5,7 @@ export interface Product {
   stock: number;
   category?: string;
   subcategory?: string;
+  min_stock?: number;
 }
 
 export interface OrderItem {
@@ -53,6 +54,8 @@ export interface PilgrimageOccurrence {
   pilgrimageId: string;                          // Referência à romaria
   arrivalDate: string;                           // Data de chegada desta ocorrência
   departureDate: string;                         // Data de saída desta ocorrência
+  numberOfPeople: number;                        // Número de pessoas NESTA vinda (varia a cada ocorrência)
+  numberOfBuses?: number;                        // Número de ônibus NESTA vinda
   status: 'scheduled' | 'active' | 'completed' | 'cancelled'; // Status desta ocorrência
   notes?: string;                                // Observações específicas desta ocorrência
   createdAt?: string;
@@ -61,24 +64,30 @@ export interface PilgrimageOccurrence {
 
 export interface Pilgrimage {
   id: string;
-  name: string;              // Ex: "Romaria Aparecida 2025"
-  numberOfPeople: number;    // Número de pessoas
+  name: string;              // Ex: "Romaria Aparecida" — grupo único, reutilizado a cada vinda
   busGroup: string;          // Ex: "Ônibus 1 - Aparecida"
   contactPhone?: string;     // Telefone de contato do responsável
-  status?: 'active' | 'completed' | 'cancelled'; // Status da romaria
+  status?: 'active' | 'completed' | 'cancelled'; // Status da romaria (calculado a partir das ocorrências)
+  origin?: string;           // Cidade/região de origem da romaria
   notes?: string;            // Observações gerais
-  
-  // NOVO: Múltiplas ocorrências/datas
+  // Canal de aquisição padrão desta romaria (agenciador, booking, motorista, chefe_romaria, direto).
+  // Usado para pré-preencher o canal automaticamente na Agenda e no Faturamento por Canal,
+  // já que romarias recorrentes normalmente sempre chegam pelo mesmo canal.
+  defaultChannel?: 'agenciador' | 'booking' | 'motorista' | 'chefe_romaria' | 'direto';
+
+  // Múltiplas ocorrências/datas: cada vinda do grupo, com seu próprio número de pessoas
   occurrences: PilgrimageOccurrence[];
-  
-  // DEPRECATED: Mantido para compatibilidade (use occurrences[0])
+
+  // DEPRECATED: mantido apenas por compatibilidade com dados antigos; não usar em código novo
+  numberOfPeople?: number;   // @deprecated Use occurrences[i].numberOfPeople
   arrivalDate?: string;      // @deprecated Use occurrences array
   departureDate?: string;    // @deprecated Use occurrences array
 }
 
 // Tipo helper para forms que ainda usam o modelo antigo (single date)
-export type PilgrimageFormData = Omit<Pilgrimage, 'id' | 'occurrences'> & {
+export type PilgrimageFormData = Omit<Pilgrimage, 'id' | 'occurrences' | 'numberOfPeople'> & {
   arrivalDate: string;
   departureDate: string;
+  numberOfPeople: number; // pessoas da PRIMEIRA ocorrência sendo criada/editada
   occurrences?: PilgrimageOccurrence[]; // Opcional para compatibilidade
 };

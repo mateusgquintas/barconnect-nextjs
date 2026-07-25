@@ -229,10 +229,10 @@ export function PilgrimageCombobox({
                             {new Date(displayOccurrence.departureDate).toLocaleDateString('pt-BR')}
                           </span>
                         )}
-                        {pilgrimage.numberOfPeople && (
+                        {(displayOccurrence as any).numberOfPeople != null && (
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {pilgrimage.numberOfPeople} pessoas
+                            {(displayOccurrence as any).numberOfPeople} pessoas
                           </span>
                         )}
                       </div>

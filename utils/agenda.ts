@@ -47,3 +47,16 @@ export function isRoomOccupiedOnDate(
 export function clampToDay(date: Date): Date {
   const d = new Date(date); d.setHours(0,0,0,0); return d;
 }
+
+/**
+ * Retorna a data local (YYYY-MM-DD) de um Date, sem conversão para UTC.
+ * Usar SEMPRE que precisar do "dia de hoje" no fuso local — `date.toISOString().slice(0,10)`
+ * converte para UTC primeiro, o que pode retornar o dia errado dependendo do horário/fuso
+ * (ex: 23h de um dia no Brasil já é o dia seguinte em UTC).
+ */
+export function getLocalDateStr(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}

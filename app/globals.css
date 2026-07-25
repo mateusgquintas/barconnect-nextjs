@@ -195,6 +195,11 @@ html {
   font-size: var(--font-size);
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Ensure base typography metrics are measurable in JSDOM */
 p, span, button, input, label {
   line-height: 1.5;

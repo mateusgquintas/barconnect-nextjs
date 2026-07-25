@@ -49,7 +49,7 @@ export default function PilgrimagesManagement() {
       name: pilgrimage.name,
       arrivalDate: pilgrimage.arrivalDate || pilgrimage.occurrences?.[0]?.arrivalDate || '',
       departureDate: pilgrimage.departureDate || pilgrimage.occurrences?.[0]?.departureDate || '',
-      numberOfPeople: pilgrimage.numberOfPeople,
+      numberOfPeople: pilgrimage.numberOfPeople ?? 0,
       busGroup: pilgrimage.busGroup,
     });
     setEditingId(pilgrimage.id);

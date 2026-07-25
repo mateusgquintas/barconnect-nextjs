@@ -6,9 +6,7 @@ import { ResponsiveDrawer } from '@/components/ResponsiveDrawer';
 import { HoverZone, SidePanelHoverHandler } from '@/components/HoverZone';
 import { MobileTrigger } from '@/components/MobileTrigger';
 import { PanelIndicator } from '@/components/PanelIndicator';
-import { ComandaSidebar } from '@/components/ComandaSidebar';
 import { ComandaDetail } from '@/components/ComandaDetail';
-import { Button } from '@/components/ui/button';
 import ProductCatalog from '@/components/ProductCatalog';
 import { Comanda, OrderItem } from '@/types';
 import { UserRole } from '@/types/user';
@@ -24,10 +22,7 @@ const formatCurrency = (value: number): string => {
 
 interface PDVLayoutProps {
   // Comandas props
-  comandas: Comanda[];
   selectedComandaId: string | null;
-  onSelectComanda: (comanda: Comanda) => void;
-  onCloseComanda: (comandaId: string) => void;
   userRole: UserRole;
 
   // Venda direta props  
@@ -49,10 +44,7 @@ interface PDVLayoutProps {
 }
 
 export function PDVLayout({
-  comandas,
   selectedComandaId,
-  onSelectComanda,
-  onCloseComanda,
   userRole,
   isDirectSale,
   directSaleItems,
@@ -66,12 +58,11 @@ export function PDVLayout({
   onRemoveItemFromComanda,
   onCheckout,
 }: PDVLayoutProps) {
-  const { 
-    setCanOpenRightPanel, 
-    isRightPanelFixed, 
+  const {
+    setCanOpenRightPanel,
+    isRightPanelFixed,
     setRightPanelFixed,
-    isLeftPanelOpen,
-    isRightPanelOpen 
+    isRightPanelOpen
   } = useSidePanels();
 
   // Atualizar se o painel direito pode abrir baseado no estado atual
@@ -90,37 +81,17 @@ export function PDVLayout({
   return (
     <div className="flex-1 flex overflow-hidden min-h-0 relative">
       {/* Indicadores visuais dos painéis */}
-      <PanelIndicator 
-        side="left" 
-        isActive={isLeftPanelOpen} 
-        isVisible={!isLeftPanelOpen && comandas.length > 0} 
-      />
-      <PanelIndicator 
-        side="right" 
-        isActive={isRightPanelOpen || isRightPanelFixed} 
-        isVisible={!isRightPanelFixed && hasRightPanelContent && !isRightPanelOpen} 
+      <PanelIndicator
+        side="right"
+        isActive={isRightPanelOpen || isRightPanelFixed}
+        isVisible={!isRightPanelFixed && hasRightPanelContent && !isRightPanelOpen}
       />
 
-      {/* Hot zones para desktop - só esquerda se painel direito estiver fixo */}
-      <HoverZone side="left" />
+      {/* Hot zone para desktop, quando painel direito não estiver fixo */}
       {!isRightPanelFixed && <HoverZone side="right" />}
 
-      {/* Triggers para mobile */}
-      <MobileTrigger side="left" />
+      {/* Trigger para mobile, quando painel direito não estiver fixo */}
       {!isRightPanelFixed && <MobileTrigger side="right" />}
-
-      {/* Painel esquerdo: Comandas */}
-      <ResponsiveDrawer side="left" title="Comandas Abertas">
-        <SidePanelHoverHandler side="left">
-          <ComandaSidebar
-            comandas={comandas}
-            selectedComandaId={selectedComandaId}
-            onSelectComanda={onSelectComanda}
-            onCloseComanda={onCloseComanda}
-            userRole={userRole}
-          />
-        </SidePanelHoverHandler>
-      </ResponsiveDrawer>
 
       {/* Área central: Catálogo de produtos */}
       <div className="flex-1 bg-white overflow-hidden min-h-0">
@@ -352,13 +323,9 @@ function EmptyPanel() {
       </div>
       <h3 className="text-xl font-bold text-slate-900 mb-3">Nenhuma comanda selecionada</h3>
       <p className="text-sm text-slate-600 max-w-xs mb-6 leading-relaxed">
-        Selecione uma comanda existente no painel esquerdo ou adicione produtos ao catálogo para iniciar uma nova venda direta.
+        Adicione produtos do catálogo ao carrinho para iniciar uma nova venda direta.
       </p>
       <div className="flex flex-col gap-2 text-xs text-slate-500">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          <span>Comandas abertas aparecem à esquerda</span>
-        </div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
           <span>Produtos podem ser adicionados ao centro</span>

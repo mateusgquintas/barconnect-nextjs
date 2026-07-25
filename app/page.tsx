@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { SidePanelsProvider, useSidePanels } from "@/contexts/SidePanelsContext";
-import { Header, PageView } from "@/components/Header";
+import { Sidebar, PageView } from "@/components/Sidebar";
 import { ComandaSidebar } from "@/components/ComandaSidebar";
 import { ComandaDetail } from "@/components/ComandaDetail";
 import ProductCatalog from "@/components/ProductCatalog";
@@ -15,7 +15,13 @@ import { Hotel } from "@/components/Hotel";
 import { HotelPilgrimages } from "@/components/HotelPilgrimages";
 import AgendaPage from "@/app/hotel/agenda/page";
 import { Inventory } from "@/components/Inventory";
-import { Transactions } from "@/components/Transactions";
+import { FinanceControladoria } from "@/components/FinanceControladoria";
+import { FaturamentoPorCanal } from "@/components/FaturamentoPorCanal";
+import { CashFlow } from "@/components/CashFlow";
+import { DashboardGeral } from "@/components/DashboardGeral";
+import { FinancialReports } from "@/components/FinancialReports";
+import { Processes } from "@/components/Processes";
+import { Team } from "@/components/Team";
 import { LoginScreen } from "@/components/LoginScreen";
 import { ResponsiveDrawer } from "@/components/ResponsiveDrawer";
 import { HoverZone, SidePanelHoverHandler } from "@/components/HoverZone";
@@ -46,7 +52,7 @@ export default function Home() {
   // Hooks do Supabase
   const { comandas, loading: loadingComandas, createComanda, addItemToComanda, removeItem, closeComanda, deleteComanda, refetch: refetchComandas } = useComandasDB();
   const { products } = useProductsDB();
-  const { transactions, addTransaction, refetch: refetchTransactions } = useTransactionsDB();
+  const { transactions, refetch: refetchTransactions } = useTransactionsDB();
   const { decreaseStock } = useStockManager();
   
   // Vendas agora usam Supabase
@@ -301,6 +307,12 @@ export default function Home() {
 
   const renderContent = () => {
     switch (currentView) {
+      case "dashboard-geral":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <DashboardGeral />
+          </ProtectedRoute>
+        );
       case "dashboard":
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
@@ -331,6 +343,12 @@ export default function Home() {
             <HotelPilgrimages />
           </ProtectedRoute>
         );
+      case "financial-reports":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <FinancialReports />
+          </ProtectedRoute>
+        );
       case "inventory":
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
@@ -340,13 +358,31 @@ export default function Home() {
       case "transactions":
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
-            <Transactions
-              transactions={transactions}
-              salesRecords={salesRecords}
-              onAddTransaction={addTransaction}
-              startDate={new Date().toISOString().split('T')[0]}
-              endDate={new Date().toISOString().split('T')[0]}
-            />
+            <CashFlow />
+          </ProtectedRoute>
+        );
+      case "controladoria-financeira":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <FinanceControladoria />
+          </ProtectedRoute>
+        );
+      case "faturamento-canal":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <FaturamentoPorCanal />
+          </ProtectedRoute>
+        );
+      case "sops":
+        return (
+          <ProtectedRoute allowedRoles={["admin", "operator"]}>
+            <Processes />
+          </ProtectedRoute>
+        );
+      case "team":
+        return (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Team />
           </ProtectedRoute>
         );
       case "pdv":
@@ -354,10 +390,7 @@ export default function Home() {
         return (
           <ProtectedRoute allowedRoles={["admin", "operator"]}>
             <PDVLayout
-              comandas={comandas}
               selectedComandaId={selectedComandaId}
-              onSelectComanda={handleSelectComanda}
-              onCloseComanda={handleCloseComanda}
               onAddProduct={handleAddProduct}
               isDirectSale={isDirectSale}
               directSaleItems={directSaleItems}
@@ -378,11 +411,8 @@ export default function Home() {
 
   return (
     <SidePanelsProvider>
-      <div className="h-screen flex flex-col bg-slate-100">
-      <Header
-        onNewComanda={handleNewComanda}
-        onDirectSale={handleDirectSale}
-        onQuickComanda={handleQuickComanda}
+      <div className="h-screen flex bg-slate-100">
+      <Sidebar
         currentView={currentView}
         onViewChange={setCurrentView}
         dashboardView={dashboardView}
@@ -392,7 +422,9 @@ export default function Home() {
         onLogout={handleLogout}
       />
 
-      {renderContent()}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {renderContent()}
+      </div>
 
       {showPayment && (
         <PaymentScreen

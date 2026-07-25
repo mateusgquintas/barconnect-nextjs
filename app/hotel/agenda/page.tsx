@@ -2,12 +2,18 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { MonthlyCalendar } from '@/components/agenda/MonthlyCalendar';
+import { WeeklyCalendar } from '@/components/agenda/WeeklyCalendar';
 import { NewReservationDialog } from '@/components/agenda/NewReservationDialog';
+import { EditReservationDialog } from '@/components/agenda/EditReservationDialog';
 import { DaySidebar } from '@/components/agenda/DaySidebar';
 import { DashboardRomarias } from '@/components/agenda/DashboardRomarias';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Filter, X, AlertCircle, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Calendar, Filter, X, AlertCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { cancelRoomReservation, syncOccurrenceCancellation } from '@/lib/agendaService';
 // Defer heavy PDF export component to improve initial UI responsiveness
 const ExportAgendaPDF = dynamic(() => import('@/components/agenda/ExportAgendaPDF').then(m => m.ExportAgendaPDF), {
   ssr: false,
@@ -18,14 +24,16 @@ import { useAgendaDB } from '@/hooks/useAgendaDB';
 import { usePilgrimagesDB } from '@/hooks/usePilgrimagesDB';
 import { useRoomsDB } from '@/hooks/useRoomsDB';
 import * as agendaService from '@/lib/agendaService';
-import { DayOccupancyBar } from '@/components/agenda/DayOccupancyBar';
 import { CalendarLegend } from '@/components/agenda/CalendarLegend';
 
 export default function AgendaPage() {
   const [month, setMonth] = React.useState(() => new Date());
+  const [viewMode, setViewMode] = React.useState<'month' | 'week'>('month');
   const [selected, setSelected] = React.useState<Date | null>(null);
   const [open, setOpen] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [editingReservation, setEditingReservation] = React.useState<any | null>(null);
+  const [showEditReservation, setShowEditReservation] = React.useState(false);
   const [filterPilgrimage, setFilterPilgrimage] = React.useState<string>('all');
   const [filterStatus, setFilterStatus] = React.useState<string>('all');
   const { reservations, loading, error, refetch } = useAgendaDB(month.getMonth() + 1, month.getFullYear());
@@ -68,17 +76,40 @@ export default function AgendaPage() {
     } catch {}
   }, [filterStatus, filterPilgrimage]);
 
-  // Filtrar reservas
+  // Filtrar reservas por romaria. O filtro de status é aplicado depois, numa segunda etapa,
+  // porque "pendente/confirmada" não é um valor gravado em room_reservations.status — é
+  // calculado a partir do valor em aberto (ver statusFilteredReservations mais abaixo).
   const filteredReservations = React.useMemo(() => {
-    return reservations.filter(r => {
-      if (filterPilgrimage !== 'all' && r.pilgrimage_id !== filterPilgrimage) return false;
-      if (filterStatus !== 'all' && r.status !== filterStatus) return false;
-      return true;
+    return reservations.filter(r => filterPilgrimage === 'all' || r.pilgrimage_id === filterPilgrimage);
+  }, [reservations, filterPilgrimage]);
+
+  // "Em aberto" é calculado dinamicamente (total − parcelas já pagas), não gravado fixo na reserva.
+  const [openAmountByReservation, setOpenAmountByReservation] = React.useState<Record<string, number>>({});
+  React.useEffect(() => {
+    const ids = filteredReservations.map(r => r.id);
+    if (ids.length === 0) { setOpenAmountByReservation({}); return; }
+    agendaService.getOpenAmountsByReservation(ids)
+      .then(setOpenAmountByReservation)
+      .catch(err => console.error('Erro ao calcular valores em aberto:', err));
+  }, [filteredReservations]);
+
+  // Filtro de status da Agenda: só Pendente / Confirmada / Cancelada (check-in/check-out são
+  // conceito da Gestão de Quartos, não daqui). Pendente = ainda tem valor em aberto; Confirmada
+  // = sem pendência bloqueante; Cancelada = reserva cancelada.
+  const statusFilteredReservations = React.useMemo(() => {
+    if (filterStatus === 'all') return filteredReservations;
+    return filteredReservations.filter(r => {
+      if (r.status === 'cancelled') return filterStatus === 'cancelled';
+      const open = openAmountByReservation[r.id] ?? (r.total_value || 0);
+      const computed = open > 0 ? 'pending' : 'confirmed';
+      return computed === filterStatus;
     });
-  }, [reservations, filterPilgrimage, filterStatus]);
+  }, [filteredReservations, filterStatus, openAmountByReservation]);
 
   function prevMonth() { const d = new Date(month); d.setMonth(d.getMonth()-1); setMonth(d); }
   function nextMonth() { const d = new Date(month); d.setMonth(d.getMonth()+1); setMonth(d); }
+  function prevWeek() { const d = new Date(month); d.setDate(d.getDate()-7); setMonth(d); }
+  function nextWeek() { const d = new Date(month); d.setDate(d.getDate()+7); setMonth(d); }
 
   function dayKey(d: Date) {
     const y = d.getFullYear();
@@ -87,38 +118,54 @@ export default function AgendaPage() {
     return `${y}-${m}-${day}`;
   }
 
-  const renderBadge = React.useCallback((d: Date) => {
-    // Mostra contadores de quartos e pessoas na segunda linha com legendas
-    const key = d.toISOString().slice(0,10);
-    const data = occupancy[key];
-    
-    if (!data || (data.occupied === 0 && data.occupiedPeople === 0)) return null;
-    
-    return (
-      <div className="flex items-center justify-between gap-2 w-full text-[10px] font-semibold">
-        {/* Quartos - alinhado à esquerda */}
-        <span className="text-blue-700 tabular-nums" aria-label={`${data.occupied} de ${data.total} quartos reservados`}>
-          {data.occupied}/{data.total} <span className="text-slate-500 font-normal">Quartos</span>
-        </span>
-        
-        {/* Pessoas - alinhado à direita */}
-        <span className="text-purple-700 tabular-nums" aria-label={`${data.occupiedPeople} de ${data.totalPeople} pessoas`}>
-          {data.occupiedPeople}/{data.totalPeople} <span className="text-slate-500 font-normal">Pessoas</span>
-        </span>
-      </div>
-    );
-  }, [occupancy]);
-
-  const renderOccupancyBar = React.useCallback((d: Date) => {
-    const key = d.toISOString().slice(0,10);
-    const data = occupancy[key];
-    if (!data || data.percent === 0) return null;
-    return <DayOccupancyBar percent={data.percent} occupied={data.occupied} total={data.total} />;
-  }, [occupancy]);
 
   function handleOpenDialog(date: Date) {
     setSelected(date);
     setOpen(true);
+  }
+
+  function handleEditReservation(reservation: any) {
+    setEditingReservation(reservation);
+    setShowEditReservation(true);
+  }
+
+  // Chamar window.confirm() a partir do menu "..." do popover de detalhe fecha o Radix Popover
+  // como efeito colateral (ele trata a interação com o confirm() nativo do navegador como um
+  // clique fora do popover), então o cancelamento nunca chegava a acontecer. Usamos um diálogo
+  // in-app em vez disso — mesmo padrão já aplicado ao aviso de capacidade da Nova Reserva.
+  const [cancelTarget, setCancelTarget] = React.useState<any | null>(null);
+  // Uma romaria com vários quartos vira várias linhas em room_reservations. Cancelar precisa
+  // encerrar todas elas — senão os quartos restantes continuam ocupados e a reserva parece
+  // "não ter sido cancelada" (a barra continua aparecendo na agenda).
+  const [cancelTargetIds, setCancelTargetIds] = React.useState<string[]>([]);
+  const [cancelling, setCancelling] = React.useState(false);
+
+  function handleCancelReservation(reservation: any, allIds?: string[]) {
+    setCancelTarget(reservation);
+    setCancelTargetIds(allIds && allIds.length > 0 ? allIds : [reservation.id]);
+  }
+
+  async function confirmCancelReservation() {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      await Promise.all(cancelTargetIds.map(id => cancelRoomReservation(id)));
+      await syncOccurrenceCancellation(cancelTarget.occurrence_id);
+      notifySuccess('Reserva cancelada!');
+      setCancelTarget(null);
+      setCancelTargetIds([]);
+      refetch?.();
+    } catch (err) {
+      notifyError('Erro ao cancelar reserva', err as any);
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  async function handleSaveEditedReservation(id: string, updates: any) {
+    const { error } = await supabase.from('room_reservations').update(updates).eq('id', id);
+    if (!error) refetch?.();
+    return !error;
   }
 
   function handleSuccess() {
@@ -131,7 +178,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex-1 min-h-0 overflow-y-auto bg-slate-50">
       {/* Header Profissional */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-[1600px] mx-auto px-6 py-5">
@@ -151,43 +198,6 @@ export default function AgendaPage() {
                   </p>
                 </div>
               </div>
-
-              {/* Navegação de Mês */}
-              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={prevMonth}
-                  disabled={loading}
-                  className="h-8 px-3 hover:bg-white hover:shadow-sm"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <div className="px-4 text-sm font-medium text-slate-700 min-w-[140px] text-center capitalize">
-                  {month.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={nextMonth}
-                  disabled={loading}
-                  className="h-8 px-3 hover:bg-white hover:shadow-sm"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Ações */}
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => setOpen(true)}
-                disabled={loading}
-                className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm hover:shadow-md transition-all"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Reserva
-              </Button>
             </div>
           </div>
 
@@ -248,8 +258,6 @@ export default function AgendaPage() {
                     <option value="all">Todos</option>
                     <option value="pending">Pendente</option>
                     <option value="confirmed">Confirmada</option>
-                    <option value="checked_in">Check-in</option>
-                    <option value="checked_out">Check-out</option>
                     <option value="cancelled">Cancelada</option>
                   </select>
                 </div>
@@ -269,8 +277,6 @@ export default function AgendaPage() {
               )}
             </div>
           </div>
-        </div>
-
         </div>
 
         {/* Legenda e Export em linha compacta */}
@@ -332,27 +338,72 @@ export default function AgendaPage() {
         )}
         
         {/* Calendário */}
-        {!loading && !error && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <MonthlyCalendar
-              month={month}
-              selectedDate={selected || undefined}
-              onDayClick={(d) => { setSelected(d); setSidebarOpen(true); }}
-              onDayDoubleClick={(d) => { setSelected(d); setOpen(true); }}
-              renderDayBadge={renderBadge}
-              renderOccupancyBar={renderOccupancyBar}
-              reservations={filteredReservations}
-              rooms={rooms as any}
-              pilgrimages={pilgrimages}
-              onEventClick={(reservation) => {
-                const date = new Date(reservation.check_in_date);
-                setSelected(date);
-                setSidebarOpen(true);
-              }}
-              showEvents={true}
-            />
-          </div>
-        )}
+        {!loading && !error && (() => {
+          const calendarHeaderActions = (
+            <div className="flex items-center gap-2">
+              <Select value={viewMode} onValueChange={(v) => setViewMode(v as 'month' | 'week')}>
+                <SelectTrigger className="h-9 w-28" aria-label="Alternar visualização">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">Mês</SelectItem>
+                  <SelectItem value="week">Semana</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => setOpen(true)}
+                disabled={loading}
+                size="sm"
+                className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm hover:shadow-md transition-all"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Reserva
+              </Button>
+            </div>
+          );
+          const handleEventClick = (reservation: { check_in_date: string }) => {
+            const date = new Date(reservation.check_in_date);
+            setSelected(date);
+            setSidebarOpen(true);
+          };
+          return (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              {viewMode === 'month' ? (
+                <MonthlyCalendar
+                  month={month}
+                  selectedDate={selected || undefined}
+                  onDayClick={(d) => { setSelected(d); setSidebarOpen(true); }}
+                  onDayDoubleClick={(d) => { setSelected(d); setOpen(true); }}
+                  reservations={statusFilteredReservations}
+                  rooms={rooms as any}
+                  pilgrimages={pilgrimages}
+                  openAmountByReservation={openAmountByReservation}
+                  onEditReservation={handleEditReservation}
+                  onCancelReservation={handleCancelReservation}
+                  onPrevMonth={prevMonth}
+                  onNextMonth={nextMonth}
+                  onToday={() => setMonth(new Date())}
+                  headerActions={calendarHeaderActions}
+                />
+              ) : (
+                <WeeklyCalendar
+                  weekStart={month}
+                  selectedDate={selected || undefined}
+                  onDayClick={(d) => { setSelected(d); setSidebarOpen(true); }}
+                  onDayDoubleClick={(d) => { setSelected(d); setOpen(true); }}
+                  reservations={statusFilteredReservations}
+                  rooms={rooms as any}
+                  pilgrimages={pilgrimages}
+                  onEventClick={handleEventClick}
+                  onPrevWeek={prevWeek}
+                  onNextWeek={nextWeek}
+                  headerActions={calendarHeaderActions}
+                />
+              )}
+            </div>
+          );
+        })()}
+      </div>
       <NewReservationDialog
         open={open}
         onOpenChange={setOpen}
@@ -360,6 +411,13 @@ export default function AgendaPage() {
         pilgrimages={pilgrimages}
         rooms={rooms as any}
         onSuccess={handleSuccess}
+      />
+      <EditReservationDialog
+        open={showEditReservation}
+        onOpenChange={setShowEditReservation}
+        reservation={editingReservation}
+        rooms={rooms as any}
+        onSave={handleSaveEditedReservation}
       />
       <DaySidebar
         date={sidebarOpen ? selected : null}
@@ -370,6 +428,24 @@ export default function AgendaPage() {
         onReservationChanged={handleSuccess}
         onClose={() => setSidebarOpen(false)}
       />
+      <Dialog open={!!cancelTarget} onOpenChange={(v) => !v && setCancelTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar reserva?</DialogTitle>
+            <DialogDescription>
+              {cancelTargetIds.length > 1
+                ? `Isso vai cancelar os ${cancelTargetIds.length} quartos desta reserva. A reserva inteira será removida da agenda. Esta ação não pode ser desfeita.`
+                : 'Esta reserva será removida da agenda. Esta ação não pode ser desfeita.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelTarget(null)} disabled={cancelling}>Voltar</Button>
+            <Button onClick={confirmCancelReservation} disabled={cancelling} className="bg-red-600 hover:bg-red-700">
+              {cancelling ? 'Cancelando...' : 'Cancelar Reserva'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

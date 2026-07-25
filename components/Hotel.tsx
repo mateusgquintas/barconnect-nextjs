@@ -1,22 +1,38 @@
 'use client'
-import { useState, useEffect } from 'react';
-import { useRoomsDB, Room } from '../hooks/useRoomsDB';
+import { useState, useEffect, useRef } from 'react';
+import { Room } from '../hooks/useRoomsDB';
+import { useRoomOperationalStatus } from '@/hooks/useRoomOperationalStatus';
 import { Pilgrimage as PilgrimageType } from '@/types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Bed, Users, Clock, DollarSign, Search, Bus, UserPlus, Wrench, Plus, Edit, Tv, Wind, Wifi, Wine, Home, Building2, X, Calendar, TrendingUp, FileSpreadsheet, Printer, Bath, Lock, Phone, Eye, Accessibility, Cigarette, PawPrint, MapPin, Filter, LogOut, LogIn, CheckCircle } from 'lucide-react';
+import { Bed, Users, Clock, DollarSign, Search, Bus, Wrench, Plus, Edit, Tv, Wind, Wifi, Wine, Home, Building2, X, Calendar, TrendingUp, FileSpreadsheet, Printer, Accessibility, PawPrint, Filter, LogIn, CalendarSearch } from 'lucide-react';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { usePilgrimagesDB } from '../hooks/usePilgrimagesDB';
 import { RoomEditDialog } from './rooms/RoomEditDialog';
-import { getAvailableRooms, listBookingsInRange } from '@/lib/agendaService';
-import { isRoomOccupiedOnDate } from '@/utils/agenda';
-import { Booking } from '@/types/agenda';
+import { NewReservationDialog } from './agenda/NewReservationDialog';
 import { exportRoomsToExcel } from '@/lib/exportRoomsToExcel';
+import { getOpenAmountsByReservation, syncOccurrenceCancellation } from '@/lib/agendaService';
+import { supabase } from '@/lib/supabase';
+import { notifyError, notifySuccess } from '@/utils/notify';
+import { getLocalDateStr } from '@/utils/agenda';
+import { formatCurrency } from '@/utils/format';
+
+interface PeriodReservation {
+  id: string;
+  room_id: string;
+  check_in_date: string;
+  check_out_date: string;
+  total_value: number | null;
+  number_of_people: number | null;
+  notes: string | null;
+  pilgrimage_id: string | null;
+}
 
 // Helper para compatibilidade com múltiplas datas
 const getPilgrimageDates = (p: PilgrimageType) => {
@@ -50,7 +66,7 @@ const statusColors = {
 };
 
 export function Hotel() {
-  const { rooms, loading, error, updateRoom, addRoom } = useRoomsDB();
+  const { rooms, loading, error, updateRoom, addRoom, getEffectiveStatus, activeBookingByRoom, reservedBookingByRoom, bookingInfoByRoom } = useRoomOperationalStatus();
   const { pilgrimages } = usePilgrimagesDB();
 
   // Tipagem explícita para pilgrimages
@@ -90,46 +106,43 @@ export function Hotel() {
     hasBalcony: false,
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [showDateFilter, setShowDateFilter] = useState<boolean>(false);
-  
-  // Persistir selectedDate no localStorage para não perder quando o componente remontar
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('hotel-selected-date');
-      if (saved) {
-        console.log('💾 Restaurando data do localStorage:', saved);
-        return saved;
-      }
-    }
-    const today = new Date().toISOString().split('T')[0];
-    console.log('🎉 Inicializando com data de hoje:', today);
-    return today;
-  });
-  
-  // Salvar selectedDate no localStorage quando mudar
-  useEffect(() => {
-    console.log('💾 Salvando selectedDate no localStorage:', selectedDate);
-    localStorage.setItem('hotel-selected-date', selectedDate);
-  }, [selectedDate]);
-  
-  const [availableRoomIds, setAvailableRoomIds] = useState<Set<string>>(new Set());
-  const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
-  const [reservedRoomIds, setReservedRoomIds] = useState<Set<string>>(new Set());
   const [showPrintOptions, setShowPrintOptions] = useState(false);
-  const [printWithFilters, setPrintWithFilters] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+
+  // Filtro simples de período: "quais quartos estão disponíveis entre X e Y" — não é um calendário navegável.
+  const [periodStart, setPeriodStart] = useState('');
+  const [periodEnd, setPeriodEnd] = useState('');
+  const [periodBookings, setPeriodBookings] = useState<PeriodReservation[] | null>(null);
+  const [periodOpenAmounts, setPeriodOpenAmounts] = useState<Record<string, number>>({});
+  const [periodLoading, setPeriodLoading] = useState(false);
+  const [periodDetailRoomId, setPeriodDetailRoomId] = useState<string | null>(null);
+  const [periodReservationDate, setPeriodReservationDate] = useState<Date | null>(null);
+  const [showNewReservation, setShowNewReservation] = useState(false);
+
+  // Check-in: abre um formulário para capturar dados do hóspede em vez de trocar o status direto.
+  const [checkInRoom, setCheckInRoom] = useState<Room | null>(null);
+  const [checkInGuestName, setCheckInGuestName] = useState('');
+  const [checkInGuestCpf, setCheckInGuestCpf] = useState('');
+  const [checkInGuestPhone, setCheckInGuestPhone] = useState('');
+  const [checkInCheckOutDate, setCheckInCheckOutDate] = useState('');
+  const [checkInObservations, setCheckInObservations] = useState('');
+
+  // Manutenção: exige uma observação sobre o problema antes de bloquear o quarto.
+  const [maintenanceRoom, setMaintenanceRoom] = useState<Room | null>(null);
+  const [maintenanceNote, setMaintenanceNote] = useState('');
+
+  // Exclusão de quarto: bloqueada se houver reservas ativas vinculadas.
+  const [deleteRoomTarget, setDeleteRoomTarget] = useState<Room | null>(null);
+  const [deleteChecking, setDeleteChecking] = useState(false);
+  const [deleteBlockedMessage, setDeleteBlockedMessage] = useState<string | null>(null);
 
   const filteredRooms = rooms.filter(room => {
     const matchesSearch = room.number?.toString().includes(searchQuery) || 
                          room.guest_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Considerar quarto como "reservado" se está na lista de reservas (independente do status)
-    const isReserved = reservedRoomIds.has(room.id);
-    const effectiveStatus = isReserved ? 'reserved' : room.status;
-    
-    const matchesStatus = filterStatus === 'all' || effectiveStatus === filterStatus;
+    const matchesStatus = filterStatus === 'all' || getEffectiveStatus(room) === filterStatus;
     const matchesPilgrimage = filterPilgrimage === 'all' || room.pilgrimage_id === filterPilgrimage;
     const matchesType = filterType === 'all' || room.type === filterType;
     const matchesBuilding = filterBuilding === 'all' || room.type === filterBuilding;
@@ -166,17 +179,6 @@ export function Hotel() {
     
     return sortOrder === 'asc' ? comparison : -comparison;
   });
-
-  // Log do resultado do filtro
-  useEffect(() => {
-    console.log('\n🎯 FILTER RESULTS:');
-    console.log('Total rooms:', rooms.length);
-    console.log('Reserved room IDs:', Array.from(reservedRoomIds));
-    console.log('Filter status:', filterStatus);
-    console.log('Filtered rooms count:', filteredRooms.length);
-    console.log('Filtered room IDs:', filteredRooms.map(r => r.id));
-    console.log('Filtered room numbers:', filteredRooms.map(r => r.number));
-  }, [filteredRooms, filterStatus, reservedRoomIds, rooms]);
 
   // Função para formatar descrição das camas
   const formatBedsDescription = (room: Room): string => {
@@ -279,21 +281,221 @@ export function Hotel() {
 
   const stats = {
     total: rooms.length,
-    available: rooms.filter(r => r.status === 'available' && !reservedRoomIds.has(r.id)).length,
-    reserved: reservedRoomIds.size,
-    occupied: rooms.filter(r => r.status === 'occupied').length,
+    available: rooms.filter(r => getEffectiveStatus(r) === 'available').length,
+    reserved: rooms.filter(r => getEffectiveStatus(r) === 'reserved').length,
+    occupied: rooms.filter(r => getEffectiveStatus(r) === 'occupied').length,
     cleaning: rooms.filter(r => r.status === 'cleaning').length,
     maintenance: rooms.filter(r => r.status === 'maintenance').length,
-    occupancyRate: rooms.length > 0 ? ((rooms.filter(r => r.status === 'occupied').length / rooms.length) * 100).toFixed(0) : '0',
+    occupancyRate: rooms.length > 0 ? ((rooms.filter(r => getEffectiveStatus(r) === 'occupied').length / rooms.length) * 100).toFixed(0) : '0',
   };
 
   const handleChangeStatus = async (roomId: string, newStatus: string) => {
     await updateRoom(roomId, { status: newStatus });
   };
 
-  const handleReserveRoom = (roomId: string) => {
-    // Adiciona o quarto à lista de reservados
-    setReservedRoomIds(prev => new Set(prev).add(roomId));
+  // Ocupado ou reservado -> check-out sempre manda o quarto para limpeza, nunca direto para disponível.
+  const handleCheckOut = async (room: Room) => {
+    await updateRoom(room.id, {
+      status: 'cleaning',
+      guest_name: null as any,
+      guest_cpf: null as any,
+      guest_phone: null as any,
+      guest_email: null as any,
+      check_in_date: null as any,
+      check_out_date: null as any,
+      observations: null as any,
+    });
+    // Se a ocupação vem de uma reserva da Agenda (room_reservations), encerra ela agora —
+    // no momento real do check-out, não na data prevista, que pode ter passado ou ainda não
+    // ter chegado. Sem isso, o quarto voltaria a contar como ocupado/reservado no próximo cálculo.
+    const bookingId = activeBookingByRoom[room.id];
+    if (bookingId) {
+      const { error: bookingError } = await supabase
+        .from('room_reservations')
+        .update({ status: 'checked_out', check_out_date: getLocalDateStr() })
+        .eq('id', bookingId);
+      if (bookingError) console.error('Erro ao encerrar reserva no check-out:', bookingError);
+    }
+  };
+
+  const handleCleaningDone = async (room: Room) => {
+    await updateRoom(room.id, { status: 'available' });
+  };
+
+  // Cancelar uma reserva futura (quarto "reservado") precisa encerrar a room_reservations de
+  // verdade — não só o rooms.status — senão a Agenda continua mostrando a reserva como ativa
+  // (as duas telas leem o mesmo registro, então cancelar aqui tem que refletir lá também).
+  const handleCancelReservedRoom = async (room: Room) => {
+    const bookingId = reservedBookingByRoom[room.id];
+    if (bookingId) {
+      const { error: bookingError } = await supabase
+        .from('room_reservations')
+        .update({ status: 'cancelled' })
+        .eq('id', bookingId);
+      if (bookingError) {
+        console.error('Erro ao cancelar reserva:', bookingError);
+        notifyError('Erro ao cancelar reserva');
+        return;
+      }
+      await syncOccurrenceCancellation(bookingInfoByRoom[room.id]?.occurrence_id);
+    }
+    await updateRoom(room.id, { status: 'available' });
+    notifySuccess('Reserva cancelada!');
+  };
+
+  const handleMaintenanceDone = async (room: Room) => {
+    await updateRoom(room.id, { status: 'available', maintenance_notes: null as any });
+  };
+
+  const openCheckInDialog = (room: Room) => {
+    setCheckInRoom(room);
+    setCheckInGuestName('');
+    setCheckInGuestCpf('');
+    setCheckInGuestPhone('');
+    setCheckInCheckOutDate('');
+    setCheckInObservations('');
+  };
+
+  const handleConfirmCheckIn = async () => {
+    if (!checkInRoom) return;
+    if (!checkInGuestName.trim()) {
+      notifyError('Informe o nome do hóspede');
+      return;
+    }
+    await updateRoom(checkInRoom.id, {
+      status: 'occupied',
+      guest_name: checkInGuestName.trim(),
+      guest_cpf: checkInGuestCpf.trim() || null as any,
+      guest_phone: checkInGuestPhone.trim() || null as any,
+      check_in_date: getLocalDateStr() as any,
+      check_out_date: checkInCheckOutDate || null as any,
+      observations: checkInObservations.trim() || null as any,
+    });
+    notifySuccess('Check-in realizado!');
+    setCheckInRoom(null);
+  };
+
+  const openMaintenanceDialog = (room: Room) => {
+    setMaintenanceRoom(room);
+    setMaintenanceNote(room.maintenance_notes || '');
+  };
+
+  const handleConfirmMaintenance = async () => {
+    if (!maintenanceRoom) return;
+    if (!maintenanceNote.trim()) {
+      notifyError('Descreva o problema para colocar em manutenção');
+      return;
+    }
+    await updateRoom(maintenanceRoom.id, { status: 'maintenance', maintenance_notes: maintenanceNote.trim() });
+    notifySuccess('Quarto colocado em manutenção');
+    setMaintenanceRoom(null);
+  };
+
+  const handleRequestDeleteRoom = async (room: Room) => {
+    setDeleteRoomTarget(room);
+    setDeleteBlockedMessage(null);
+    setDeleteChecking(true);
+    try {
+      if (getEffectiveStatus(room) === 'occupied' || room.guest_name) {
+        setDeleteBlockedMessage('Este quarto está ocupado no momento. Faça o check-out antes de excluí-lo.');
+        return;
+      }
+      const { data, error: checkError } = await supabase
+        .from('room_reservations')
+        .select('id, status, check_out_date')
+        .eq('room_id', room.id)
+        .neq('status', 'cancelled');
+      if (checkError) throw checkError;
+      const today = getLocalDateStr();
+      const active = (data || []).filter((r: any) => !r.check_out_date || r.check_out_date >= today);
+      if (active.length > 0) {
+        setDeleteBlockedMessage(`Este quarto tem ${active.length} reserva(s) ativa(s) vinculada(s). Cancele ou finalize essas reservas antes de excluir o quarto.`);
+      }
+    } catch (err) {
+      console.error('Erro ao verificar reservas do quarto:', err);
+      setDeleteBlockedMessage('Não foi possível verificar reservas vinculadas. Tente novamente.');
+    } finally {
+      setDeleteChecking(false);
+    }
+  };
+
+  const handleConfirmDeleteRoom = async () => {
+    if (!deleteRoomTarget || deleteBlockedMessage) return;
+    const { error: delError } = await supabase.from('rooms').delete().eq('id', deleteRoomTarget.id);
+    if (delError) {
+      notifyError('Erro ao excluir quarto');
+    } else {
+      notifySuccess('Quarto excluído');
+      setDeleteRoomTarget(null);
+    }
+  };
+
+  const runPeriodSearch = async (start: string, end: string) => {
+    if (!start || !end) return;
+    if (new Date(end) <= new Date(start)) {
+      notifyError('A data final deve ser depois da data inicial');
+      return;
+    }
+    setPeriodLoading(true);
+    setPeriodDetailRoomId(null);
+    try {
+      // Sobreposição [check_in, check_out) com o período [start, end)
+      const { data, error: queryError } = await supabase
+        .from('room_reservations')
+        .select('id, room_id, check_in_date, check_out_date, total_value, number_of_people, notes, pilgrimage_id')
+        .neq('status', 'cancelled')
+        .lt('check_in_date', end)
+        .gt('check_out_date', start);
+      if (queryError) throw queryError;
+      const bookings = (data || []) as PeriodReservation[];
+      setPeriodBookings(bookings);
+      const openAmounts = await getOpenAmountsByReservation(bookings.map(b => b.id));
+      setPeriodOpenAmounts(openAmounts);
+    } catch (err) {
+      console.error('Erro ao verificar disponibilidade no período:', err);
+      notifyError('Erro ao verificar disponibilidade');
+    } finally {
+      setPeriodLoading(false);
+    }
+  };
+
+  const handlePeriodSearch = async () => {
+    if (!periodStart || !periodEnd) {
+      notifyError('Selecione data de início e fim');
+      return;
+    }
+    await runPeriodSearch(periodStart, periodEnd);
+  };
+
+  // Ao abrir a tela, já mostra a semana atual (domingo a sábado) em vez de começar em branco —
+  // é só um filtro de consulta, mas o padrão precisa responder "quem está livre agora" de cara.
+  const periodInitialized = useRef(false);
+  useEffect(() => {
+    if (periodInitialized.current) return;
+    periodInitialized.current = true;
+    const today = new Date();
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - today.getDay());
+    const saturdayExclusive = new Date(sunday);
+    saturdayExclusive.setDate(sunday.getDate() + 7);
+    const startStr = getLocalDateStr(sunday);
+    const endStr = getLocalDateStr(saturdayExclusive);
+    setPeriodStart(startStr);
+    setPeriodEnd(endStr);
+    runPeriodSearch(startStr, endStr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleClearPeriod = () => {
+    setPeriodStart('');
+    setPeriodEnd('');
+    setPeriodBookings(null);
+    setPeriodDetailRoomId(null);
+  };
+
+  const handleReserveAvailableRoom = () => {
+    setPeriodReservationDate(periodStart ? new Date(`${periodStart}T00:00:00`) : new Date());
+    setShowNewReservation(true);
   };
 
   const handleCreateRoom = () => {
@@ -324,7 +526,6 @@ export function Hotel() {
     setFilterFloor('all');
     setFilterMinCapacity('');
     setFilterMaxCapacity('');
-    setSelectedDate(new Date().toISOString().split('T')[0]); // Resetar para hoje
     setFilterAmenities({
       hasTv: false,
       hasAc: false,
@@ -337,12 +538,7 @@ export function Hotel() {
   const handleExportToExcel = () => {
     exportRoomsToExcel(filteredRooms, {
       includeAmenities: true,
-      includeOccupancy: selectedDate ? true : false,
-      occupancyData: roomOccupancy,
-      dateRange: selectedDate ? {
-        start: selectedDate,
-        end: new Date(new Date(selectedDate).getTime() + 24*60*60*1000).toISOString().split('T')[0],
-      } : undefined,
+      includeOccupancy: false,
     });
   };
 
@@ -367,103 +563,6 @@ export function Hotel() {
   // Get unique floors from rooms
   const uniqueFloors = Array.from(new Set(rooms.map(r => r.floor).filter(f => f !== null && f !== undefined))).sort((a, b) => (a || 0) - (b || 0));
 
-  // Log de montagem do componente
-  useEffect(() => {
-    console.log('🏚️ HOTEL COMPONENT MOUNTED');
-    return () => {
-      console.log('🚪 HOTEL COMPONENT UNMOUNTED');
-    };
-  }, []);
-
-  // Effect to calculate room availability, occupancy AND reservations when date changes
-  useEffect(() => {
-    async function calculateOccupancyAndReservations() {
-      if (!selectedDate) {
-        setAvailableRoomIds(new Set());
-        setRoomOccupancy({});
-        setReservedRoomIds(new Set());
-        return;
-      }
-
-      try {
-        // IMPORTANTE: Limpar estados antes de recalcular para evitar exibição de dados antigos
-        setAvailableRoomIds(new Set());
-        setRoomOccupancy({});
-        setReservedRoomIds(new Set());
-
-        // Usar strings de data no formato ISO (YYYY-MM-DD) para consistência
-        const startDate = new Date(selectedDate);
-        startDate.setHours(0, 0, 0, 0);
-        
-        const endDate = new Date(selectedDate);
-        endDate.setDate(endDate.getDate() + 1);
-        endDate.setHours(0, 0, 0, 0);
-
-        // Normalizar selectedDate para string YYYY-MM-DD
-        const targetDateStr = selectedDate; // Já está em formato YYYY-MM-DD
-
-        // Get available rooms for the selected day
-        const availableRooms = await getAvailableRooms(startDate, endDate);
-        const availableIds = new Set(availableRooms.map(r => r.id));
-
-        // Get all bookings in the day to check occupancy AND reservations
-        const bookings = await listBookingsInRange({ start: startDate, end: endDate });
-        
-        // Calculate occupancy AND reserved rooms for each room
-        const occupancyMap: Record<string, number> = {};
-        const roomsWithReservations = new Set<string>();
-        
-        rooms.forEach(room => {
-          // Para cada quarto, verificar se está ocupado na data alvo
-          const roomBookings = bookings.filter(b => b.room_id === room.id);
-          
-          if (roomBookings.length === 0) {
-            // Sem reservas para este quarto neste range
-            occupancyMap[room.id] = 0;
-            return;
-          }
-
-          // Verificar se alguma reserva deste quarto cobre a data alvo
-          const isOccupied = roomBookings.some(booking => {
-            const occupied = isRoomOccupiedOnDate(booking.start, booking.end, targetDateStr);
-            console.log(`  Room ${room.number}: booking ${booking.start.slice(0,10)} to ${booking.end.slice(0,10)} on ${targetDateStr} = ${occupied}`);
-            return occupied;
-          });
-          
-          if (isOccupied) {
-            roomsWithReservations.add(room.id);
-          }
-          
-          occupancyMap[room.id] = isOccupied ? 100 : 0;
-        });
-        
-        // Atualizar todos os estados juntos para evitar renderizações inconsistentes
-        setAvailableRoomIds(availableIds);
-        setRoomOccupancy(occupancyMap);
-        setReservedRoomIds(roomsWithReservations);
-        
-        // Debug log DETALHADO
-        console.log('\n=== 🏨 HOTEL OCCUPANCY CALCULATION ===');
-        console.log('📅 Target Date:', targetDateStr);
-        console.log('📊 Total bookings in range:', bookings.length);
-        console.log('📋 Bookings details:');
-        bookings.forEach(b => {
-          const occupied = isRoomOccupiedOnDate(b.start, b.end, targetDateStr);
-          console.log(`  - Room ${b.room_id}: ${b.start.slice(0,10)} to ${b.end.slice(0,10)} → ${occupied ? '🔴 OCCUPIED' : '🟢 FREE'} on ${targetDateStr}`);
-        });
-        console.log('💎 Total rooms:', rooms.length);
-        console.log('🏨 Occupied rooms:', Array.from(roomsWithReservations).length);
-        console.log('✅ Available rooms:', availableIds.size);
-        console.log('📊 Occupancy summary:', Object.entries(occupancyMap).filter(([_, v]) => v === 100).length, 'occupied out of', Object.keys(occupancyMap).length);
-        console.log('==================\n');
-      } catch (error) {
-        console.error('❌ Error calculating occupancy:', error);
-      }
-    }
-
-    calculateOccupancyAndReservations();
-  }, [selectedDate, rooms]);
-
   if (loading) {
     return <div className="p-8">Carregando quartos...</div>;
   }
@@ -473,12 +572,104 @@ export function Hotel() {
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50">
       <div className="p-8">
-        {/* Header with Title, Date Filter, and Actions */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Header with Title and Actions */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h1 className="text-slate-900 mb-1">Gestão de Quartos</h1>
             <p className="text-slate-600 text-sm">Controle de ocupação e status dos quartos</p>
           </div>
+        </div>
+
+        {/* Filtro de período: pergunta direta "quais quartos estão livres entre X e Y", sem calendário */}
+        <Card className="p-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <CalendarSearch className="w-4 h-4 text-slate-600" />
+            <span className="text-sm font-semibold text-slate-900">Verificar disponibilidade em um período</span>
+          </div>
+          <div className="flex items-end gap-3 flex-wrap">
+            <div>
+              <Label className="text-xs text-slate-600 mb-1 block">Início</Label>
+              <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="w-40" />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-600 mb-1 block">Fim</Label>
+              <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="w-40" />
+            </div>
+            <Button onClick={handlePeriodSearch} disabled={periodLoading} className="h-10">
+              {periodLoading ? 'Verificando...' : 'Buscar disponibilidade'}
+            </Button>
+            {periodBookings !== null && (
+              <Button variant="ghost" onClick={handleClearPeriod} className="h-10">
+                <X className="w-4 h-4 mr-1" /> Limpar
+              </Button>
+            )}
+          </div>
+
+          {periodBookings !== null && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              {(() => {
+                const occupiedRoomIds = new Set(periodBookings.map(b => b.room_id));
+                const availableCount = rooms.length - occupiedRoomIds.size;
+                return (
+                  <>
+                    <p className="text-sm text-slate-700 mb-3">
+                      <span className="font-semibold text-green-700">{availableCount}</span> de {rooms.length} quartos disponíveis entre{' '}
+                      <span className="font-medium">{periodStart.split('-').reverse().join('/')}</span> e{' '}
+                      <span className="font-medium">{periodEnd.split('-').reverse().join('/')}</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {rooms.map(room => {
+                        const booking = periodBookings.find(b => b.room_id === room.id);
+                        const isAvailable = !booking;
+                        const occupantName = booking
+                          ? (booking.pilgrimage_id ? getPilgrimageById(booking.pilgrimage_id)?.name : (booking.notes || room.guest_name))
+                          : null;
+                        return (
+                          <button
+                            key={room.id}
+                            type="button"
+                            onClick={() => isAvailable ? handleReserveAvailableRoom() : setPeriodDetailRoomId(periodDetailRoomId === room.id ? null : room.id)}
+                            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                              isAvailable
+                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                            }`}
+                          >
+                            Quarto {room.number}{occupantName ? ` · ${occupantName}` : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {periodDetailRoomId && (() => {
+                      const room = rooms.find(r => r.id === periodDetailRoomId);
+                      const booking = periodBookings.find(b => b.room_id === periodDetailRoomId);
+                      if (!room || !booking) return null;
+                      const nights = Math.max(1, Math.round((new Date(booking.check_out_date).getTime() - new Date(booking.check_in_date).getTime()) / 86400000));
+                      const openAmount = periodOpenAmounts[booking.id];
+                      const occupantName = booking.pilgrimage_id ? getPilgrimageById(booking.pilgrimage_id)?.name : (booking.notes || room.guest_name);
+                      return (
+                        <div className="mt-3 p-3 bg-slate-50 rounded-md border border-slate-200 text-sm">
+                          <p className="font-medium text-slate-900">Quarto {room.number} — ocupado neste período</p>
+                          {occupantName && <p className="text-slate-600">{booking.pilgrimage_id ? 'Romaria' : 'Hóspede'}: <span className="text-slate-900">{occupantName}</span></p>}
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-slate-600">
+                            <p>Hóspedes: <span className="text-slate-900">{booking.number_of_people ?? '—'}</span></p>
+                            <p>Diárias: <span className="text-slate-900">{nights}</span></p>
+                            <p>Check-in: <span className="text-slate-900">{booking.check_in_date.split('-').reverse().join('/')}</span></p>
+                            <p>Check-out: <span className="text-slate-900">{booking.check_out_date.split('-').reverse().join('/')}</span></p>
+                            <p>Valor total: <span className="text-slate-900">{booking.total_value != null ? formatCurrency(booking.total_value) : '—'}</span></p>
+                            <p>Em aberto: <span className="text-slate-900">{openAmount != null ? formatCurrency(openAmount) : '—'}</span></p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                );
+              })()}
+            </div>
+          )}
+        </Card>
+
+        <div className="flex items-center justify-end mb-6">
           <div className="flex items-center gap-3">
             {/* Export/Print Buttons */}
             <button
@@ -679,47 +870,6 @@ export function Hotel() {
             </div>
 
             <div className="h-6 w-px bg-slate-300 mx-1"></div>
-
-            {/* Date Filter - Highlighted */}
-            {showDateFilter && (
-              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedDate(e.target.value)}
-                  className="w-36 h-8 text-sm border-blue-300"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                  className="h-8 px-3 text-sm border-blue-300 hover:bg-blue-100 whitespace-nowrap"
-                >
-                  Hoje
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDateFilter(false)}
-                  className="text-blue-600 hover:text-blue-900 hover:bg-blue-100 h-8 px-3 text-sm whitespace-nowrap"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Ocultar
-                </Button>
-              </div>
-            )}
-            {!showDateFilter && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDateFilter(true)}
-                className="text-slate-600 hover:text-slate-900 h-9 px-3 text-sm whitespace-nowrap"
-              >
-                <Calendar className="h-4 w-4 mr-1" />
-                Data
-              </Button>
-            )}
 
             <div className="flex-1"></div>
 
@@ -1022,10 +1172,8 @@ export function Hotel() {
         {/* Rooms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 rooms-grid">
           {filteredRooms.map((room) => {
-            // Determinar status efetivo (considerar reserva)
-            const isReserved = reservedRoomIds.has(room.id);
-            const effectiveStatus = isReserved && room.status === 'available' ? 'reserved' : room.status;
-            
+            const effectiveStatus = getEffectiveStatus(room);
+
             return (
             <Card key={room.id} className="p-0 hover:shadow-lg transition-all duration-200 room-card overflow-hidden border-2 hover:border-slate-300 flex flex-col">
               {/* Header compacto */}
@@ -1065,6 +1213,22 @@ export function Hotel() {
                     </Button>
                   </div>
                 </div>
+                {/* Ocupante/reserva direto na listagem, sem precisar abrir detalhes */}
+                {(effectiveStatus === 'occupied' || effectiveStatus === 'reserved') && (() => {
+                  const booking = bookingInfoByRoom[room.id];
+                  // room_reservations não tem coluna customer_name — o nome do hóspede avulso
+                  // fica em notes; romaria usa o nome do grupo.
+                  const occupantName = room.guest_name
+                    || (booking?.pilgrimage_id ? getPilgrimageById(booking.pilgrimage_id)?.name : booking?.notes)
+                    || undefined;
+                  if (!occupantName) return null;
+                  return (
+                    <p className="text-xs text-slate-600 mt-1 flex items-center gap-1 truncate">
+                      {booking?.pilgrimage_id ? <Bus className="w-3 h-3 shrink-0" /> : <Users className="w-3 h-3 shrink-0" />}
+                      <span className="truncate">{occupantName}</span>
+                    </p>
+                  );
+                })()}
               </div>
 
               {/* Body compacto */}
@@ -1173,35 +1337,6 @@ export function Hotel() {
                   </div>
                 )}
 
-                {/* Ocupação para a data selecionada (apenas se diferente de hoje) */}
-                {selectedDate && selectedDate !== new Date().toISOString().split('T')[0] && roomOccupancy[room.id] !== undefined && (
-                  <div className={`mb-3 p-2 rounded-md border ${
-                    roomOccupancy[room.id] === 100 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className={`w-4 h-4 ${
-                        roomOccupancy[room.id] === 100 ? 'text-red-600' : 'text-green-600'
-                      }`} />
-                      <div className="flex-1">
-                        <p className={`text-xs font-medium ${
-                          roomOccupancy[room.id] === 100 ? 'text-red-900' : 'text-green-900'
-                        }`}>
-                          {roomOccupancy[room.id] === 100 ? 'Ocupado' : 'Disponível'} em {new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                      {availableRoomIds.has(room.id) ? (
-                        <Badge className="bg-green-100 text-green-700 border-green-200 border text-xs">
-                          ✓ Disponível
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-red-100 text-red-700 border-red-200 border text-xs">
-                          ✗ Ocupado
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Informações do hóspede */}
                 {room.guest_name && (
                   <div className="mb-3 p-2 bg-slate-50 rounded-md border border-slate-200">
@@ -1227,10 +1362,10 @@ export function Hotel() {
 
               {/* Ações do quarto - Sempre na parte inferior */}
               <div className="flex gap-2 no-print px-3 pb-3">
-                {room.status === 'occupied' && (
+                {effectiveStatus === 'occupied' && (
                   <Button
                     size="sm"
-                    onClick={() => handleChangeStatus(room.id, 'cleaning')}
+                    onClick={() => handleCheckOut(room)}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Check-out
@@ -1239,29 +1374,20 @@ export function Hotel() {
                 {room.status === 'cleaning' && (
                   <Button
                     size="sm"
-                    onClick={() => handleChangeStatus(room.id, 'available')}
+                    onClick={() => handleCleaningDone(room)}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   >
-                    Liberar
+                    Limpeza Concluída
                   </Button>
                 )}
                 {effectiveStatus === 'available' && (
-                  <>
-                    <Button
-                      size="sm"
-                      onClick={() => handleReserveRoom(room.id)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      Reservar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleChangeStatus(room.id, 'occupied')}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      Check-in
-                    </Button>
-                  </>
+                  <Button
+                    size="sm"
+                    onClick={() => openCheckInDialog(room)}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    Check-in
+                  </Button>
                 )}
                 {effectiveStatus === 'reserved' && (
                   <DropdownMenu>
@@ -1274,11 +1400,15 @@ export function Hotel() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                      <DropdownMenuItem onClick={() => handleChangeStatus(room.id, 'occupied')}>
+                      <DropdownMenuItem onClick={() => openCheckInDialog(room)}>
                         <LogIn className="w-4 h-4 mr-2" />
                         Fazer Check-in
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleChangeStatus(room.id, 'available')}>
+                      <DropdownMenuItem onClick={() => handleCheckOut(room)}>
+                        <Clock className="w-4 h-4 mr-2" />
+                        Check-out
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCancelReservedRoom(room)}>
                         <X className="w-4 h-4 mr-2" />
                         Cancelar Reserva
                       </DropdownMenuItem>
@@ -1288,19 +1418,21 @@ export function Hotel() {
                 {room.status === 'maintenance' && (
                   <Button
                     size="sm"
-                    onClick={() => handleChangeStatus(room.id, 'available')}
+                    onClick={() => handleMaintenanceDone(room)}
                     className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                   >
-                    Disponibilizar
+                    Manutenção Concluída
                   </Button>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleChangeStatus(room.id, 'maintenance')}
-                >
-                  <Wrench className="w-4 h-4" />
-                </Button>
+                {room.status !== 'maintenance' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openMaintenanceDialog(room)}
+                  >
+                    <Wrench className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </Card>
           );
@@ -1314,7 +1446,101 @@ export function Hotel() {
         onOpenChange={setEditDialogOpen}
         room={selectedRoom}
         onSave={handleSaveRoom}
+        onDelete={(room) => { setEditDialogOpen(false); handleRequestDeleteRoom(room); }}
         mode={dialogMode}
+      />
+
+      {/* Check-in: captura dados do hóspede antes de ocupar o quarto */}
+      <Dialog open={!!checkInRoom} onOpenChange={(v) => !v && setCheckInRoom(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Check-in — Quarto {checkInRoom?.number}</DialogTitle>
+            <DialogDescription>Informe os dados do hóspede para ocupar o quarto agora.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nome do hóspede *</Label>
+              <Input value={checkInGuestName} onChange={(e) => setCheckInGuestName(e.target.value)} placeholder="Nome completo" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>CPF</Label>
+                <Input value={checkInGuestCpf} onChange={(e) => setCheckInGuestCpf(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input value={checkInGuestPhone} onChange={(e) => setCheckInGuestPhone(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Previsão de check-out</Label>
+              <Input type="date" value={checkInCheckOutDate} onChange={(e) => setCheckInCheckOutDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Input value={checkInObservations} onChange={(e) => setCheckInObservations(e.target.value)} placeholder="Informações adicionais" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCheckInRoom(null)}>Cancelar</Button>
+            <Button onClick={handleConfirmCheckIn} className="bg-emerald-600 hover:bg-emerald-700">Confirmar Check-in</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manutenção: exige observação sobre o problema */}
+      <Dialog open={!!maintenanceRoom} onOpenChange={(v) => !v && setMaintenanceRoom(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manutenção — Quarto {maintenanceRoom?.number}</DialogTitle>
+            <DialogDescription>Descreva o problema. O quarto ficará indisponível até a manutenção ser concluída.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Observação *</Label>
+            <Input value={maintenanceNote} onChange={(e) => setMaintenanceNote(e.target.value)} placeholder="Ex: torneira vazando, ar-condicionado quebrado..." />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMaintenanceRoom(null)}>Cancelar</Button>
+            <Button onClick={handleConfirmMaintenance} className="bg-gray-700 hover:bg-gray-800">Colocar em Manutenção</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exclusão de quarto: bloqueada se houver reservas ativas */}
+      <Dialog open={!!deleteRoomTarget} onOpenChange={(v) => !v && setDeleteRoomTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Quarto {deleteRoomTarget?.number}?</DialogTitle>
+            <DialogDescription>Esta ação não pode ser desfeita.</DialogDescription>
+          </DialogHeader>
+          {deleteChecking ? (
+            <p className="text-sm text-slate-600 py-2">Verificando reservas vinculadas...</p>
+          ) : deleteBlockedMessage ? (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">{deleteBlockedMessage}</p>
+          ) : (
+            <p className="text-sm text-slate-600 py-2">Nenhuma reserva ativa vinculada. O quarto será excluído permanentemente.</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteRoomTarget(null)}>Cancelar</Button>
+            <Button
+              onClick={handleConfirmDeleteRoom}
+              disabled={deleteChecking || !!deleteBlockedMessage}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Excluir Quarto
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nova reserva a partir do filtro de período (quarto disponível clicado) */}
+      <NewReservationDialog
+        open={showNewReservation}
+        onOpenChange={setShowNewReservation}
+        date={periodReservationDate}
+        pilgrimages={pilgrimages as any}
+        rooms={rooms as any}
+        onSuccess={handlePeriodSearch}
       />
     </div>
   );

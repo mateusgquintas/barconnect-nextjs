@@ -60,6 +60,8 @@ export interface Pilgrimage {
   departureDate?: string;
 }
 
+export type AcquisitionChannel = 'agenciador' | 'booking' | 'motorista' | 'chefe_romaria' | 'direto';
+
 export interface Booking {
   id: string;
   room_id: string;
@@ -68,8 +70,13 @@ export interface Booking {
   status: BookingStatus;
   customer_name?: string | null;
   pilgrimage_id?: string | null;
+  occurrence_id?: string | null;
   notes?: string | null;
   created_at?: string;
+  channel?: AcquisitionChannel | null;
+  total_value?: number | null;
+  number_of_people?: number | null;
+  number_of_buses?: number | null;
 }
 
 export interface DateRange {

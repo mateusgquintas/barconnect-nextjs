@@ -38,6 +38,7 @@ interface RoomEditDialogProps {
   onOpenChange: (open: boolean) => void;
   room: Room | null;
   onSave: (roomData: Partial<Room>) => Promise<void>;
+  onDelete?: (room: Room) => void;
   mode: 'create' | 'edit';
 }
 
@@ -75,7 +76,7 @@ const ROOM_TYPES = [
   { value: 'executive', label: 'Executive' },
 ];
 
-export function RoomEditDialog({ open, onOpenChange, room, onSave, mode }: RoomEditDialogProps) {
+export function RoomEditDialog({ open, onOpenChange, room, onSave, onDelete, mode }: RoomEditDialogProps) {
   const [loading, setLoading] = useState(false);
   const [bedConfigs, setBedConfigs] = useState<BedConfig[]>([
     { id: '1', type: 'solteiro', quantity: 1 }
@@ -666,23 +667,37 @@ export function RoomEditDialog({ open, onOpenChange, room, onSave, mode }: RoomE
             </div>
           </div>
 
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              disabled={loading}
-              className="h-10 px-4 rounded-lg font-medium min-w-fit whitespace-nowrap"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="h-10 px-4 rounded-lg font-medium min-w-fit whitespace-nowrap gap-2"
-            >
-              {loading ? 'Salvando...' : mode === 'create' ? 'Criar Quarto' : 'Salvar Alterações'}
-            </Button>
+          <DialogFooter className={mode === 'edit' && onDelete ? 'sm:justify-between' : undefined}>
+            {mode === 'edit' && onDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => room && onDelete(room)}
+                disabled={loading}
+                className="h-10 px-4 rounded-lg font-medium min-w-fit whitespace-nowrap gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir Quarto
+              </Button>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+                className="h-10 px-4 rounded-lg font-medium min-w-fit whitespace-nowrap"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-10 px-4 rounded-lg font-medium min-w-fit whitespace-nowrap gap-2"
+              >
+                {loading ? 'Salvando...' : mode === 'create' ? 'Criar Quarto' : 'Salvar Alterações'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -122,7 +122,7 @@ export async function getDetailedOccupancyByDay(month: number, year: number) {
 }
 import { Booking, Room, DateRange } from '@/types/agenda';
 import { supabase } from '@/lib/supabase';
-import { hasOverlap, isRoomOccupiedOnDate } from '@/utils/agenda';
+import { hasOverlap, isRoomOccupiedOnDate, getLocalDateStr } from '@/utils/agenda';
 
 const TABLES = {
   rooms: ['rooms', 'hotel_rooms'],
@@ -316,6 +316,8 @@ export async function listBookingsInRange(range: DateRange): Promise<Booking[]> 
       status,
       customer_name: row.customer_name ?? row.guest_name ?? null,
       pilgrimage_id: row.pilgrimage_id ?? null,
+      occurrence_id: row.occurrence_id ?? null,
+      notes: row.notes ?? null,
       created_at: row.created_at ?? undefined,
     });
   }
@@ -399,6 +401,33 @@ export async function cancelRoomReservation(id: string): Promise<boolean> {
   return true;
 }
 
+// Depois de cancelar reserva(s) de quarto, verifica se TODAS as linhas de room_reservations
+// daquela ocorrência de romaria já estão canceladas — se sim, marca a própria ocorrência como
+// cancelada, para que a Gestão de Romarias reflita o cancelamento feito na Agenda/Gestão de
+// Quartos (status "Cancelada" é calculado a partir do status das ocorrências).
+export async function syncOccurrenceCancellation(occurrenceId: string | null | undefined): Promise<void> {
+  if (!occurrenceId) return;
+  const { data, error } = await (supabase as any)
+    .from('room_reservations')
+    .select('status')
+    .eq('occurrence_id', occurrenceId);
+  if (error) {
+    console.error('[agendaService] Erro ao verificar reservas da ocorrência:', error);
+    return;
+  }
+  const rows = data || [];
+  if (rows.length === 0) return;
+  const allCancelled = rows.every((r: any) => r.status === 'cancelled');
+  if (!allCancelled) return;
+  const { error: occError } = await (supabase as any)
+    .from('pilgrimage_occurrences')
+    .update({ status: 'cancelled' })
+    .eq('id', occurrenceId);
+  if (occError) {
+    console.error('[agendaService] Erro ao marcar ocorrência como cancelada:', occError);
+  }
+}
+
 export async function updateRoomReservation(id: string, updates: Partial<{
   check_in_date: string;
   check_out_date: string;
@@ -460,6 +489,13 @@ export async function createRoomReservation(payload: Omit<Booking,'id'|'created_
     row.check_in_date = start;
     row.check_out_date = end;
     // Não enviar customer_name pois a tabela não possui essa coluna neste esquema
+    if ((payload as any).channel !== undefined) row.channel = (payload as any).channel || null;
+    if ((payload as any).total_value !== undefined) row.total_value = (payload as any).total_value ?? null;
+    if ((payload as any).number_of_people !== undefined) row.number_of_people = (payload as any).number_of_people ?? null;
+    if ((payload as any).number_of_buses !== undefined) row.number_of_buses = (payload as any).number_of_buses ?? null;
+    // occurrence_id identifica a vinda específica da romaria (não só o grupo), evitando que
+    // quartos de vindas diferentes se misturem no mesmo agrupamento visual.
+    if ((payload as any).occurrence_id !== undefined) row.occurrence_id = (payload as any).occurrence_id ?? null;
   } else if (tbl === 'hotel_reservations') {
     row.checkin_date = start;
     row.checkout_date = end;
@@ -476,4 +512,166 @@ export async function createRoomReservation(payload: Omit<Booking,'id'|'created_
     throw new Error(error.message || 'Erro ao criar reserva');
   }
   return String(data?.id);
+}
+
+export interface ReservationPaymentPlan {
+  method: string;
+  installments: number;
+  alreadyPaid: boolean;
+  receivingMode: 'antecipado' | 'parcela_a_parcela';
+  receivedDate: string | null;
+  dueDate: string | null;
+  // Liga a transação à vinda específica da romaria (pilgrimage_occurrences.id), permitindo
+  // ao relatório financeiro cruzar receita de hospedagem com a estadia exata que a gerou.
+  occurrenceId?: string | null;
+}
+
+// Aplica o plano de pagamento definido no bloco financeiro da Nova Reserva: grava as parcelas
+// em `reservation_payments` (fonte de verdade para o cálculo dinâmico de "valor em aberto") e
+// espelha no fluxo de caixa (`transactions`) o que já foi de fato recebido ou está agendado.
+export async function applyReservationPaymentPlan(
+  reservationId: string,
+  description: string,
+  totalAmount: number,
+  plan: ReservationPaymentPlan
+): Promise<void> {
+  if (!totalAmount || totalAmount <= 0) return;
+
+  const insertTransaction = async (amount: number, date: string): Promise<string | undefined> => {
+    const { data, error } = await (supabase as any)
+      .from('transactions')
+      .insert({
+        type: 'income',
+        description,
+        amount,
+        category: 'Hospedagens',
+        payment_method: plan.method || null,
+        transaction_date: date,
+        occurrence_id: plan.occurrenceId || null,
+      })
+      .select('id')
+      .single();
+    if (error) {
+      console.error('[agendaService] Erro ao lançar transação da reserva:', error);
+      return undefined;
+    }
+    return data?.id;
+  };
+
+  // Com uma única parcela, não há "forma de recebimento" — só importa se já foi pago ou não.
+  if (plan.installments <= 1) {
+    if (!plan.alreadyPaid) {
+      const dueDate = plan.dueDate || getLocalDateStr();
+      await (supabase as any).from('reservation_payments').insert({
+        room_reservation_id: reservationId,
+        installment_number: 1,
+        amount: totalAmount,
+        due_date: dueDate,
+        status: 'pending',
+        payment_method: plan.method || null,
+      });
+      return;
+    }
+    const receivedDate = plan.receivedDate || getLocalDateStr();
+    const txId = await insertTransaction(totalAmount, receivedDate);
+    await (supabase as any).from('reservation_payments').insert({
+      room_reservation_id: reservationId,
+      installment_number: 1,
+      amount: totalAmount,
+      due_date: receivedDate,
+      status: 'paid',
+      payment_method: plan.method || null,
+      received_date: receivedDate,
+      transaction_id: txId || null,
+    });
+    return;
+  }
+
+  // Mais de uma parcela: a forma de recebimento é escolhida independentemente de o cliente já
+  // ter pago ou não, pois define como as parcelas futuras serão projetadas no fluxo de caixa.
+  const receivedDate = plan.receivedDate || getLocalDateStr();
+
+  if (plan.receivingMode === 'antecipado') {
+    if (!plan.alreadyPaid) {
+      // Ainda não recebeu, mas quando receber será de uma vez só: registra como pendente,
+      // sem lançar transação até a confirmação de recebimento.
+      await (supabase as any).from('reservation_payments').insert({
+        room_reservation_id: reservationId,
+        installment_number: 1,
+        amount: totalAmount,
+        due_date: receivedDate,
+        status: 'pending',
+        payment_method: plan.method || null,
+      });
+      return;
+    }
+    const txId = await insertTransaction(totalAmount, receivedDate);
+    await (supabase as any).from('reservation_payments').insert({
+      room_reservation_id: reservationId,
+      installment_number: 1,
+      amount: totalAmount,
+      due_date: receivedDate,
+      status: 'paid',
+      payment_method: plan.method || null,
+      received_date: receivedDate,
+      transaction_id: txId || null,
+    });
+    return;
+  }
+
+  // Parcela a parcela: uma linha por mês. Se o cliente ainda não pagou, as parcelas só
+  // ficam registradas como pendentes (sem lançar nada no fluxo de caixa ainda); se já pagou,
+  // cada parcela também nasce como um lançamento agendado no fluxo de caixa, mas só entra na
+  // conta de "valor em aberto" quando for confirmada como recebida (ação futura).
+  const n = plan.installments;
+  const perInstallment = Math.round((totalAmount / n) * 100) / 100;
+  const base = new Date(`${receivedDate}T00:00:00`);
+  for (let i = 0; i < n; i++) {
+    const dueDate = new Date(base);
+    dueDate.setMonth(dueDate.getMonth() + i);
+    const dueDateStr = getLocalDateStr(dueDate);
+    const amount = i === n - 1 ? Math.round((totalAmount - perInstallment * (n - 1)) * 100) / 100 : perInstallment;
+    const txId = plan.alreadyPaid ? await insertTransaction(amount, dueDateStr) : undefined;
+    await (supabase as any).from('reservation_payments').insert({
+      room_reservation_id: reservationId,
+      installment_number: i + 1,
+      amount,
+      due_date: dueDateStr,
+      status: 'pending',
+      payment_method: plan.method || null,
+      transaction_id: txId || null,
+    });
+  }
+}
+
+// Soma das parcelas efetivamente pagas por reserva, usada para calcular o "valor em aberto"
+// dinamicamente (total da reserva − soma das parcelas quitadas), em vez de um valor fixo.
+export async function getOpenAmountsByReservation(reservationIds: string[]): Promise<Record<string, number>> {
+  if (reservationIds.length === 0) return {};
+  const { data: reservations, error: resError } = await (supabase as any)
+    .from('room_reservations')
+    .select('id, total_value')
+    .in('id', reservationIds);
+  if (resError) throw resError;
+
+  const { data: payments, error: payError } = await (supabase as any)
+    .from('reservation_payments')
+    .select('room_reservation_id, amount, status')
+    .in('room_reservation_id', reservationIds);
+  if (payError) throw payError;
+
+  const paidByReservation: Record<string, number> = {};
+  (payments || []).forEach((p: any) => {
+    if (p.status === 'paid') {
+      paidByReservation[p.room_reservation_id] = (paidByReservation[p.room_reservation_id] || 0) + Number(p.amount);
+    }
+  });
+
+  const result: Record<string, number> = {};
+  (reservations || []).forEach((r: any) => {
+    const total = Number(r.total_value) || 0;
+    const paid = paidByReservation[r.id] || 0;
+    result[r.id] = Math.max(0, total - paid);
+  });
+  return result;
 }
